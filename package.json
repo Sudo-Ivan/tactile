@@ -10,14 +10,14 @@
   },
   "devDependencies": {
     "@tactile/eslint-config": "workspace:*",
-    "eslint": "^8.56.0",
-    "husky": "^9.0.10",
-    "lint-staged": "^15.2.1",
-    "prettier": "^3.1.1",
-    "prettier-plugin-svelte": "^3.1.2",
-    "turbo": "latest"
+    "eslint": "catalog:",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.5.1",
+    "prettier": "catalog:",
+    "prettier-plugin-svelte": "catalog:",
+    "turbo": "^2.10.12"
   },
-  "packageManager": "pnpm@8.9.0",
+  "packageManager": "pnpm@11.24.0",
   "lint-staged": {
     "*.{svelte,js,ts}": [
       "prettier --write",
@@ -25,6 +25,6 @@
     ]
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   }
 }
