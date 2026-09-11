@@ -26,7 +26,7 @@ catalog:
   '@sveltejs/adapter-static': ^3.0.10
   vite: ^8.3.0
   svelte-check: ^4.7.6
-  typescript: ~5.9.3
+  typescript: ~7.0.2
   tslib: ^2.8.1
   tailwindcss: ^4.3.3
   '@tailwindcss/vite': ^4.3.3
@@ -50,7 +50,7 @@ catalog:
   '@tiptap/pm': ^3.31.3
   '@tiptap/starter-kit': ^3.31.3
   tiptap-markdown: ^0.9.0
-  bits-ui: ^2.19.2
+  bits-ui: ^2.19.1
   lucide-svelte: ^1.0.1
   cmdk-sv: ^0.0.19
   clsx: ^2.1.1
@@ -59,7 +59,7 @@ catalog:
   '@electric-sql/pglite': ^0.5.8
   drizzle-orm: ^0.45.2
   drizzle-kit: ^0.31.10
-  markdown-it: ^15.0.0
+  markdown-it: ^15.0.1
   '@types/markdown-it': ^14.2.0
   '@tauri-apps/api': ^2.11.1
   '@tauri-apps/cli': ^2.11.4
