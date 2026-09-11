@@ -1,112 +1,59 @@
-<!-- Header -->
-<div align="center" style="margin-top: 120px">
-  <a href="https://github.com/Sudo-Ivan/tactile/app">
-    <img
-      src="./.github/assets/icon.svg"
-      alt="Tactile"
-      height="100"
-    />
-  </a>
+# Tactile
 
-  <h3 align="center">Tactile
-  </h3>
-  <b>
-    Open-Source markdown editor - your new home for notes
-  </b>
-</div>
+Local-first, privacy-focused markdown notes. Minimal, lightweight and fast.
 
-<!-- TOC -->
-<p align="center">
-    <a href="https://github.com/Sudo-Ivan/tactile"><strong>Learn more »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/Sudo-Ivan/tactile/tree/main#introduction">Introduction</a>
-    ·
-    <a href="https://github.com/Sudo-Ivan/tactile/tree/main#tech-stack">Tech Stack</a>
-    ·
-    <a href="https://github.com/Sudo-Ivan/tactile/tree/main#deploy-your-own">Deploy Your Own</a>
-    ·
-    <a href="https://github.com/Sudo-Ivan/tactile/tree/main#roadmap">Roadmap</a>
-    ·
-    <a href="https://github.com/Sudo-Ivan/tactile/tree/main#contributing">Contributing</a>
-  </p>
-</p>
+Tactile is a hard fork of [haptic](https://github.com/chroxify/haptic) by chroxify, continued under [Sudo-Ivan](https://github.com/Sudo-Ivan).
 
-<p>
-    <a href="https://github.com/Sudo-Ivan/tactile/app">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="./.github/assets/tactile-dark.png">
-        <source media="(prefers-color-scheme: light)" srcset="./.github/assets/tactile-light.png">
-        <img alt="Tactile" src="./.github/assets/tactile-dark.png">
-      </picture>
-    </a>
-</p>
+## Features
 
-## Introduction
+- Markdown notes with a TipTap-based editor
+- Local-first: notes stay on your machine
+- Desktop app built with Tauri, web app powered by PGlite
+- Command menu, daily notes and tasks
+- Dark mode
+- No third-party trackers or hosted backends required
 
-Tactile is a new local-first & privacy-focused, open-source home for your markdown notes. It's minimal, lightweight, efficient and aims to have _all you need and nothing you don't_.
+## Install
 
-If you'd like to learn more about Tactile, why it's being built, what its goals are and how it differs from all the other markdown editors out there, you can read more about it [here](https://github.com/Sudo-Ivan/tactile/app).
+Download desktop builds from the [releases](https://github.com/Sudo-Ivan/tactile/releases) page.
 
-## Tech Stack
-
-- [Tauri](https://tauri.app/) – Desktop App
-- [PGlite](https://pglite.dev/) – Local Database
-- [Svelte](https://kit.svelte.dev/) – Framework
-- [Tailwind](https://tailwindcss.com/) – CSS
-- [Shadcn/ui](https://www.shadcn-svelte.com/) – Component Library
-- [Vercel](https://vercel.com/) – Hosting
-
-## Deploy Your Own
-
-If you're interested in self-hosting your own web instance of Tactile, you can do so with these two options:
-
-### Vercel
-
-You can one-click deploy your own instance of Tactile on Vercel. Just click the button below and follow the instructions:
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Sudo-Ivan/tactile&project-name=tactile-web&repository-name=tactile-web&root-directory=apps/web)
-
-### Docker
-
-1. Pull the image from the docker hub
+Run the web app with Docker:
 
 ```bash
-docker pull Sudo-Ivan/tactile-web:latest
+docker pull ghcr.io/sudo-ivan/tactile-web:latest
+docker run -d -p 3000:80 ghcr.io/sudo-ivan/tactile-web:latest
 ```
 
-2. Run the container
+## Build from source
+
+Requires Node.js 22+, pnpm 11 and a Rust toolchain for the desktop app.
 
 ```bash
-docker run -d -p 3000:80 Sudo-Ivan/tactile-web:latest
+git clone https://github.com/Sudo-Ivan/tactile.git
+cd tactile
+pnpm install
 ```
 
-3. Visit `http://localhost:3000` in your browser
+Run everything in dev mode:
 
-## Roadmap
+```bash
+pnpm dev
+```
 
-Tactile is currently still in active development. Here are some of the features planned for the future:
+Or per app:
 
-- [ ] Tactile Sync - Sync your notes across devices
-- [ ] Note sharing - Share single notes or entire collections via link
-- [ ] Mobile support for the web app - Currently dependent on PGlite support for mobile
-- [ ] Native mobile apps for iOS & Android
-- [ ] Windows & Linux support for the desktop app
+```bash
+pnpm --filter web dev          # web app
+pnpm --filter homepage dev     # homepage
+pnpm --filter desktop dev:tauri  # desktop app (needs Rust + webkit deps)
+```
 
-and much much more, so stay tuned!
+Build:
 
-## Contributing
-
-We would love to have your help in making tactile better!
-
-Here's how you can contribute:
-
-- [Report a bug](https://github.com/Sudo-Ivan/tactile/issues/new?labels=bug) you found while using Tactile
-- [Request a feature](https://github.com/Sudo-Ivan/tactile/issues/new?labels=enhancement) that you think will be useful
-- [Submit a pull request](https://github.com/Sudo-Ivan/tactile/pulls) if you want to contribute with new features or bug fixes
+```bash
+pnpm build
+```
 
 ## License
 
-Tactile is licensed under the [GNU Affero General Public License Version 3 (AGPLv3)](https://github.com/Sudo-Ivan/tactile/blob/main/LICENSE).
-
----
+GNU Affero General Public License v3, see [LICENSE](LICENSE). Original work copyright chroxify and haptic contributors.
