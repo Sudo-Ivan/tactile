@@ -6,8 +6,14 @@ mod mac;
 mod commands;
 
 fn main() {
-  let mut ctx = tauri::generate_context!();
+  let ctx = tauri::generate_context!();
   tauri::Builder::default()
+    .plugin(tauri_plugin_dialog::init())
+    .plugin(tauri_plugin_shell::init())
+    .plugin(tauri_plugin_os::init())
+    .plugin(tauri_plugin_updater::Builder::new().build())
+    .plugin(tauri_plugin_fs::init())
+    .plugin(tauri_plugin_window_state::Builder::default().build())
     .setup(|app| {
       if cfg!(target_os = "macos") {
           #[cfg(target_os = "macos")]
@@ -23,10 +29,6 @@ fn main() {
         commands::folder::show_in_folder,
         commands::search::search_files
     ])
-    .plugin(tauri_plugin_theme::ThemePlugin::init(ctx.config_mut()))
-    .plugin(tauri_plugin_fs_watch::init())
-    .plugin(tauri_plugin_fs_extra::init())
-    .plugin(tauri_plugin_window_state::Builder::default().build())
     .run(ctx)
     .expect("error while running tauri application");
 }

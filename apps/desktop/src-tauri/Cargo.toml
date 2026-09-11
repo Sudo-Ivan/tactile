@@ -1,37 +1,44 @@
 [package]
 name = "app"
 version = "0.1.0"
-description = "A Tauri App"
+description = "Tactile"
 authors = ["you"]
-license = ""
+license = "AGPL-3.0-only"
 repository = ""
 default-run = "app"
 edition = "2021"
-rust-version = "1.67"
+rust-version = "1.77"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1.5.1", features = [] }
+tauri-build = { version = "2", features = [] }
 
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "1.5.4", features = [ "updater", "api-all"] }
+tauri = { version = "2", features = [] }
 regex = "1.5"
-objc = "0.2.7"
 hex_color = "3.0.0"
-tauri-plugin-fs-watch = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
-tauri-plugin-window-state = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
-tauri-plugin-fs-extra = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
-tauri-plugin-theme = "0.2.0"
+# In v2 plugin-fs covers both the old fs-extra and fs-watch plugins
+tauri-plugin-fs = { version = "2", features = ["watch"] }
+tauri-plugin-window-state = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-os = "2"
+tauri-plugin-updater = "2"
+# tauri-plugin-theme is dropped: all of its 2.x releases are yanked on crates.io.
+# Theme switching now uses the core app set_theme API via @tauri-apps/api/app setTheme.
 
 # MacOS dependencies
 [target.'cfg(target_os = "macos")'.dependencies]
-cocoa = "0.25.0"
+objc2 = "0.6"
+objc2-app-kit = "0.3"
+objc2-foundation = "0.3"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.
 # If you use cargo directly instead of tauri's cli you can use this feature flag to switch between tauri's `dev` and `build` modes.
 # DO NOT REMOVE!!
-custom-protocol = [ "tauri/custom-protocol" ]
+# In Tauri v2 the tauri/custom-protocol feature no longer exists, kept as an empty no-op
+custom-protocol = []
