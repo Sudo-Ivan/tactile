@@ -45,7 +45,7 @@
 			<button
 				class="text-sm gap-1.5 flex text-muted-foreground hover:text-secondary-foreground transition-colors items-center justify-center"
 				on:click={() => {
-					browserOpen('https://go.haptic.md/github');
+					browserOpen('https://github.com/Sudo-Ivan/tactile');
 				}}
 			>
 				<Shortcut options={githubShortcut} />
@@ -60,7 +60,7 @@
 			<button
 				class="text-sm gap-1.5 flex text-muted-foreground hover:text-secondary-foreground transition-colors items-center justify-center"
 				on:click={() => {
-					browserOpen('https://go.haptic.md/sponsor');
+					browserOpen('https://github.com/sponsors/Sudo-Ivan');
 				}}
 			>
 				<Shortcut options={sponsorShortcut} />

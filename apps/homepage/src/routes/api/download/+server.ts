@@ -1,8 +1,22 @@
-import { createClient } from '@vercel/edge-config';
 import type { RequestHandler } from './$types';
 
 type Target = 'linux' | 'windows' | 'darwin';
 type Arch = 'x86_64' | 'i686' | 'aarch64' | 'armv7';
+
+const REPO = 'Sudo-Ivan/tactile';
+
+async function getLatestRelease(): Promise<{ tag_name: string }> {
+	const response = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, {
+		headers: {
+			Accept: 'application/vnd.github+json',
+			'User-Agent': 'tactile-homepage'
+		}
+	});
+	if (!response.ok) {
+		throw new Error(`GitHub API responded with ${response.status}`);
+	}
+	return await response.json();
+}
 
 export const GET: RequestHandler = async ({ url }) => {
 	// Params
@@ -48,19 +62,19 @@ export const GET: RequestHandler = async ({ url }) => {
 		);
 	}
 
-	// Get latest version info from Edge Config
-	const configClient = createClient(import.meta.env.VITE_EDGE_CONFIG);
-	const edgeConfig = (await configClient.getAll()) as { latest_version: string };
+	// Get latest version info from GitHub releases
+	const release = await getLatestRelease();
+	const latestVersion = release.tag_name;
+	const version = latestVersion.replace('v', '');
 
-	const version = edgeConfig.latest_version.replace('v', '');
-	const baseUrl = `https://github.com/chroxify/haptic/releases/download/${edgeConfig.latest_version}`;
+	const baseUrl = `https://github.com/${REPO}/releases/download/${latestVersion}`;
 
 	const platforms: Record<string, string> = {
-		'darwin-x86_64': `${baseUrl}/Haptic_${version}_x64.dmg`,
-		'darwin-aarch64': `${baseUrl}/Haptic_${version}_aarch64.dmg`
+		'darwin-x86_64': `${baseUrl}/Tactile_${version}_x64.dmg`,
+		'darwin-aarch64': `${baseUrl}/Tactile_${version}_aarch64.dmg`
 		//? Not yet supported
-		// 'linux-x86_64': `${baseUrl}/Haptic_${version}_amd64.AppImage.tar.gz`,
-		// 'windows-x86_64': `${baseUrl}/Haptic_${version}_x64-setup.nsis.zip`
+		// 'linux-x86_64': `${baseUrl}/Tactile_${version}_amd64.AppImage.tar.gz`,
+		// 'windows-x86_64': `${baseUrl}/Tactile_${version}_x64-setup.nsis.zip`
 	};
 
 	const downloadUrl = platforms[`${target}-${arch}`];

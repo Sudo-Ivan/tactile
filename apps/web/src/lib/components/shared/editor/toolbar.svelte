@@ -14,8 +14,8 @@
 		isPageSidebarOpen,
 		noteHistory
 	} from '@/store';
-	import Button from '@haptic/ui/components/button/button.svelte';
-	import { cn } from '@haptic/ui/lib/utils';
+	import Button from '@tactile/ui/components/button/button.svelte';
+	import { cn } from '@tactile/ui/lib/utils';
 
 	export let hideHistory: boolean = false;
 	export let hideParentDirectories: boolean = false;

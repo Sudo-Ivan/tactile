@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { Button } from '@haptic/ui/components/button';
+	import { Button } from '@tactile/ui/components/button';
 	import Icon from '../shared/icon.svelte';
 	import Tooltip from '../shared/tooltip.svelte';
-	import * as Sheet from '@haptic/ui/components/sheet';
-	import { Input } from '@haptic/ui/components/input';
-	import * as Collapsible from '@haptic/ui/components/collapsible';
+	import * as Sheet from '@tactile/ui/components/sheet';
+	import { Input } from '@tactile/ui/components/input';
+	import * as Collapsible from '@tactile/ui/components/collapsible';
 	import { ChevronDown } from 'lucide-svelte';
-	import { cn } from '@haptic/ui/lib/utils';
+	import { cn } from '@tactile/ui/lib/utils';
 	import { mainCommands as commands, createNoteCommands } from '../shared/command-menu/commands';
 	import { shortcutToString, toggleTheme } from '@/utils';
 	import { activeFile, appTheme } from '@/store';
@@ -64,14 +64,14 @@
 			</Button>
 		</Tooltip>
 
-		<Tooltip text="Haptic Sync">
+		<Tooltip text="Tactile Sync">
 			<Button
 				size="icon"
 				variant="ghost"
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
 				scale="md"
 				on:click={() => {
-					settingsStore.set({ isOpen: true, activePage: 'haptic sync' });
+					settingsStore.set({ isOpen: true, activePage: 'tactile sync' });
 				}}
 			>
 				<Icon name="cloudX" class="w-4 h-4" />

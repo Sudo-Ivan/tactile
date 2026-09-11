@@ -11,9 +11,9 @@
 	} from '@/store';
 	import { type NoteMetadataParams } from '@/types';
 	import { formatFileSize, formatTimeAgo } from '@/utils';
-	import { Button } from '@haptic/ui/components/button';
-	import Label from '@haptic/ui/components/label/label.svelte';
-	import { cn } from '@haptic/ui/lib/utils';
+	import { Button } from '@tactile/ui/components/button';
+	import Label from '@tactile/ui/components/label/label.svelte';
+	import { cn } from '@tactile/ui/lib/utils';
 	import type { NodePos } from '@tiptap/core';
 	import { onDestroy, onMount } from 'svelte';
 

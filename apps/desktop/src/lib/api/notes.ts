@@ -48,8 +48,8 @@ export const deleteNote = async (path: string) => {
 				`${await homeDir()}${OS_TRASH_DIR[get(platform)]}${path.split('/').pop()!}`
 			);
 			break;
-		case 'haptic':
-			await renameFile(path, `${get(collection)}/.haptic/trash/${path.split('/').pop()!}`);
+		case 'tactile':
+			await renameFile(path, `${get(collection)}/.tactile/trash/${path.split('/').pop()!}`);
 			break;
 		case 'delete':
 			await removeFile(path);

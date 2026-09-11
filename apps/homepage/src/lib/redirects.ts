@@ -4,9 +4,9 @@ type Redirects = {
 };
 
 export const redirects: Redirects = {
-	'/app': 'https://app.haptic.md',
-	'/github': 'https://go.haptic.md/github',
-	'/twitter': 'https://go.haptic.md/twitter',
-	'/sponsor': 'https://go.haptic.md/sponsor',
-	'/tweet': 'https://go.haptic.md/tweet'
+	'/app': 'https://github.com/Sudo-Ivan/tactile',
+	'/github': 'https://github.com/Sudo-Ivan/tactile',
+	'/twitter': 'https://github.com/Sudo-Ivan/tactile',
+	'/sponsor': 'https://github.com/sponsors/Sudo-Ivan',
+	'/tweet': 'https://github.com/Sudo-Ivan/tactile'
 };

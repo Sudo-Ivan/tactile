@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { openNote } from '@/api/notes';
 	import { activeFile, collection, editor, editorSearchActive, editorSearchValue } from '@/store';
-	import * as Collapsible from '@haptic/ui/components/collapsible';
-	import Label from '@haptic/ui/components/label/label.svelte';
-	import { cn } from '@haptic/ui/lib/utils';
+	import * as Collapsible from '@tactile/ui/components/collapsible';
+	import Label from '@tactile/ui/components/label/label.svelte';
+	import { cn } from '@tactile/ui/lib/utils';
 	import { invoke } from '@tauri-apps/api/tauri';
 	import { ChevronDown, Loader } from 'lucide-svelte';
 	import markdownit from 'markdown-it';

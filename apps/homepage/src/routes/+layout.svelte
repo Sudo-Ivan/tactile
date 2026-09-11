@@ -1,53 +1,49 @@
 <script lang="ts">
-	import '@haptic/ui/app.web.css';
-	import { Button } from '@haptic/ui/components/button';
-	import { injectAnalytics } from '@vercel/analytics/sveltekit';
+	import '@tactile/ui/app.web.css';
+	import { Button } from '@tactile/ui/components/button';
 	const currentYear = new Date().getFullYear();
-	injectAnalytics();
 </script>
 
 <svelte:head>
-	<title>Haptic - Write Notes at the speed of touch</title>
+	<title>Tactile - Write Notes at the speed of touch</title>
 	<meta
 		name="description"
-		content="Haptic is a new local-first & privacy-focused home for your markdown notes. It's a minimalistic, lightweight and fast note-taking app that's designed to be distraction-free."
+		content="Tactile is a new local-first & privacy-focused home for your markdown notes. It's a minimalistic, lightweight and fast note-taking app that's designed to be distraction-free."
 	/>
 	<meta
 		name="keywords"
-		content="Haptic, Note-taking, Markdown, Local-first, Privacy-focused, Open-source, Online Markdown Editor, Fast Note-taking, Minimalistic Design"
+		content="Tactile, Note-taking, Markdown, Local-first, Privacy-focused, Open-source, Online Markdown Editor, Fast Note-taking, Minimalistic Design"
 	/>
-	<meta name="author" content="Haptic" />
+	<meta name="author" content="Tactile" />
 	<meta name="robots" content="index, follow" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<meta name="theme-color" content="#0F0F0F" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
 	<!-- Open Graph -->
-	<meta property="og:site_name" content="Haptic" />
+	<meta property="og:site_name" content="Tactile" />
 	<meta property="og:locale" content="en" />
 	<meta property="og:type" content="website" />
-	<meta property="og:url" content="https://haptic.md/" />
-	<meta property="og:title" content="Haptic - Write Notes at the speed of touch" />
+	<meta property="og:url" content="https://github.com/Sudo-Ivan/tactile/" />
+	<meta property="og:title" content="Tactile - Write Notes at the speed of touch" />
 	<meta
 		property="og:description"
-		content="Haptic is a new local-first & privacy-focused home for your markdown notes. It's a minimalistic, lightweight and fast note-taking app that's designed to be distraction-free."
+		content="Tactile is a new local-first & privacy-focused home for your markdown notes. It's a minimalistic, lightweight and fast note-taking app that's designed to be distraction-free."
 	/>
-	<meta property="og:image" content="https://haptic.md/landing.png" />
-	<meta property="og:image:alt" content="Haptic - Markdown Editor" />
+	<meta property="og:image" content="https://github.com/Sudo-Ivan/tactile/landing.png" />
+	<meta property="og:image:alt" content="Tactile - Markdown Editor" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="627" />
 
 	<!-- Twitter -->
 	<meta property="twitter:card" content="summary_large_image" />
-	<meta property="twitter:url" content="https://haptic.md/" />
-	<meta property="twitter:title" content="Haptic - Write Notes at the speed of touch" />
+	<meta property="twitter:url" content="https://github.com/Sudo-Ivan/tactile/" />
+	<meta property="twitter:title" content="Tactile - Write Notes at the speed of touch" />
 	<meta
 		property="twitter:description"
-		content="Haptic is a new local-first & privacy-focused home for your markdown notes. It's a minimalistic, lightweight and fast note-taking app that's designed to be distraction-free."
+		content="Tactile is a new local-first & privacy-focused home for your markdown notes. It's a minimalistic, lightweight and fast note-taking app that's designed to be distraction-free."
 	/>
-	<meta property="twitter:image" content="https://haptic.md/landing.png" />
-
-	<script async src="https://cdn.seline.so/seline.js" data-token="d028e058129b859"></script>
+	<meta property="twitter:image" content="https://github.com/Sudo-Ivan/tactile/landing.png" />
 </svelte:head>
 
 <div
@@ -57,9 +53,9 @@
 	<header class="flex items-center justify-between w-full h-16 z-10 max-w-screen-2xl">
 		<!-- Logo & Name -->
 		<a class="flex items-center justify-center gap-2" href="/">
-			<img src="/icon.svg" alt="Haptic" class="w-9 h-9 border border-border/80 rounded-lg" />
+			<img src="/icon.svg" alt="Tactile" class="w-9 h-9 border border-border/80 rounded-lg" />
 			<span class="text-xl sm:text-2xl font-medium text-foreground font-['Gambarino-Regular']"
-				>Haptic</span
+				>Tactile</span
 			>
 		</a>
 
@@ -84,7 +80,7 @@
 
 	<!-- Footer -->
 	<footer class="flex items-start justify-between w-full h-16 z-10 max-w-screen-2xl px-7">
-		<p class="text-secondary-foreground/70 text-sm sm:text-[15px]">© {currentYear} Haptic</p>
+		<p class="text-secondary-foreground/70 text-sm sm:text-[15px]">© {currentYear} Tactile</p>
 
 		<nav class="items-center gap-4 ml-4 text-sm sm:text-[15px] hidden sm:flex -ml-20">
 			<a href="/download" class="text-secondary-foreground/70 hover:text-foreground transition-all"

@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { activeFile, editor, editorSearchActive, editorSearchValue } from '@/store';
-	import { cn } from '@haptic/ui/lib/utils';
+	import { cn } from '@tactile/ui/lib/utils';
 	import { openNote } from '@/api/notes';
-	import Label from '@haptic/ui/components/label/label.svelte';
-	import * as Collapsible from '@haptic/ui/components/collapsible';
+	import Label from '@tactile/ui/components/label/label.svelte';
+	import * as Collapsible from '@tactile/ui/components/collapsible';
 	import { ChevronDown, Loader } from 'lucide-svelte';
 	import markdownit from 'markdown-it';
 

@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { Input } from '@haptic/ui/components/input';
+	import { Input } from '@tactile/ui/components/input';
 	import Icon from '@/components/shared/icon.svelte';
-	import * as Collapsible from '@haptic/ui/components/collapsible';
-	import { Button } from '@haptic/ui/components/button';
+	import * as Collapsible from '@tactile/ui/components/collapsible';
+	import { Button } from '@tactile/ui/components/button';
 	import { Replace, ReplaceAll, WholeWord, ALargeSmall } from 'lucide-svelte';
 	import {
 		collectionSettings,
@@ -13,7 +13,7 @@
 		noteDetailSidebarWidth,
 		platform
 	} from '@/store';
-	import { cn } from '@haptic/ui/lib/utils';
+	import { cn } from '@tactile/ui/lib/utils';
 	import Shortcut from '@/components/shared/shortcut.svelte';
 	import { SHORTCUTS } from '@/constants';
 	import Tooltip from '@/components/shared/tooltip.svelte';

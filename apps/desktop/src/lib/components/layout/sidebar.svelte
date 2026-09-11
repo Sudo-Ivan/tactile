@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Button } from '@haptic/ui/components/button';
-	import { cn } from '@haptic/ui/lib/utils';
+	import { Button } from '@tactile/ui/components/button';
+	import { cn } from '@tactile/ui/lib/utils';
 	import Icon from '$lib/components/shared/icon.svelte';
 	import Tooltip from '$lib/components/shared/tooltip.svelte';
 	import { page } from '$app/stores';

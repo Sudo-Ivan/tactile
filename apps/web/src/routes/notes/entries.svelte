@@ -7,10 +7,10 @@
 	import { activeFile, collection, editor } from '@/store';
 	import type { FileEntry } from '@/types';
 	import { shortcutToString } from '@/utils';
-	import Button from '@haptic/ui/components/button/button.svelte';
-	import * as Collapsible from '@haptic/ui/components/collapsible';
-	import * as ContextMenu from '@haptic/ui/components/context-menu';
-	import { cn } from '@haptic/ui/lib/utils';
+	import Button from '@tactile/ui/components/button/button.svelte';
+	import * as Collapsible from '@tactile/ui/components/collapsible';
+	import * as ContextMenu from '@tactile/ui/components/context-menu';
+	import { cn } from '@tactile/ui/lib/utils';
 	import { get } from 'svelte/store';
 
 	export let entries: FileEntry[];
