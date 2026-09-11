@@ -7,8 +7,8 @@
 	import Icon from '../shared/icon.svelte';
 	import Tooltip from '../shared/tooltip.svelte';
 
-	let selectedTheme = { value: 'tactile', label: 'Tactile' };
-	let selectedFont = { value: 'inter', label: 'Inter' };
+	let selectedTheme = 'tactile';
+	let selectedFont = 'inter';
 </script>
 
 <div class="space-y-5">
@@ -25,7 +25,7 @@
 						$appTheme === 'auto' && 'bg-accent fill-foreground'
 					)}
 					scale="md"
-					on:click={() => appTheme.set('auto')}
+					onclick={() => appTheme.set('auto')}
 				>
 					<Icon name="monitor" class="w-4 h-4" />
 				</Button>
@@ -39,7 +39,7 @@
 						$appTheme === 'light' && 'bg-accent fill-foreground'
 					)}
 					scale="md"
-					on:click={() => appTheme.set('light')}
+					onclick={() => appTheme.set('light')}
 				>
 					<Icon name="sun" class="w-4 h-4" />
 				</Button>
@@ -53,7 +53,7 @@
 						$appTheme === 'dark' && 'bg-accent fill-foreground'
 					)}
 					scale="md"
-					on:click={() => appTheme.set('dark')}
+					onclick={() => appTheme.set('dark')}
 				>
 					<Icon name="moon" class="w-4 h-4" />
 				</Button>
@@ -65,12 +65,12 @@
 		<Label class="text-sm">Theme</Label>
 		<p class="text-muted-foreground text-xs">Change the theme of the app.</p>
 		<div class="flex items-center gap-2 pt-2">
-			<Select.Root bind:selected={selectedTheme}>
+			<Select.Root type="single" bind:value={selectedTheme}>
 				<Select.Trigger>
-					<Select.Value class="text-sm text-foreground/85">{selectedTheme.label}</Select.Value>
+					<Select.Value class="text-sm text-foreground/85" />
 				</Select.Trigger>
 				<Select.Content>
-					<Select.Item value="tactile">Tactile</Select.Item>
+					<Select.Item value="tactile" label="Tactile">Tactile</Select.Item>
 				</Select.Content>
 			</Select.Root>
 			<Button
@@ -89,17 +89,17 @@
 		<Label class="text-sm">Fonts</Label>
 		<p class="text-muted-foreground text-xs">Change the interface font.</p>
 		<div class="flex items-center gap-2 pt-2">
-			<Select.Root bind:selected={selectedFont} disabled>
+			<Select.Root type="single" bind:value={selectedFont} disabled>
 				<Select.Trigger>
-					<Select.Value class="text-sm text-foreground/85">{selectedFont.label}</Select.Value>
+					<Select.Value class="text-sm text-foreground/85" />
 				</Select.Trigger>
 				<Select.Content>
-					<Select.Item value="inter">Inter</Select.Item>
-					<Select.Item value="roboto">Roboto</Select.Item>
-					<Select.Item value="lato">Lato</Select.Item>
-					<Select.Item value="poppins">Poppins</Select.Item>
-					<Select.Item value="nunito">Nunito</Select.Item>
-					<Select.Item value="openSans">Open Sans</Select.Item>
+					<Select.Item value="inter" label="Inter">Inter</Select.Item>
+					<Select.Item value="roboto" label="Roboto">Roboto</Select.Item>
+					<Select.Item value="lato" label="Lato">Lato</Select.Item>
+					<Select.Item value="poppins" label="Poppins">Poppins</Select.Item>
+					<Select.Item value="nunito" label="Nunito">Nunito</Select.Item>
+					<Select.Item value="openSans" label="Open Sans">Open Sans</Select.Item>
 				</Select.Content>
 			</Select.Root>
 		</div>

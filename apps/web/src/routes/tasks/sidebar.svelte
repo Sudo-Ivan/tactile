@@ -78,7 +78,7 @@
 		class="h-full w-1 border-r cursor-col-resize absolute top-0 right-0 z-10 hover:bg-foreground/10 hover:delay-75 transition-all duration-200 active:bg-foreground/20 active:!cursor-col-resize"
 		on:mousedown={resizeHandler}
 		role="presentation"
-	/>
+	></div>
 
 	<!-- Tasks -->
 	<div

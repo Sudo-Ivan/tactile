@@ -6,8 +6,8 @@
 	import { activeFile, appTheme, collection } from '@/store';
 	import { formatTimeAgo, shortcutToString } from '@/utils';
 	import * as Command from '@tactile/ui/components/command';
-	import { open as browserOpen } from '@tauri-apps/api/shell';
-	import { Twitter } from 'lucide-svelte';
+	import { open as browserOpen } from '@tauri-apps/plugin-shell';
+	import { Share2 } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import { mainCommands as commands, createNoteCommands } from './commands';
 	import { getAllItems } from './helpers';
@@ -101,7 +101,7 @@
 	bind:open
 	bind:value
 	loop
-	onKeydown={(e) => {
+	onkeydown={(e: KeyboardEvent) => {
 		if (e.key === 'Escape') {
 			handlePageState(undefined);
 			openedWithShortcut = '';
@@ -119,9 +119,9 @@
 	<Command.List>
 		<Command.Empty class="text-foreground/60 font-light">No commands found</Command.Empty>
 		{#if page === 'default'}
-			{#each commands as group}
+			{#each commands as group (group.name)}
 				<Command.Group heading={group.name}>
-					{#each group.commands as command}
+					{#each group.commands as command (command.title)}
 						<Command.Item
 							class="[&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
 							value={command.title}
@@ -158,7 +158,7 @@
 					<!-- TODO: Make this a loading spinner -->
 					<Command.Loading class="text-foreground/90">Loading folders...</Command.Loading>
 				{:then folders}
-					{#each folders as folder}
+					{#each folders as folder (folder.path)}
 						{#if folder.path + `/${$activeFile?.split('/').pop()}` !== $activeFile}
 							<Command.Item
 								class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
@@ -184,7 +184,7 @@
 				{#await getAllItems()}
 					<Command.Loading class="text-foreground/90">Loading notes...</Command.Loading>
 				{:then notes}
-					{#each notes as note}
+					{#each notes as note (note.path)}
 						<Command.Item
 							class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
 							value={note.path}
@@ -266,7 +266,7 @@
 					<Command.Group heading="Browse recent collections">
 						{#each collections
 							.filter((c) => c.path !== $collection)
-							.sort((a, b) => +new Date(b.lastOpened) - +new Date(a.lastOpened)) as collection}
+							.sort((a, b) => +new Date(b.lastOpened) - +new Date(a.lastOpened)) as collection (collection.path)}
 							<Command.Item
 								class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
 								value={collection.path}
@@ -356,8 +356,8 @@
 						handlePageState(undefined);
 					}}
 				>
-					<Twitter />
-					Share on Twitter
+					<Share2 />
+					Share on X
 				</Command.Item>
 			</Command.Group>
 		{/if}
@@ -365,8 +365,8 @@
 </Command.Dialog>
 
 <style>
-	:global([data-cmdk-list]) {
-		height: min(300px, var(--cmdk-list-height));
+	:global([data-command-list]) {
+		height: min(300px, var(--bits-command-list-height));
 		max-height: 400px;
 		margin-bottom: 8px;
 		margin-top: 8px;

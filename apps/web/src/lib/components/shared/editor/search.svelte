@@ -179,7 +179,7 @@
 						variant="ghost"
 						scale="md"
 						class={cn('h-7 w-7 group', caseSensitive ? 'bg-accent' : '')}
-						on:click={() => {
+						onclick={() => {
 							caseSensitive = !caseSensitive;
 						}}
 					>
@@ -197,7 +197,7 @@
 						variant="ghost"
 						scale="md"
 						class={cn('h-7 w-7 group', wholeWord ? 'bg-accent' : '')}
-						on:click={() => {
+						onclick={() => {
 							wholeWord = !wholeWord;
 						}}
 					>
@@ -215,7 +215,7 @@
 						variant="ghost"
 						scale="md"
 						class="h-7 w-7 fill-muted-foreground hover:fill-foreground transition-all"
-						on:click={() => {
+						onclick={() => {
 							$editor.commands.previousSearchResult();
 							goToSelection();
 						}}
@@ -229,7 +229,7 @@
 						variant="ghost"
 						scale="md"
 						class="h-7 w-7 fill-muted-foreground hover:fill-foreground transition-all"
-						on:click={() => {
+						onclick={() => {
 							$editor.commands.nextSearchResult();
 							goToSelection();
 						}}
@@ -243,7 +243,7 @@
 						variant="ghost"
 						scale="md"
 						class="h-7 w-7 fill-muted-foreground hover:fill-foreground transition-all"
-						on:click={() => {
+						onclick={() => {
 							close();
 						}}
 					>
@@ -267,7 +267,7 @@
 							variant="ghost"
 							scale="md"
 							class="h-7 w-7 group"
-							on:click={() => {
+							onclick={() => {
 								$editor.commands.replace();
 								goToSelection();
 							}}
@@ -283,7 +283,7 @@
 							variant="ghost"
 							scale="md"
 							class="h-7 w-7 group"
-							on:click={() => {
+							onclick={() => {
 								$editor.commands.replaceAll();
 								goToSelection();
 							}}

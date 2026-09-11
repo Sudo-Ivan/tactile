@@ -41,7 +41,7 @@
 				variant="ghost"
 				scale="md"
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
-				on:click={() => {
+				onclick={() => {
 					isPageSidebarOpen.update((state) => !state);
 				}}
 			>
@@ -63,7 +63,7 @@
 					scale="md"
 					class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
 					disabled={!$noteHistory?.length || $noteHistory?.length === 1 || historyIndex === 0}
-					on:click={() => {
+					onclick={() => {
 						// Decrement the history index
 						historyIndex--;
 
@@ -98,7 +98,7 @@
 					disabled={!$noteHistory?.length ||
 						$noteHistory?.length === 1 ||
 						historyIndex === $noteHistory?.length - 1}
-					on:click={() => {
+					onclick={() => {
 						// Increment the history index
 						historyIndex++;
 
@@ -129,14 +129,14 @@
 				</Button>
 			</Tooltip>
 		{:else}
-			<div class="w-6" />
-			<div class="w-6" />
+			<div class="w-6"></div>
+			<div class="w-6"></div>
 		{/if}
 	</div>
 	<div class="flex gap-1.5">
 		<p class="text-xs flex items-center text-muted-foreground fill-muted-foreground">
 			{#if !hideParentDirectories}
-				{#each $activeFile?.replace($collection, '').split('/') ?? [] as folder, i}
+				{#each $activeFile?.replace($collection, '').split('/') ?? [] as folder, i (i)}
 					{#if i !== 0}
 						<Button
 							size="sm"
@@ -178,7 +178,7 @@
 				variant="ghost"
 				scale="md"
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
-				on:click={() => {
+				onclick={() => {
 					// TODO: Implement source mode in future
 					// Set the mode
 					if ($editorMode === 'edit') {
@@ -201,7 +201,7 @@
 				variant="ghost"
 				scale="md"
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
-				on:click={() => {
+				onclick={() => {
 					editorSearchActive.set($editorSearchActive ? false : true);
 				}}
 			>
@@ -214,7 +214,7 @@
 				variant="ghost"
 				scale="md"
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
-				on:click={() => {
+				onclick={() => {
 					isNoteDetailSidebarOpen.update((state) => !state);
 				}}
 			>

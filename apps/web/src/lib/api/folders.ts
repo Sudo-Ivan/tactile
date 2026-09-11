@@ -11,7 +11,7 @@ export const createFolder = async (dirPath: string) => {
 	// Get the entry matching the path
 	const entry = await db.select().from(entryTable).where(eq(entryTable.path, dirPath));
 
-	let files = [];
+	let files;
 	if (entry.length === 0) {
 		files = await db
 			.select()

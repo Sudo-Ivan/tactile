@@ -12,7 +12,7 @@
 	export let results: { path: string; context_preview: string }[] = [];
 	export let loading = false;
 	let openState: Record<string, boolean> = {};
-	let groupedResults: Record<string, { context_preview: string }[]> = {};
+	let groupedResults: Record<string, { context_preview: string }[]>;
 	$: groupedResults = groupResults(results);
 
 	// group results function which groups all the results from the same path together in an array
@@ -86,11 +86,11 @@
 </div>
 
 {#if Object.keys(groupedResults).length > 0 && !loading}
-	{#each Object.keys(groupedResults) as path}
+	{#each Object.keys(groupedResults) as path (path)}
 		<Collapsible.Root open={openState[path]} class="w-full">
 			<Collapsible.Trigger
 				class="text-[13px] w-full text-secondary-foreground flex items-center h-7 justify-start gap-1.5 group hover:text-foreground transition-all"
-				on:click={() => toggleOpen(path)}
+				onclick={() => toggleOpen(path)}
 			>
 				<ChevronDown
 					class={cn(
@@ -101,10 +101,10 @@
 				<p class="truncate">{path.split('/').pop()}</p>
 			</Collapsible.Trigger>
 			<Collapsible.Content class="mt-0.5 w-full gap-1.5 flex flex-col">
-				{#each groupedResults[path] as result, index}
+				{#each groupedResults[path] as result, index (result.context_preview)}
 					<button
 						class="flex items-start min-w-full overflow-hidden text-start p-2 bg-secondary-background border rounded-md text-xs hover:bg-accent hover:text-accent-foreground"
-						on:click={async () => {
+						onclick={async () => {
 							// set search term
 							editorSearchValue.set('');
 

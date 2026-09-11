@@ -3,13 +3,14 @@
 	import Footer from '@/components/layout/footer.svelte';
 	import Header from '@/components/layout/header.svelte';
 	import Sidebar from '@/components/layout/sidebar.svelte';
-	import { platform as osPlatform } from '@tauri-apps/api/os';
+	import { platform as osPlatform } from '@tauri-apps/plugin-os';
 	import Command from '@/components/shared/command-menu/command.svelte';
 	import { appTheme, collection, platform } from '@/store';
 	import { updateWindowTheme, validateTactileFolder } from '@/utils';
 	import '@tactile/ui/app.desktop.css';
-	import { BaseDirectory, readTextFile } from '@tauri-apps/api/fs';
-	import { invoke } from '@tauri-apps/api/tauri';
+	import { BaseDirectory } from '@tauri-apps/api/path';
+	import { readTextFile } from '@tauri-apps/plugin-fs';
+	import { setTheme } from '@tauri-apps/api/app';
 	import { onMount } from 'svelte';
 
 	// Prevent right-clicking in production
@@ -21,7 +22,7 @@
 	// Load latest collection
 	async function loadLatestCollection() {
 		const collections = await readTextFile('collections.json', {
-			dir: BaseDirectory.AppData
+			baseDir: BaseDirectory.AppData
 		}).catch(() => null);
 
 		if (!collections) return;
@@ -52,10 +53,8 @@
 
 	// Keep local theme synced
 	appTheme.subscribe(async (value) => {
-		// Update app theme
-		await invoke('plugin:theme|set_theme', {
-			theme: value
-		});
+		// Update app theme, auto maps to null which follows the system theme
+		await setTheme(value === 'auto' ? null : value);
 
 		// Update window theme
 		updateWindowTheme();

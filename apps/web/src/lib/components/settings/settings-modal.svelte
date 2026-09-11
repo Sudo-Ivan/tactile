@@ -7,7 +7,7 @@
 	import { Label } from '@tactile/ui/components/label';
 	import { Separator } from '@tactile/ui/components/separator';
 	import * as Tabs from '@tactile/ui/components/tabs';
-	import type { ComponentType } from 'svelte';
+	import type { Component } from 'svelte';
 	import Shortcut from '../shared/shortcut.svelte';
 	import Appearance from './appearance.svelte';
 	import Editor from './editor.svelte';
@@ -16,7 +16,7 @@
 
 	$: ({ isOpen, activePage } = $settingsStore);
 
-	const settings: Record<string, { name: string; icon: IconKey; content: ComponentType }[]> = {
+	const settings: Record<string, { name: string; icon: IconKey; content: Component }[]> = {
 		App: [
 			{
 				name: 'General',
@@ -76,7 +76,7 @@
 		>
 			<!-- Categories as label, rest as tabtrigger & corresponding content -->
 			<div class="flex flex-col items-center gap-4 h-full justify-start min-w-[160px]">
-				{#each Object.keys(settings) as setting}
+				{#each Object.keys(settings) as setting (setting)}
 					<div class="flex flex-col items-start gap-2 w-full">
 						<Label class="text-foreground/70 text-xs pl-2">
 							{setting}
@@ -84,7 +84,7 @@
 						<Tabs.List
 							class="flex items-center justify-start flex-col w-full h-fit bg-transparent p-0 gap-1.5"
 						>
-							{#each settings[setting] as tab}
+							{#each settings[setting] as tab (tab.name)}
 								<Tabs.Trigger
 									value={tab.name.toLocaleLowerCase()}
 									class="w-full h-7 rounded-lg px-3 hover:bg-accent hover:text-accent-foreground transition-transform active:scale-[98%] data-[state=active]:bg-accent text-foreground data-[state=active]:fill-foreground fill-muted-foreground/80 text-foreground/70 hover:fill-foreground items-center justify-start gap-2 text-sm font-normal"
@@ -101,8 +101,8 @@
 				{/each}
 			</div>
 			<div class="flex flex-col items-center justify-center gap-2 h-full w-2/4">
-				{#each Object.keys(settings) as setting}
-					{#each settings[setting] as tab}
+				{#each Object.keys(settings) as setting (setting)}
+					{#each settings[setting] as tab (tab.name)}
 						<Tabs.Content
 							value={tab.name.toLocaleLowerCase()}
 							class="w-full h-full -mt-2.5 overflow-y-auto pb-10"

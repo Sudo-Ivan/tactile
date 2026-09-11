@@ -44,7 +44,7 @@
 					selected === 'notes' && 'fill-foreground bg-accent'
 				)}
 				scale="md"
-				on:click={() => navigateTo('/notes')}
+				onclick={() => navigateTo('/notes')}
 			>
 				<Icon name="inboxFull" class="w-[18px] h-[18px]" />
 			</Button>
@@ -58,7 +58,7 @@
 					selected === 'daily' && 'fill-foreground bg-accent'
 				)}
 				scale="md"
-				on:click={() => navigateTo('/daily')}
+				onclick={() => navigateTo('/daily')}
 			>
 				<Icon name="calendarEdit" class="w-[18px] h-[18px]" />
 			</Button>
@@ -72,7 +72,7 @@
 					selected === 'tasks' && 'fill-foreground bg-accent'
 				)}
 				scale="md"
-				on:click={() => navigateTo('/tasks')}
+				onclick={() => navigateTo('/tasks')}
 			>
 				<Icon name="checkSquare" class="w-[18px] h-[18px]" />
 			</Button>
@@ -86,7 +86,7 @@
 				variant="ghost"
 				class="h-7 w-7 fill-muted-foreground hover:fill-foreground group relative"
 				scale="md"
-				on:click={() => {
+				onclick={() => {
 					// Simulate cmd+o key press
 					document.dispatchEvent(new KeyboardEvent('keydown', { key: 'o', metaKey: true }));
 				}}

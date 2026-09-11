@@ -15,8 +15,8 @@
 	import { cn } from '@tactile/ui/lib/utils';
 	import { CalendarDate, getLocalTimeZone, today, type DateValue } from '@internationalized/date';
 	import type { UnlistenFn } from '@tauri-apps/api/event';
-	import type { FileEntry } from '@tauri-apps/api/fs';
-	import { watchImmediate } from 'tauri-plugin-fs-watch-api';
+	import type { FileEntry } from '@/types';
+	import { watchImmediate } from '@tauri-apps/plugin-fs';
 	import Entries from './entries.svelte';
 
 	let calValue = today(getLocalTimeZone());
@@ -184,7 +184,7 @@
 		class="h-full w-1 border-r cursor-col-resize absolute top-0 right-0 z-10 hover:bg-foreground/10 hover:delay-75 transition-all duration-200 active:bg-foreground/20 active:!cursor-col-resize"
 		on:mousedown={resizeHandler}
 		role="presentation"
-	/>
+	></div>
 
 	<!-- Note Entries -->
 	<div

@@ -203,7 +203,7 @@ export function toggleTheme() {
 	const themes = ['system', 'light', 'dark'];
 
 	// Current theme
-	const currentTheme = get(userPrefersMode);
+	const currentTheme = userPrefersMode.current;
 
 	// Get index of current theme
 	const index = themes.indexOf(currentTheme);

@@ -6,7 +6,7 @@
 <header
 	class="absolute top-0 w-full flex justify-between items-center h-9 border-b pl-20 bg-background z-40 px-1.5"
 >
-	<div />
+	<div></div>
 	<p
 		class="pointer-events-none text-sm text-foreground/85 hover:text-foreground/100 transition-all cursor-default outline-none -mr-[159px]"
 	>
@@ -18,7 +18,11 @@
 				>Star on Github</Button
 			>
 		</a>
-		<a href="https://github.com/Sudo-Ivan/tactile/releases" target="_blank" rel="noopener noreferrer">
+		<a
+			href="https://github.com/Sudo-Ivan/tactile/releases"
+			target="_blank"
+			rel="noopener noreferrer"
+		>
 			<Button size="sm" scale="sm" class="rounded-full h-[27px] px-2.5">Download</Button>
 		</a>
 	</div>

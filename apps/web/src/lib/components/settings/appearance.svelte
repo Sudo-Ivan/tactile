@@ -7,8 +7,18 @@
 	import Icon from '../shared/icon.svelte';
 	import Tooltip from '../shared/tooltip.svelte';
 
-	let selectedTheme = { value: 'tactile', label: 'Tactile' };
-	let selectedFont = { value: 'inter', label: 'Inter' };
+	const themes = [{ value: 'tactile', label: 'Tactile' }];
+	const fonts = [
+		{ value: 'inter', label: 'Inter' },
+		{ value: 'roboto', label: 'Roboto' },
+		{ value: 'lato', label: 'Lato' },
+		{ value: 'poppins', label: 'Poppins' },
+		{ value: 'nunito', label: 'Nunito' },
+		{ value: 'openSans', label: 'Open Sans' }
+	];
+
+	let selectedTheme = 'tactile';
+	let selectedFont = 'inter';
 </script>
 
 <div class="space-y-5">
@@ -22,10 +32,10 @@
 					variant="ghost"
 					class={cn(
 						'h-7 w-7 fill-muted-foreground hover:fill-foreground',
-						$userPrefersMode === 'system' && 'bg-accent fill-foreground'
+						userPrefersMode.current === 'system' && 'bg-accent fill-foreground'
 					)}
 					scale="md"
-					on:click={() => setMode('system')}
+					onclick={() => setMode('system')}
 				>
 					<Icon name="monitor" class="w-4 h-4" />
 				</Button>
@@ -36,10 +46,10 @@
 					variant="ghost"
 					class={cn(
 						'h-7 w-7 fill-muted-foreground hover:fill-foreground',
-						$userPrefersMode === 'light' && 'bg-accent fill-foreground'
+						userPrefersMode.current === 'light' && 'bg-accent fill-foreground'
 					)}
 					scale="md"
-					on:click={() => setMode('light')}
+					onclick={() => setMode('light')}
 				>
 					<Icon name="sun" class="w-4 h-4" />
 				</Button>
@@ -50,10 +60,10 @@
 					variant="ghost"
 					class={cn(
 						'h-7 w-7 fill-muted-foreground hover:fill-foreground',
-						$userPrefersMode === 'dark' && 'bg-accent fill-foreground'
+						userPrefersMode.current === 'dark' && 'bg-accent fill-foreground'
 					)}
 					scale="md"
-					on:click={() => setMode('dark')}
+					onclick={() => setMode('dark')}
 				>
 					<Icon name="moon" class="w-4 h-4" />
 				</Button>
@@ -65,12 +75,14 @@
 		<Label class="text-sm">Theme</Label>
 		<p class="text-muted-foreground text-xs">Change the theme of the app.</p>
 		<div class="flex items-center gap-2 pt-2">
-			<Select.Root bind:selected={selectedTheme}>
+			<Select.Root type="single" bind:value={selectedTheme} items={themes}>
 				<Select.Trigger>
-					<Select.Value class="text-sm text-foreground/85">{selectedTheme.label}</Select.Value>
+					<Select.Value class="text-sm text-foreground/85" />
 				</Select.Trigger>
 				<Select.Content>
-					<Select.Item value="tactile">Tactile</Select.Item>
+					{#each themes as theme (theme.value)}
+						<Select.Item value={theme.value} label={theme.label}>{theme.label}</Select.Item>
+					{/each}
 				</Select.Content>
 			</Select.Root>
 			<Button
@@ -89,17 +101,14 @@
 		<Label class="text-sm">Fonts</Label>
 		<p class="text-muted-foreground text-xs">Change the interface font.</p>
 		<div class="flex items-center gap-2 pt-2">
-			<Select.Root bind:selected={selectedFont} disabled>
+			<Select.Root type="single" bind:value={selectedFont} items={fonts} disabled>
 				<Select.Trigger>
-					<Select.Value class="text-sm text-foreground/85">{selectedFont.label}</Select.Value>
+					<Select.Value class="text-sm text-foreground/85" />
 				</Select.Trigger>
 				<Select.Content>
-					<Select.Item value="inter">Inter</Select.Item>
-					<Select.Item value="roboto">Roboto</Select.Item>
-					<Select.Item value="lato">Lato</Select.Item>
-					<Select.Item value="poppins">Poppins</Select.Item>
-					<Select.Item value="nunito">Nunito</Select.Item>
-					<Select.Item value="openSans">Open Sans</Select.Item>
+					{#each fonts as font (font.value)}
+						<Select.Item value={font.value} label={font.label}>{font.label}</Select.Item>
+					{/each}
 				</Select.Content>
 			</Select.Root>
 		</div>

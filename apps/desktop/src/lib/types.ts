@@ -1,4 +1,23 @@
-import type { Metadata } from 'tauri-plugin-fs-extra-api';
+// Local replacement for the v1 FileEntry type which does not exist in the
+// v2 plugin-fs API. DirEntry there has no path or children fields, so the
+// recursive tree shape is built by the app itself.
+export interface FileEntry {
+	name: string;
+	path: string;
+	isDirectory: boolean;
+	isFile: boolean;
+	isSymlink: boolean;
+	children?: FileEntry[];
+}
+
+// Local replacement for the removed tauri-plugin-fs-extra-api Metadata type.
+// The v2 plugin-fs stat call returns FileInfo with birthtime and mtime fields
+// which get mapped onto these names in getNoteMetadataParams.
+export interface FileMetadataParams {
+	createdAt: Date;
+	modifiedAt: Date;
+	size: number;
+}
 
 export interface ShortcutParams {
 	alt?: boolean;
@@ -40,7 +59,7 @@ export interface CollectionParams {
 }
 
 export interface NoteMetadataParams {
-	fileMetadata: Metadata;
+	fileMetadata: FileMetadataParams;
 	editorMetadata: {
 		words: number;
 		characters: number;

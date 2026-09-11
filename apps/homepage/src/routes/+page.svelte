@@ -50,7 +50,7 @@
 <div class="relative mx-auto w-full flex max-w-4xl flex-col items-center text-center mt-5">
 	<span
 		class="-inset-x-1/4 top-4 h-1/4 rounded-3xl bg-foreground/50 dark:bg-muted/30 blur-3xl absolute"
-	/>
+	></span>
 	<div class="relative xl:-mx-36">
 		<div
 			class="relative flex min-h-full h-full w-full items-center justify-center overflow-hidden rounded-lg md:rounded-xl bg-neutral-950 md:rounded-xl border"

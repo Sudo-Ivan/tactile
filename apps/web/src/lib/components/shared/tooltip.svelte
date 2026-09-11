@@ -10,8 +10,7 @@
 </script>
 
 <Tooltip.Root
-	openDelay={$tooltipsOpen >= 1 ? 0 : 300}
-	closeDelay={$tooltipsOpen >= 1 ? 0 : 50}
+	delayDuration={$tooltipsOpen >= 1 ? 0 : 300}
 	onOpenChange={(open) => {
 		if (open) {
 			tooltipsOpen.update((value) => value + 1);
@@ -23,7 +22,7 @@
 	}}
 >
 	<Tooltip.Trigger><slot /></Tooltip.Trigger>
-	<Tooltip.Content {...$$props} transitionConfig={{ duration: $tooltipsOpen > 1 ? 125 : 175 }}>
+	<Tooltip.Content {...$$props}>
 		{text}
 		{#if shortcut}
 			<span

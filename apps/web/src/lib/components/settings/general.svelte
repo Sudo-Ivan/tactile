@@ -41,15 +41,13 @@
 		<p class="text-muted-foreground text-xs">The delay before auto save is triggered.</p>
 		<div class="flex items-center gap-1 pt-2">
 			<Select.Root
-				selected={{
-					value: $collectionSettings.editor.auto_save_debounce,
-					label: $collectionSettings.editor.auto_save_debounce + 'ms'
-				}}
-				onSelectedChange={(value) => {
+				type="single"
+				value={String($collectionSettings.editor.auto_save_debounce)}
+				onValueChange={(value) => {
 					if (!value) return;
 					setSettings('collection', {
 						...$collectionSettings,
-						editor: { ...$collectionSettings.editor, auto_save_debounce: value.value }
+						editor: { ...$collectionSettings.editor, auto_save_debounce: Number(value) }
 					});
 				}}
 				disabled={!$collectionSettings.editor.auto_save}
@@ -60,13 +58,13 @@
 					>
 				</Select.Trigger>
 				<Select.Content align="start" class="!w-28">
-					<Select.Item value="250">250ms</Select.Item>
-					<Select.Item value="500">500ms</Select.Item>
-					<Select.Item value="750">750ms</Select.Item>
-					<Select.Item value="1000">1000ms</Select.Item>
-					<Select.Item value="1500">1500ms</Select.Item>
-					<Select.Item value="2000">2000ms</Select.Item>
-					<Select.Item value="3000">3000ms</Select.Item>
+					<Select.Item value="250" label="250ms">250ms</Select.Item>
+					<Select.Item value="500" label="500ms">500ms</Select.Item>
+					<Select.Item value="750" label="750ms">750ms</Select.Item>
+					<Select.Item value="1000" label="1000ms">1000ms</Select.Item>
+					<Select.Item value="1500" label="1500ms">1500ms</Select.Item>
+					<Select.Item value="2000" label="2000ms">2000ms</Select.Item>
+					<Select.Item value="3000" label="3000ms">3000ms</Select.Item>
 				</Select.Content>
 			</Select.Root>
 
@@ -78,7 +76,7 @@
 						class="h-7 w-7 fill-muted-foreground hover:fill-foreground"
 						scale="md"
 						disabled={!$collectionSettings.editor.auto_save}
-						on:click={() => {
+						onclick={() => {
 							setSettings('collection', {
 								...$collectionSettings,
 								editor: { ...$collectionSettings.editor, auto_save_debounce: 750 }

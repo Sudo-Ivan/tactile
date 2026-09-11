@@ -11,7 +11,7 @@ export const createNote = async (dirPath: string, name?: string) => {
 	// Read the directory
 	const dirEntry = await db.select().from(entryTable).where(eq(entryTable.path, dirPath));
 
-	let files = [];
+	let files;
 	if (dirEntry.length === 0) {
 		files = await db
 			.select()
@@ -118,7 +118,7 @@ export const moveNote = async (source: string, target: string) => {
 	// Get target directory
 	const targetDir = await db.select().from(entryTable).where(eq(entryTable.path, target));
 
-	let targetFiles = [];
+	let targetFiles;
 	if (targetDir.length === 0) {
 		targetFiles = await db.select().from(entryTable);
 	} else {

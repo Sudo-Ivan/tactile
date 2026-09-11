@@ -1,4 +1,3 @@
-import type { Button as ButtonPrimitive } from 'bits-ui';
 import type { HTMLAnchorAttributes, HTMLButtonAttributes } from 'svelte/elements';
 import type { WithElementRef } from 'bits-ui';
 import { tv, type VariantProps } from 'tailwind-variants';

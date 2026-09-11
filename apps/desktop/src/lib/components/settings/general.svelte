@@ -9,25 +9,14 @@
 	import Icon from '../shared/icon.svelte';
 	import Tooltip from '../shared/tooltip.svelte';
 
-	let selectedTrashLocation: { value: 'system' | 'tactile' | 'delete'; label: string } = {
-		value: $collectionSettings.notes.trash_dir,
-		label:
-			$collectionSettings.notes.trash_dir === 'system'
-				? 'System trash'
-				: $collectionSettings.notes.trash_dir === 'tactile'
-					? 'Tactile trash'
-					: 'Permanently delete'
-	};
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const handleSelected = (value: any) => {
-		selectedTrashLocation = value;
+	const handleValueChange = (value: string) => {
+		if (!value) return;
 
 		setSettings('collection', {
 			...$collectionSettings,
 			notes: {
 				...$collectionSettings.notes,
-				trash_dir: selectedTrashLocation.value
+				trash_dir: value as 'system' | 'tactile' | 'delete'
 			}
 		});
 	};
@@ -64,32 +53,28 @@
 		<p class="text-muted-foreground text-xs">The delay before auto save is triggered.</p>
 		<div class="flex items-center gap-1 pt-2">
 			<Select.Root
-				selected={{
-					value: $collectionSettings.editor.auto_save_debounce,
-					label: $collectionSettings.editor.auto_save_debounce + 'ms'
-				}}
-				onSelectedChange={(value) => {
+				type="single"
+				value={$collectionSettings.editor.auto_save_debounce.toString()}
+				onValueChange={(value) => {
 					if (!value) return;
 					setSettings('collection', {
 						...$collectionSettings,
-						editor: { ...$collectionSettings.editor, auto_save_debounce: value.value }
+						editor: { ...$collectionSettings.editor, auto_save_debounce: Number(value) }
 					});
 				}}
 				disabled={!$collectionSettings.editor.auto_save}
 			>
 				<Select.Trigger>
-					<Select.Value class="text-xs text-foreground/85"
-						>{$collectionSettings.editor.auto_save_debounce}ms</Select.Value
-					>
+					<Select.Value class="text-xs text-foreground/85" />
 				</Select.Trigger>
 				<Select.Content align="start" class="!w-28">
-					<Select.Item value="250">250ms</Select.Item>
-					<Select.Item value="500">500ms</Select.Item>
-					<Select.Item value="750">750ms</Select.Item>
-					<Select.Item value="1000">1000ms</Select.Item>
-					<Select.Item value="1500">1500ms</Select.Item>
-					<Select.Item value="2000">2000ms</Select.Item>
-					<Select.Item value="3000">3000ms</Select.Item>
+					<Select.Item value="250" label="250ms">250ms</Select.Item>
+					<Select.Item value="500" label="500ms">500ms</Select.Item>
+					<Select.Item value="750" label="750ms">750ms</Select.Item>
+					<Select.Item value="1000" label="1000ms">1000ms</Select.Item>
+					<Select.Item value="1500" label="1500ms">1500ms</Select.Item>
+					<Select.Item value="2000" label="2000ms">2000ms</Select.Item>
+					<Select.Item value="3000" label="3000ms">3000ms</Select.Item>
 				</Select.Content>
 			</Select.Root>
 
@@ -101,7 +86,7 @@
 						class="h-7 w-7 fill-muted-foreground hover:fill-foreground"
 						scale="md"
 						disabled={!$collectionSettings.editor.auto_save}
-						on:click={() => {
+						onclick={() => {
 							setSettings('collection', {
 								...$collectionSettings,
 								editor: { ...$collectionSettings.editor, auto_save_debounce: 750 }
@@ -119,16 +104,18 @@
 		<Label class="text-sm">Deleted files location</Label>
 		<p class="text-muted-foreground text-xs">Where to move deleted files to.</p>
 		<div class="flex items-center gap-2 pt-2">
-			<Select.Root selected={selectedTrashLocation} onSelectedChange={handleSelected}>
+			<Select.Root
+				type="single"
+				value={$collectionSettings.notes.trash_dir}
+				onValueChange={handleValueChange}
+			>
 				<Select.Trigger>
-					<Select.Value class="text-xs text-foreground/85"
-						>{selectedTrashLocation.label}</Select.Value
-					>
+					<Select.Value class="text-xs text-foreground/85" />
 				</Select.Trigger>
 				<Select.Content align="start" class="!w-40">
-					<Select.Item value="system">System trash</Select.Item>
-					<Select.Item value="tactile">Tactile trash</Select.Item>
-					<Select.Item value="delete">Permanently delete</Select.Item>
+					<Select.Item value="system" label="System trash">System trash</Select.Item>
+					<Select.Item value="tactile" label="Tactile trash">Tactile trash</Select.Item>
+					<Select.Item value="delete" label="Permanently delete">Permanently delete</Select.Item>
 				</Select.Content>
 			</Select.Root>
 		</div>

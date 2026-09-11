@@ -4,7 +4,7 @@
 	import * as Collapsible from '@tactile/ui/components/collapsible';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
-	import { invoke } from '@tauri-apps/api/tauri';
+	import { invoke } from '@tauri-apps/api/core';
 	import { ChevronDown, Loader } from 'lucide-svelte';
 	import markdownit from 'markdown-it';
 	import { onDestroy, onMount } from 'svelte';
@@ -12,7 +12,7 @@
 	let tasks: { path: string; context_preview: string }[] = [];
 	let loading = false;
 	let openState: Record<string, boolean> = {};
-	let groupedTasks: Record<string, { context_preview: string }[]> = {};
+	let groupedTasks: Record<string, { context_preview: string }[]>;
 	$: groupedTasks = groupResults(tasks);
 
 	// Initialize all collapsibles as open
@@ -124,7 +124,7 @@
 		<Collapsible.Root open={openState[path]} class="w-full transition-all">
 			<Collapsible.Trigger
 				class="text-[13px] w-full text-secondary-foreground flex items-center h-7 justify-start gap-1.5 group hover:text-foreground transition-all"
-				on:click={() => toggleOpen(path)}
+				onclick={() => toggleOpen(path)}
 			>
 				<ChevronDown
 					class={cn(
@@ -138,7 +138,7 @@
 				{#each groupedTasks[path] as result, index (result.context_preview)}
 					<button
 						class="flex items-start min-w-full overflow-hidden text-start p-2 bg-secondary-background border rounded-md text-xs hover:bg-accent hover:text-accent-foreground"
-						on:click={async () => {
+						onclick={async () => {
 							editorSearchValue.set('');
 							if ($activeFile !== path) {
 								console.log('File already open');

@@ -50,15 +50,15 @@
 	<div class="cursor-default space-x-0.5">
 		<Tooltip text="Toggle theme" shortcut={SHORTCUTS['settings:toggle-theme']}>
 			<Button
-				on:click={toggleTheme}
+				onclick={toggleTheme}
 				size="icon"
 				variant="ghost"
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
 				scale="md"
 			>
-				{#if $userPrefersMode === 'dark'}
+				{#if userPrefersMode.current === 'dark'}
 					<Icon name="moon" class="w-4 h-4" />
-				{:else if $userPrefersMode === 'light'}
+				{:else if userPrefersMode.current === 'light'}
 					<Icon name="sun" class="w-4 h-4" />
 				{:else}
 					<Icon name="monitor" class="w-4 h-4" />
@@ -72,7 +72,7 @@
 				variant="ghost"
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
 				scale="md"
-				on:click={() => {
+				onclick={() => {
 					settingsStore.set({ isOpen: true, activePage: 'tactile sync' });
 				}}
 			>
@@ -88,7 +88,7 @@
 				variant="ghost"
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
 				scale="md"
-				on:click={() => {
+				onclick={() => {
 					document.dispatchEvent(
 						new KeyboardEvent('keydown', { key: 'h', metaKey: true, shiftKey: true })
 					);
@@ -126,7 +126,7 @@
 				</Sheet.Header>
 
 				<div>
-					{#each filteredCommands as group}
+					{#each filteredCommands as group (group.name)}
 						<div class="w-full h-full py-3 px-5">
 							<Collapsible.Root
 								open={!collapsedCategories.includes(group.name)}
@@ -151,7 +151,7 @@
 								</Collapsible.Trigger>
 								<Collapsible.Content class="text-sm text-muted-foreground pt-3 space-y-3">
 									<!-- Shortcuts -->
-									{#each group.commands as command}
+									{#each group.commands as command (command.title)}
 										<div class="flex items-center justify-between gap-2">
 											<span class="font-light">{command.title}</span>
 											{#if command.shortcut}
@@ -185,7 +185,7 @@
 				variant="ghost"
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
 				scale="md"
-				on:click={() => {
+				onclick={() => {
 					document.dispatchEvent(
 						new KeyboardEvent('keydown', { key: 'l', metaKey: true, shiftKey: true })
 					);

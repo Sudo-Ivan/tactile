@@ -2,10 +2,9 @@ import { OS_TRASH_DIR } from '@/constants';
 import { activeFile, collection, collectionSettings, editor, noteHistory, platform } from '@/store';
 import type { NoteMetadataParams } from '@/types';
 import { calculateReadingTime, getNextUntitledName, setEditorContent } from '@/utils';
-import { readDir, readTextFile, removeFile, renameFile, writeTextFile } from '@tauri-apps/api/fs';
+import { readDir, readTextFile, remove, rename, stat, writeTextFile } from '@tauri-apps/plugin-fs';
 import { homeDir } from '@tauri-apps/api/path';
 import { get } from 'svelte/store';
-import { metadata } from 'tauri-plugin-fs-extra-api';
 
 // Create a new note
 export const createNote = async (dirPath: string, name?: string) => {
@@ -43,16 +42,16 @@ export async function openNote(path: string, skipHistory = false) {
 export const deleteNote = async (path: string) => {
 	switch (get(collectionSettings).notes.trash_dir) {
 		case 'system':
-			await renameFile(
+			await rename(
 				path,
 				`${await homeDir()}${OS_TRASH_DIR[get(platform)]}${path.split('/').pop()!}`
 			);
 			break;
 		case 'tactile':
-			await renameFile(path, `${get(collection)}/.tactile/trash/${path.split('/').pop()!}`);
+			await rename(path, `${get(collection)}/.tactile/trash/${path.split('/').pop()!}`);
 			break;
 		case 'delete':
-			await removeFile(path);
+			await remove(path);
 			break;
 	}
 	activeFile.set(null);
@@ -72,16 +71,12 @@ export const renameNote = async (path: string, name: string) => {
 	const files = await readDir(path.split('/').slice(0, -1).join('/'));
 
 	// Make sure there are no name conflicts
-	if (
-		files.some(
-			(file) => file.name?.toLowerCase() === name.toLowerCase() && file.children === undefined
-		)
-	) {
+	if (files.some((file) => file.name?.toLowerCase() === name.toLowerCase() && file.isFile)) {
 		throw new Error('Name conflict');
 	}
 
 	// Rename the file
-	await renameFile(path, `${path.split('/').slice(0, -1).join('/')}/${name}`);
+	await rename(path, `${path.split('/').slice(0, -1).join('/')}/${name}`);
 	activeFile.set(`${path.split('/').slice(0, -1).join('/')}/${name}`);
 };
 
@@ -103,11 +98,11 @@ export const moveNote = async (source: string, target: string) => {
 	// Make sure there are no name conflicts
 	const noteName = source.split('/').pop()!;
 
-	if (files.some((file) => file.name === noteName && file.children === undefined)) {
+	if (files.some((file) => file.name === noteName && file.isFile)) {
 		throw new Error('Name conflict');
 	}
 
-	await renameFile(source, target + '/' + noteName);
+	await rename(source, target + '/' + noteName);
 	openNote(target + '/' + noteName);
 };
 
@@ -127,7 +122,7 @@ export const duplicateNote = async (path: string) => {
 
 	// Get current index of the note
 	const files = await readDir(path.split('/').slice(0, -1).join('/'));
-	const notes = files.filter((file) => file.name?.startsWith(name) && file.children === undefined);
+	const notes = files.filter((file) => file.name?.startsWith(name) && file.isFile);
 
 	// Write the new note
 	const newName = `${name} (${notes.length}).${ext}`;
@@ -139,7 +134,13 @@ export const duplicateNote = async (path: string) => {
 
 export const getNoteMetadataParams = async (path: string): Promise<NoteMetadataParams> => {
 	// General file metadata
-	const fileMetadata = await metadata(path);
+	// v2 plugin-fs stat returns birthtime/mtime, map them to the old field names
+	const fileInfo = await stat(path);
+	const fileMetadata = {
+		createdAt: fileInfo.birthtime ?? fileInfo.mtime ?? new Date(0),
+		modifiedAt: fileInfo.mtime ?? new Date(0),
+		size: fileInfo.size
+	};
 
 	// Get editor metadata
 	const editorWordCount = get(editor).storage.characterCount.words();

@@ -35,7 +35,11 @@ export default [
       '@typescript-eslint/no-unused-vars': [
         'warn',
         { varsIgnorePattern: '^\\$\\$(Props|Events|Slots)$' }
-      ]
+      ],
+      // TODO: migrate links and goto calls to $app/paths resolve()
+      'svelte/no-navigation-without-resolve': 'warn',
+      // TODO: move reactive Date usage to SvelteDate
+      'svelte/prefer-svelte-reactivity': 'warn'
     }
   },
   {
@@ -44,7 +48,8 @@ export default [
       '**/.svelte-kit/',
       '**/dist/',
       '**/node_modules/',
-      '**/src-tauri/target/'
+      '**/src-tauri/target/',
+      '**/src-tauri/gen/'
     ]
   }
 ];

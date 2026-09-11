@@ -5,10 +5,28 @@
 	import Switch from '@tactile/ui/components/switch/switch.svelte';
 	import Tooltip from '../shared/tooltip.svelte';
 
+	const syncIntervals = [
+		{ value: '5m', label: '5 minutes' },
+		{ value: '10m', label: '10 minutes' },
+		{ value: '15m', label: '15 minutes' },
+		{ value: '30m', label: '30 minutes' },
+		{ value: '1h', label: '1 hour' },
+		{ value: '2h', label: '2 hours' },
+		{ value: '4h', label: '4 hours' },
+		{ value: '6h', label: '6 hours' },
+		{ value: '12h', label: '12 hours' },
+		{ value: '24h', label: '24 hours' }
+	];
+	const backupIntervals = [
+		{ value: '1w', label: '1 week' },
+		{ value: '2w', label: '2 weeks' },
+		{ value: '1m', label: '1 month' }
+	];
+
 	let autoSync = false;
 	let autoBackup = false;
-	let selectedSyncInterval = { value: '5m', label: '5 minutes' };
-	let selectedBackupInterval = { value: '1w', label: '1 week' };
+	let selectedSyncInterval = '5m';
+	let selectedBackupInterval = '1w';
 </script>
 
 <div class="space-y-5">
@@ -26,23 +44,20 @@
 		<Label class="text-sm">Sync interval</Label>
 		<p class="text-muted-foreground text-xs">How often to sync your notes.</p>
 		<div class="flex items-center gap-2 pt-2">
-			<Select.Root bind:selected={selectedSyncInterval} disabled={!autoSync}>
+			<Select.Root
+				type="single"
+				bind:value={selectedSyncInterval}
+				items={syncIntervals}
+				disabled={!autoSync}
+			>
 				<Select.Trigger>
-					<Select.Value class="text-sm text-foreground/85"
-						>{selectedSyncInterval.label}</Select.Value
-					>
+					<Select.Value class="text-sm text-foreground/85" />
 				</Select.Trigger>
 				<Select.Content>
-					<Select.Item value="5m">5 minutes</Select.Item>
-					<Select.Item value="10m">10 minutes</Select.Item>
-					<Select.Item value="15m">15 minutes</Select.Item>
-					<Select.Item value="30m">30 minutes</Select.Item>
-					<Select.Item value="1h">1 hour</Select.Item>
-					<Select.Item value="2h">2 hours</Select.Item>
-					<Select.Item value="4h">4 hours</Select.Item>
-					<Select.Item value="6h">6 hours</Select.Item>
-					<Select.Item value="12h">12 hours</Select.Item>
-					<Select.Item value="24h">24 hours</Select.Item>
+					{#each syncIntervals as interval (interval.value)}
+						<Select.Item value={interval.value} label={interval.label}>{interval.label}</Select.Item
+						>
+					{/each}
 				</Select.Content>
 			</Select.Root>
 		</div>
@@ -62,16 +77,20 @@
 		<Label class="text-sm">Backup interval</Label>
 		<p class="text-muted-foreground text-xs">How often to create backups of your notes.</p>
 		<div class="flex items-center gap-2 pt-2">
-			<Select.Root bind:selected={selectedBackupInterval} disabled={!autoBackup}>
+			<Select.Root
+				type="single"
+				bind:value={selectedBackupInterval}
+				items={backupIntervals}
+				disabled={!autoBackup}
+			>
 				<Select.Trigger>
-					<Select.Value class="text-sm text-foreground/85"
-						>{selectedBackupInterval.label}</Select.Value
-					>
+					<Select.Value class="text-sm text-foreground/85" />
 				</Select.Trigger>
 				<Select.Content>
-					<Select.Item value="1w">1 week</Select.Item>
-					<Select.Item value="2w">2 weeks</Select.Item>
-					<Select.Item value="1m">1 month</Select.Item>
+					{#each backupIntervals as interval (interval.value)}
+						<Select.Item value={interval.value} label={interval.label}>{interval.label}</Select.Item
+						>
+					{/each}
 				</Select.Content>
 			</Select.Root>
 

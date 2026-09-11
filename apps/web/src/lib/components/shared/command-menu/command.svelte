@@ -8,7 +8,7 @@
 	import { activeFile, collection } from '@/store';
 	import { formatTimeAgo, shortcutToString } from '@/utils';
 	import * as Command from '@tactile/ui/components/command';
-	import { Loader, Twitter } from 'lucide-svelte';
+	import { Loader, Share2 } from 'lucide-svelte';
 	import { setMode, userPrefersMode } from 'mode-watcher';
 	import { onMount } from 'svelte';
 	import { mainCommands as commands, createNoteCommands } from './commands';
@@ -196,7 +196,7 @@
 	bind:open
 	bind:value
 	loop
-	onKeydown={(e) => {
+	onkeydown={(e) => {
 		if (e.key === 'Escape') {
 			handlePageState(undefined);
 			openedWithShortcut = '';
@@ -216,9 +216,9 @@
 			<Command.Empty class="text-foreground/60 font-light">No commands found</Command.Empty>
 		{/if}
 		{#if page === 'default'}
-			{#each commands as group}
+			{#each commands as group (group.name)}
 				<Command.Group heading={group.name}>
-					{#each group.commands as command}
+					{#each group.commands as command (command.title)}
 						<Command.Item
 							class="[&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
 							value={command.title}
@@ -255,7 +255,7 @@
 					<!-- TODO: Make this a loading spinner -->
 					<Command.Loading class="text-foreground/90">Loading folders...</Command.Loading>
 				{:then folders}
-					{#each folders as folder}
+					{#each folders as folder (folder.path)}
 						{#if folder.path + `/${$activeFile?.split('/').pop()}` !== $activeFile}
 							<Command.Item
 								class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
@@ -281,7 +281,7 @@
 				{#await getAllItems()}
 					<Command.Loading class="text-foreground/90">Loading notes...</Command.Loading>
 				{:then notes}
-					{#each notes as note}
+					{#each notes as note (note.path)}
 						<Command.Item
 							class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
 							value={note.path}
@@ -302,7 +302,7 @@
 			</Command.Group>
 		{:else if page === 'change_theme'}
 			<Command.Group heading="Change theme...">
-				{#if $userPrefersMode !== 'light'}
+				{#if userPrefersMode.current !== 'light'}
 					<Command.Item
 						class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
 						value="light"
@@ -315,7 +315,7 @@
 						Light
 					</Command.Item>
 				{/if}
-				{#if $userPrefersMode !== 'dark'}
+				{#if userPrefersMode.current !== 'dark'}
 					<Command.Item
 						class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
 						value="dark"
@@ -328,7 +328,7 @@
 						Dark
 					</Command.Item>
 				{/if}
-				{#if $userPrefersMode !== 'system'}
+				{#if userPrefersMode.current !== 'system'}
 					<Command.Item
 						class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
 						value="system"
@@ -371,7 +371,6 @@
 							bind:this={fileInput}
 							class="hidden"
 							webkitdirectory
-							directory
 							multiple
 						/>
 						Open new collection
@@ -384,7 +383,7 @@
 						<Command.Group heading="Browse recent collections">
 							{#each collections
 								.filter((c) => c.path !== $collection)
-								.sort((a, b) => +new Date(b.lastOpened) - +new Date(a.lastOpened)) as collection}
+								.sort((a, b) => +new Date(b.lastOpened) - +new Date(a.lastOpened)) as collection (collection.path)}
 								<Command.Item
 									class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
 									value={collection.path}
@@ -430,7 +429,11 @@
 						Sponsor Tactile
 					</Command.Item>
 				</a>
-				<a href="https://github.com/Sudo-Ivan/tactile/issues" target="_blank" rel="noopener noreferrer">
+				<a
+					href="https://github.com/Sudo-Ivan/tactile/issues"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
 					<Command.Item
 						class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
 						value="help"
@@ -442,7 +445,11 @@
 						Get help
 					</Command.Item>
 				</a>
-				<a href="https://github.com/Sudo-Ivan/tactile/issues" target="_blank" rel="noopener noreferrer">
+				<a
+					href="https://github.com/Sudo-Ivan/tactile/issues"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
 					<Command.Item
 						class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
 						value="feedback"
@@ -476,8 +483,8 @@
 							handlePageState(undefined);
 						}}
 					>
-						<Twitter />
-						Share on Twitter
+						<Share2 />
+						Share on X
 					</Command.Item>
 				</a>
 			</Command.Group>
@@ -486,8 +493,8 @@
 </Command.Dialog>
 
 <style>
-	:global([data-cmdk-list]) {
-		height: min(300px, var(--cmdk-list-height));
+	:global([data-command-list]) {
+		height: min(300px, var(--bits-command-list-height));
 		max-height: 400px;
 		margin-bottom: 8px;
 		margin-top: 8px;

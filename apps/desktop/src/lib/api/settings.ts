@@ -1,13 +1,14 @@
 import { collection, appSettings, collectionSettings } from '@/store';
 import type { AppSettingsParams, CollectionSettingsParams } from '@/types';
-import { BaseDirectory, readTextFile, writeTextFile } from '@tauri-apps/api/fs';
+import { BaseDirectory } from '@tauri-apps/api/path';
+import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { get } from 'svelte/store';
 
 export const loadSettings = async (loadApp: boolean, loadCollection: boolean) => {
 	if (loadApp) {
 		const appSettingsPath = 'settings.json';
 		const appSettingsText = await readTextFile(appSettingsPath, {
-			dir: BaseDirectory.AppData
+			baseDir: BaseDirectory.AppData
 		}).catch(() => null);
 
 		if (!appSettingsText) {
@@ -37,7 +38,7 @@ export const setSettings = async (
 		const appSettingsText = JSON.stringify(value ?? get(appSettings));
 		appSettings.set((value ?? get(appSettings)) as AppSettingsParams);
 		await writeTextFile(appSettingsPath, appSettingsText, {
-			dir: BaseDirectory.AppData
+			baseDir: BaseDirectory.AppData
 		});
 	}
 

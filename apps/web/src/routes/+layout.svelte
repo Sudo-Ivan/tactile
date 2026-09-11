@@ -97,7 +97,6 @@
 		content="Tactile is a new local-first & privacy-focused home for your markdown notes. It's a minimalistic, lightweight and fast note-taking app that's designed to be distraction-free."
 	/>
 	<meta property="twitter:image" content="https://github.com/Sudo-Ivan/tactile/landing.png" />
-
 </svelte:head>
 
 {#if $device.isDesktop}

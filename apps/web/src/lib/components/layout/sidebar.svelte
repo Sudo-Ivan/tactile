@@ -22,7 +22,7 @@
 >
 	<div class="flex flex-col items-center gap-2">
 		<Tooltip text="Notes" side="right">
-			<a href={'/notes'}>
+			<a href="/notes">
 				<Button
 					size="icon"
 					variant="ghost"
@@ -31,7 +31,7 @@
 						selected === 'notes' && 'fill-foreground bg-accent'
 					)}
 					scale="md"
-					on:click={() => (selected = 'notes')}
+					onclick={() => (selected = 'notes')}
 				>
 					<Icon name="inboxFull" class="w-[18px] h-[18px]" />
 				</Button>
@@ -47,7 +47,7 @@
 						selected === 'daily' && 'fill-foreground bg-accent'
 					)}
 					scale="md"
-					on:click={() => (selected = 'daily')}
+					onclick={() => (selected = 'daily')}
 				>
 					<Icon name="calendarEdit" class="w-[18px] h-[18px]" />
 				</Button>
@@ -63,7 +63,7 @@
 						selected === 'tasks' && 'fill-foreground bg-accent'
 					)}
 					scale="md"
-					on:click={() => (selected = 'tasks')}
+					onclick={() => (selected = 'tasks')}
 				>
 					<Icon name="checkSquare" class="w-[18px] h-[18px]" />
 				</Button>
@@ -78,7 +78,7 @@
 				variant="ghost"
 				class="h-7 w-7 fill-muted-foreground hover:fill-foreground group relative"
 				scale="md"
-				on:click={() => {
+				onclick={() => {
 					// Simulate cmd+o key press
 					document.dispatchEvent(new KeyboardEvent('keydown', { key: 'o', metaKey: true }));
 				}}

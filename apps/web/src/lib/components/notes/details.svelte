@@ -124,9 +124,6 @@
 			activeNoteMetadataParams = await getNoteMetadataParams($activeFile!);
 		} else if (tab === 'toc') {
 			nodeHeadings = $editor.$nodes('heading');
-			if (nodeHeadings) {
-				tocItems = calculateTocItems(nodeHeadings);
-			}
 		}
 	});
 
@@ -153,7 +150,7 @@
 		class="h-full w-1 border-l cursor-col-resize absolute top-0 left-0 z-10 hover:bg-foreground/10 hover:delay-75 transition-all duration-200 active:bg-foreground/20 active:!cursor-col-resize"
 		on:mousedown={resizeHandler}
 		role="presentation"
-	/>
+	></div>
 
 	<!-- Controls -->
 	<div
@@ -168,7 +165,7 @@
 					'h-7 w-7 fill-muted-foreground hover:fill-foreground transition-all',
 					tab === 'metadata' && 'fill-foreground bg-accent'
 				)}
-				on:click={() => {
+				onclick={() => {
 					tab = 'metadata';
 				}}
 			>
@@ -184,7 +181,7 @@
 					'h-7 w-7 fill-muted-foreground hover:fill-foreground transition-all',
 					tab === 'toc' && 'fill-foreground bg-accent'
 				)}
-				on:click={() => {
+				onclick={() => {
 					tab = 'toc';
 				}}
 			>
@@ -251,7 +248,7 @@
 		<div class="w-full h-full overflow-auto">
 			<!-- TOC -->
 			<div class="flex flex-col gap-1.5 items-start w-full h-full overflow-auto px-4 py-2.5">
-				{#each tocItems as item}
+				{#each tocItems as item, index (index)}
 					<button
 						type="button"
 						class="flex flex-row items-center justify-between w-full min-h-[24px] h-6 text-[13px] truncate font-normal text-muted-foreground hover:text-primary transition-all"

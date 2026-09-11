@@ -12,7 +12,7 @@
 	};
 
 	let isTouchDevice: boolean;
-	let isOpen = false;
+	let isOpen: boolean;
 	let tooltipId =
 		Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
@@ -49,8 +49,7 @@
 </script>
 
 <Tooltip.Root
-	openDelay={300}
-	closeDelay={50}
+	delayDuration={300}
 	open={isTouchDevice ? isOpen : undefined}
 	onOpenChange={(open) => {
 		if (open) {
@@ -68,13 +67,8 @@
 		}
 	}}
 >
-	<Tooltip.Trigger on:pointerdown={handleInteraction}><slot /></Tooltip.Trigger>
-	<Tooltip.Content
-		{...$$props}
-		sideOffset={0}
-		class="text-sm h-7"
-		transitionConfig={{ duration: $tooltipsOpen > 1 ? 125 : 175 }}
-	>
+	<Tooltip.Trigger onpointerdown={handleInteraction}><slot /></Tooltip.Trigger>
+	<Tooltip.Content {...$$props} sideOffset={0} class="text-sm h-7">
 		{#if type === 'github'}
 			<svg
 				viewBox="0 0 256 250"

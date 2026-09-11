@@ -170,7 +170,7 @@
 						class="flex items-center gap-2 rounded-[0.55rem] w-full sm:w-[210px]"
 						scale="sm"
 						data-sln-event="download: mac-aarch64"
-						on:click={() => downloadForMac('aarch64')}
+						onclick={() => downloadForMac('aarch64')}
 					>
 						Download for Apple Silicon
 					</Button>
@@ -178,7 +178,7 @@
 						class="flex items-center gap-2 rounded-[0.55rem] w-full sm:w-[210px]"
 						scale="sm"
 						data-sln-event="download: mac-x86_64"
-						on:click={() => downloadForMac('x86_64')}
+						onclick={() => downloadForMac('x86_64')}
 					>
 						Download for Intel Chip
 					</Button>

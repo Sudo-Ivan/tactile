@@ -20,10 +20,10 @@
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
 	import type { UnlistenFn } from '@tauri-apps/api/event';
-	import type { FileEntry } from '@tauri-apps/api/fs';
-	import { invoke } from '@tauri-apps/api/tauri';
+	import type { FileEntry } from '@/types';
+	import { invoke } from '@tauri-apps/api/core';
 	import { ALargeSmall, WholeWord } from 'lucide-svelte';
-	import { watchImmediate } from 'tauri-plugin-fs-watch-api';
+	import { watchImmediate } from '@tauri-apps/plugin-fs';
 	import Entries from './entries.svelte';
 	import SearchResults from './search-results.svelte';
 
@@ -186,7 +186,7 @@
 		class="h-full w-1 border-r cursor-col-resize absolute top-0 right-0 z-10 hover:bg-foreground/10 hover:delay-75 transition-all duration-200 active:bg-foreground/20 active:!cursor-col-resize"
 		on:mousedown={resizeHandler}
 		role="presentation"
-	/>
+	></div>
 
 	<!-- Controls -->
 	<div class="relative top-0 flex flex-col min-h-10 w-full border-b bg-background overflow-hidden">
@@ -203,7 +203,7 @@
 					variant="ghost"
 					scale="md"
 					class="h-7 w-7 fill-muted-foreground hover:fill-foreground transition-all"
-					on:click={async () => createNote($collection)}
+					onclick={async () => createNote($collection)}
 				>
 					<Shortcut options={SHORTCUTS['notes:create']} />
 					<Icon name="notePlus" class="w-[18px] h-[18px]" />
@@ -215,7 +215,7 @@
 					variant="ghost"
 					scale="md"
 					class="h-7 w-7 fill-muted-foreground hover:fill-foreground transition-all"
-					on:click={async () => createFolder($collection)}
+					onclick={async () => createFolder($collection)}
 				>
 					<Shortcut options={SHORTCUTS['notes:create-folder']} />
 					<Icon name="folderPlus" class="w-[18px] h-[18px]" />
@@ -230,7 +230,7 @@
 					variant="ghost"
 					scale="md"
 					class="h-7 w-7 fill-muted-foreground hover:fill-foreground"
-					on:click={async () => {
+					onclick={async () => {
 						toggleFolderStates();
 					}}
 				>
@@ -256,7 +256,7 @@
 					variant="ghost"
 					scale="md"
 					class="h-7 w-7 fill-muted-foreground hover:fill-foreground transition-all"
-					on:click={() => {
+					onclick={() => {
 						collectionSearchActive.set(!$collectionSearchActive);
 					}}
 				>
@@ -308,8 +308,8 @@
 						size="icon"
 						variant="ghost"
 						scale="md"
-						class={'h-7 w-6 shrink-0 group hover:bg-transparent'}
-						on:click={() => {
+						class="h-7 w-6 shrink-0 group hover:bg-transparent"
+						onclick={() => {
 							caseSensitive = !caseSensitive;
 							searchCollection();
 						}}
@@ -327,8 +327,8 @@
 						size="icon"
 						variant="ghost"
 						scale="md"
-						class={'h-7 w-6 shrink-0 group hover:bg-transparent'}
-						on:click={() => {
+						class="h-7 w-6 shrink-0 group hover:bg-transparent"
+						onclick={() => {
 							wholeWord = !wholeWord;
 							searchCollection();
 						}}
@@ -346,8 +346,8 @@
 						size="icon"
 						variant="ghost"
 						scale="md"
-						class={'h-7 w-6 group shrink-0 transition-all hover:bg-transparent fill-muted-foreground hover:fill-foreground '}
-						on:click={() => {
+						class="h-7 w-6 group shrink-0 transition-all hover:bg-transparent fill-muted-foreground hover:fill-foreground "
+						onclick={() => {
 							closeSearch();
 						}}
 					>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { FileEntry } from '@tauri-apps/api/fs';
+	import type { FileEntry } from '@/types';
 	import Button from '@tactile/ui/components/button/button.svelte';
 	import * as ContextMenu from '@tactile/ui/components/context-menu';
 	import Icon from '@/components/shared/icon.svelte';
@@ -86,7 +86,7 @@
 	console.log(groupEntries(entries));
 </script>
 
-{#each Object.entries(groupedEntries) as [groupName, groupEntries]}
+{#each Object.entries(groupedEntries) as [groupName, groupEntries] (groupName)}
 	{#if groupEntries.length > 0}
 		<div class="w-full text-xs space-y-1">
 			<!-- Title -->
@@ -99,7 +99,7 @@
 			</Label>
 
 			<!-- Notes -->
-			{#each groupEntries as entry}
+			{#each groupEntries as entry (entry.path)}
 				<ContextMenu.Root>
 					<ContextMenu.Trigger class="w-full" data-path={entry.path}>
 						<div class="w-full h-full" role="button" tabindex="0">
@@ -111,7 +111,7 @@
 									'h-7 w-full transition-all text-secondary-foreground/80 hover:text-foreground flex items-center gap-2 justify-start',
 									$activeFile === entry.path && 'bg-accent text-foreground'
 								)}
-								on:click={() => openNote(entry.path, true)}
+								onclick={() => openNote(entry.path, true)}
 							>
 								<Shortcut
 									options={SHORTCUTS['note:delete']}
@@ -139,7 +139,7 @@
 						<ContextMenu.Separator />
 						<ContextMenu.Item
 							class="flex items-center gap-2 font-base group"
-							on:click={() => showInFolder(entry.path)}
+							onclick={() => showInFolder(entry.path)}
 						>
 							<Icon name="eye" class="w-3.5 h-3.5 fill-foreground/70 group-hover:fill-foreground" />
 							Show in {#if $platform === 'darwin'}Finder{:else if $platform === 'linux'}Files{:else}Explorer{/if}
@@ -150,7 +150,7 @@
 						<ContextMenu.Separator />
 						<ContextMenu.Item
 							class="flex text-destructive data-[highlighted]:bg-destructive/20 data-[highlighted]:text-destructive items-center gap-2 font-base group"
-							on:click={() => deleteNote(entry.path)}
+							onclick={() => deleteNote(entry.path)}
 						>
 							<Icon
 								name="bin"

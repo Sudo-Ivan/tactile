@@ -1,6 +1,6 @@
 import { emit } from '@tauri-apps/api/event';
-import { createDir, readDir, type FileEntry } from '@tauri-apps/api/fs';
-import { invoke } from '@tauri-apps/api/tauri';
+import { mkdir, readDir } from '@tauri-apps/plugin-fs';
+import { invoke } from '@tauri-apps/api/core';
 import { EditorState } from '@tiptap/pm/state';
 import { clsx, type ClassValue } from 'clsx';
 import { cubicOut } from 'svelte/easing';
@@ -8,7 +8,7 @@ import { get } from 'svelte/store';
 import type { TransitionConfig } from 'svelte/transition';
 import { twMerge } from 'tailwind-merge';
 import { appTheme, editor, platform } from './store';
-import type { ShortcutParams } from './types';
+import type { FileEntry, ShortcutParams } from './types';
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
@@ -154,13 +154,13 @@ export async function validateTactileFolder(path: string) {
 
 	if (!tactileFolder) {
 		// Create .tactile folder
-		await createDir(path + '/.tactile');
+		await mkdir(path + '/.tactile');
 
 		// Create trash folder
-		await createDir(path + '/.tactile/trash');
+		await mkdir(path + '/.tactile/trash');
 
 		// Create daily folder
-		await createDir(path + '/.tactile/daily');
+		await mkdir(path + '/.tactile/daily');
 	}
 }
 
@@ -273,7 +273,11 @@ export function toggleTheme() {
 }
 
 // Helper function to get the next available untitled name
-export const getNextUntitledName = (files: FileEntry[], prefix: string, extension: string = '') => {
+export const getNextUntitledName = (
+	files: { name: string }[],
+	prefix: string,
+	extension: string = ''
+) => {
 	const untitledItems = files
 		.filter(
 			(file) =>

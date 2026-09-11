@@ -29,7 +29,11 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
 			continue;
 
 		e.preventDefault();
-		shortcut.callback ? shortcut.callback() : shortcut.node?.click();
+		if (shortcut.callback) {
+			shortcut.callback();
+		} else {
+			shortcut.node?.click();
+		}
 	}
 });
 

@@ -14,7 +14,7 @@
 	let tasks: SearchResultParams[] = [];
 	let loading = false;
 	let openState: Record<string, boolean> = {};
-	let groupedTasks: Record<string, { context_preview: string }[]> = {};
+	let groupedTasks: Record<string, { context_preview: string }[]>;
 	$: groupedTasks = groupResults(tasks);
 
 	// Initialize all collapsibles as open
@@ -120,7 +120,7 @@
 		<Collapsible.Root open={openState[path]} class="w-full transition-all">
 			<Collapsible.Trigger
 				class="text-[13px] w-full text-secondary-foreground flex items-center h-7 justify-start gap-1.5 group hover:text-foreground transition-all"
-				on:click={() => toggleOpen(path)}
+				onclick={() => toggleOpen(path)}
 			>
 				<ChevronDown
 					class={cn(

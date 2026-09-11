@@ -103,7 +103,6 @@
 <div
 	bind:this={element}
 	spellcheck={$collectionSettings.editor.spell_check}
-	autocorrect={$collectionSettings.editor.auto_correct.toString()}
 	class="w-full h-[calc(100%-97px)] px-8"
 >
 	<Shortcut options={SHORTCUTS['note:save']} callback={() => saveNote(get(activeFile) ?? '')} />

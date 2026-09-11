@@ -8,8 +8,8 @@
 	import * as Select from '@tactile/ui/components/select';
 	import { Switch } from '@tactile/ui/components/switch';
 
-	let selectedFont = { value: 'inter', label: 'Inter' };
-	let selectedFontSize = { value: 'normal', label: 'Normal' };
+	let selectedFont = 'inter';
+	let selectedFontSize = 'normal';
 </script>
 
 <div class="space-y-5">
@@ -17,17 +17,17 @@
 		<Label class="text-sm">Font</Label>
 		<p class="text-muted-foreground text-xs">Change the editor font.</p>
 		<div class="flex items-center gap-2 pt-2">
-			<Select.Root bind:selected={selectedFont} disabled>
+			<Select.Root type="single" bind:value={selectedFont} disabled>
 				<Select.Trigger>
-					<Select.Value class="text-sm text-foreground/85">{selectedFont.label}</Select.Value>
+					<Select.Value class="text-sm text-foreground/85" />
 				</Select.Trigger>
 				<Select.Content>
-					<Select.Item value="inter">Inter</Select.Item>
-					<Select.Item value="roboto">Roboto</Select.Item>
-					<Select.Item value="lato">Lato</Select.Item>
-					<Select.Item value="poppins">Poppins</Select.Item>
-					<Select.Item value="nunito">Nunito</Select.Item>
-					<Select.Item value="openSans">Open Sans</Select.Item>
+					<Select.Item value="inter" label="Inter">Inter</Select.Item>
+					<Select.Item value="roboto" label="Roboto">Roboto</Select.Item>
+					<Select.Item value="lato" label="Lato">Lato</Select.Item>
+					<Select.Item value="poppins" label="Poppins">Poppins</Select.Item>
+					<Select.Item value="nunito" label="Nunito">Nunito</Select.Item>
+					<Select.Item value="openSans" label="Open Sans">Open Sans</Select.Item>
 				</Select.Content>
 			</Select.Root>
 		</div>
@@ -37,16 +37,16 @@
 		<Label class="text-sm">Font size</Label>
 		<p class="text-muted-foreground text-xs">Change the editor font size.</p>
 		<div class="flex items-center gap-2 pt-2">
-			<Select.Root bind:selected={selectedFontSize} disabled>
+			<Select.Root type="single" bind:value={selectedFontSize} disabled>
 				<Select.Trigger>
-					<Select.Value class="text-sm text-foreground/85">{selectedFontSize.label}</Select.Value>
+					<Select.Value class="text-sm text-foreground/85" />
 				</Select.Trigger>
 				<Select.Content>
-					<Select.Item value="smaller">Smaller</Select.Item>
-					<Select.Item value="small">Small</Select.Item>
-					<Select.Item value="normal">Normal</Select.Item>
-					<Select.Item value="large">Large</Select.Item>
-					<Select.Item value="larger">Larger</Select.Item>
+					<Select.Item value="smaller" label="Smaller">Smaller</Select.Item>
+					<Select.Item value="small" label="Small">Small</Select.Item>
+					<Select.Item value="normal" label="Normal">Normal</Select.Item>
+					<Select.Item value="large" label="Large">Large</Select.Item>
+					<Select.Item value="larger" label="Larger">Larger</Select.Item>
 				</Select.Content>
 			</Select.Root>
 		</div>

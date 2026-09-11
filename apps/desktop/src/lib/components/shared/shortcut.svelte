@@ -4,4 +4,4 @@
 	export let callback: (() => void) | undefined = undefined;
 </script>
 
-<div class="hidden" use:shortcut={{ ...options, callback }} />
+<div class="hidden" use:shortcut={{ ...options, callback }}></div>

@@ -276,7 +276,7 @@
 	}
 </script>
 
-{#each entries as entry, i}
+{#each entries as entry, i (entry.path)}
 	{#if entry.children}
 		<Collapsible.Root class="w-full" bind:open={folderOpenStates[i]}>
 			<ContextMenu.Root>
@@ -291,57 +291,59 @@
 						}}
 						data-is-folder
 					>
-						<Collapsible.Trigger asChild let:builder>
-							<Button
-								builders={[builder]}
-								size="sm"
-								variant="ghost"
-								scale="sm"
-								class="h-7 w-full fill-muted-foreground hover:fill-foreground text-secondary-foreground/80 hover:text-foreground transition-all flex items-center justify-between"
-								style={`padding-left: ${calculateDepth(entry.path)}`}
-								draggable
-							>
-								<Shortcut
-									options={SHORTCUTS['folder:create']}
-									callback={() => {
-										!isRenaming && createFolder(entry.path);
-									}}
-								/>
-								<Shortcut
-									options={SHORTCUTS['folder:rename']}
-									callback={() => !isRenaming && handleRename(entry, 'folder')}
-								/>
-								<Shortcut
-									options={SHORTCUTS['folder:create-note']}
-									callback={() => !isRenaming && createNote(entry.path)}
-								/>
-								<Shortcut
-									options={SHORTCUTS['folder:delete']}
-									callback={() => !isRenaming && deleteFolder(entry.path)}
-								/>
-								<div class="flex items-center w-[calc(100%-20px)] gap-2">
-									<Icon
-										name="folder"
-										class={cn('w-[18px] h-[18px] shrink-0', folderOpenStates[i] && 'hidden')}
+						<Collapsible.Trigger>
+							{#snippet child({ props })}
+								<Button
+									{...props}
+									size="sm"
+									variant="ghost"
+									scale="sm"
+									class="h-7 w-full fill-muted-foreground hover:fill-foreground text-secondary-foreground/80 hover:text-foreground transition-all flex items-center justify-between"
+									style={`padding-left: ${calculateDepth(entry.path)}`}
+									draggable
+								>
+									<Shortcut
+										options={SHORTCUTS['folder:create']}
+										callback={() => {
+											if (!isRenaming) createFolder(entry.path);
+										}}
 									/>
-									<Icon
-										name="folderOpen"
-										class={cn('w-[18px] h-[18px] shrink-0', !folderOpenStates[i] && 'hidden')}
+									<Shortcut
+										options={SHORTCUTS['folder:rename']}
+										callback={() => !isRenaming && handleRename(entry, 'folder')}
 									/>
-									<span class="text-xs truncate outline-none" autocorrect="off" spellcheck="false"
-										>{entry.name}</span
-									>
-								</div>
-								<!-- TODO: Make this an optional feature -->
-								<span class="text-xs text-foreground/40">{entry.children.length}</span>
-							</Button>
+									<Shortcut
+										options={SHORTCUTS['folder:create-note']}
+										callback={() => !isRenaming && createNote(entry.path)}
+									/>
+									<Shortcut
+										options={SHORTCUTS['folder:delete']}
+										callback={() => !isRenaming && deleteFolder(entry.path)}
+									/>
+									<div class="flex items-center w-[calc(100%-20px)] gap-2">
+										<Icon
+											name="folder"
+											class={cn('w-[18px] h-[18px] shrink-0', folderOpenStates[i] && 'hidden')}
+										/>
+										<Icon
+											name="folderOpen"
+											class={cn('w-[18px] h-[18px] shrink-0', !folderOpenStates[i] && 'hidden')}
+										/>
+										<span class="text-xs truncate outline-none" spellcheck="false"
+											>{entry.name}</span
+										>
+									</div>
+									<!-- TODO: Make this an optional feature -->
+									<span class="text-xs text-foreground/40">{entry.children?.length}</span>
+								</Button>
+							{/snippet}
 						</Collapsible.Trigger>
 					</div>
 				</ContextMenu.Trigger>
 				<ContextMenu.Content class="w-44">
 					<ContextMenu.Item
 						class="flex items-center gap-2 font-base group"
-						on:click={() => {
+						onclick={() => {
 							createNote(entry.path);
 							folderOpenStates[i] = true;
 						}}
@@ -357,7 +359,7 @@
 					</ContextMenu.Item>
 					<ContextMenu.Item
 						class="flex items-center gap-2 font-base group"
-						on:click={() => {
+						onclick={() => {
 							createFolder(entry.path);
 							folderOpenStates[i] = true;
 						}}
@@ -374,7 +376,7 @@
 					<ContextMenu.Separator />
 					<ContextMenu.Item
 						class="flex items-center gap-2 font-base group"
-						on:click={async () => {
+						onclick={async () => {
 							handleRename(entry, 'folder');
 						}}
 					>
@@ -392,11 +394,11 @@
 							Move folder to...
 						</ContextMenu.SubTrigger>
 						<ContextMenu.SubContent class="w-40">
-							{#each getDirectories(entries) as directory}
+							{#each getDirectories(entries) as directory (directory.path)}
 								{#if directory.name !== entry.name}
 									<ContextMenu.Item
 										class="flex items-center gap-2 font-base group"
-										on:click={() => moveFolder(entry.path, directory.path)}
+										onclick={() => moveFolder(entry.path, directory.path)}
 									>
 										<Icon
 											name="folder"
@@ -410,7 +412,7 @@
 							{#if getDirectories(entries).filter((directory) => directory.name !== entry.name).length === 0}
 								<ContextMenu.Item
 									class="flex items-center gap-2 font-base group"
-									on:click={async () => {
+									onclick={async () => {
 										// Create a new folder in parent directory
 										const dirPath = await createFolder(
 											entry.path.split('/').slice(0, -1).join('/')
@@ -435,7 +437,7 @@
 					<ContextMenu.Separator />
 					<ContextMenu.Item
 						class="flex text-destructive data-[highlighted]:bg-destructive/20 data-[highlighted]:text-destructive items-center gap-2 font-base group"
-						on:click={() => deleteFolder(entry.path)}
+						onclick={() => deleteFolder(entry.path)}
 					>
 						<Icon name="bin" class="w-3.5 h-3.5 fill-destructive/70 group-hover:fill-destructive" />
 						Delete
@@ -472,7 +474,7 @@
 							$activeFile === entry.path && 'bg-accent text-foreground'
 						)}
 						style={`padding-left: ${calculateDepth(entry.path)}`}
-						on:click={() => openNote(entry.path)}
+						onclick={() => openNote(entry.path)}
 						draggable
 					>
 						<Shortcut
@@ -487,14 +489,14 @@
 							options={SHORTCUTS['note:delete']}
 							callback={() => !isRenaming && deleteNote(entry.path)}
 						/>
-						<span class="text-xs truncate" autocorrect="off" spellcheck="false">{entry.name}</span>
+						<span class="text-xs truncate" spellcheck="false">{entry.name}</span>
 					</Button>
 				</div>
 			</ContextMenu.Trigger>
 			<ContextMenu.Content class="w-44">
 				<ContextMenu.Item
 					class="flex items-center gap-2 font-base group"
-					on:click={async () => {
+					onclick={async () => {
 						handleRename(entry, 'note');
 					}}
 				>
@@ -507,7 +509,7 @@
 				</ContextMenu.Item>
 				<ContextMenu.Item
 					class="flex items-center gap-2 font-base group"
-					on:click={() => duplicateNote(entry.path)}
+					onclick={() => duplicateNote(entry.path)}
 				>
 					<Icon name="copy" class="w-3.5 h-3.5 fill-foreground/70 group-hover:fill-foreground" />
 					Duplicate
@@ -523,11 +525,11 @@
 						Move note to...
 					</ContextMenu.SubTrigger>
 					<ContextMenu.SubContent class="w-40">
-						{#each getDirectories(entries) as directory}
+						{#each getDirectories(entries) as directory (directory.path)}
 							{#if directory.name !== entry.name}
 								<ContextMenu.Item
 									class="flex items-center gap-2 font-base group"
-									on:click={() => moveNote(entry.path, directory.path)}
+									onclick={() => moveNote(entry.path, directory.path)}
 								>
 									<Icon
 										name="folder"
@@ -541,7 +543,7 @@
 						{#if getDirectories(entries).length === 0}
 							<ContextMenu.Item
 								class="flex items-center gap-2 font-base group"
-								on:click={async () => {
+								onclick={async () => {
 									// Create a new folder in parent directory
 									await createFolder(entry.path.split('/').slice(0, -1).join('/'));
 
@@ -564,7 +566,7 @@
 				<ContextMenu.Separator />
 				<ContextMenu.Item
 					class="flex text-destructive data-[highlighted]:bg-destructive/20 data-[highlighted]:text-destructive items-center gap-2 font-base group"
-					on:click={() => deleteNote(entry.path)}
+					onclick={() => deleteNote(entry.path)}
 				>
 					<Icon name="bin" class="w-3.5 h-3.5 fill-destructive/70 group-hover:fill-destructive" />
 					Delete

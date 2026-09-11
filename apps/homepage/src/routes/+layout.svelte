@@ -106,7 +106,7 @@
 
 		<!-- Socials -->
 		<div class="flex items-center gap-4">
-			<a href="/twitter" rel="noopener noreferrer" target="_blank">
+			<a href="/twitter" rel="noopener noreferrer" target="_blank" aria-label="X (Twitter)">
 				<svg
 					stroke="currentColor"
 					fill="currentColor"
@@ -121,7 +121,7 @@
 					></path></svg
 				>
 			</a>
-			<a href="/github" rel="noopener noreferrer" target="_blank">
+			<a href="/github" rel="noopener noreferrer" target="_blank" aria-label="GitHub">
 				<svg
 					viewBox="0 0 256 250"
 					width="256"
@@ -141,5 +141,5 @@
 	<!-- Overlay -->
 	<div
 		class="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-transparent to-neutral-950 to-95%"
-	/>
+	></div>
 </div>

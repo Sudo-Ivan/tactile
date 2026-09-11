@@ -8,8 +8,24 @@
 	import * as Select from '@tactile/ui/components/select';
 	import { Switch } from '@tactile/ui/components/switch';
 
-	let selectedFont = { value: 'inter', label: 'Inter' };
-	let selectedFontSize = { value: 'normal', label: 'Normal' };
+	const fonts = [
+		{ value: 'inter', label: 'Inter' },
+		{ value: 'roboto', label: 'Roboto' },
+		{ value: 'lato', label: 'Lato' },
+		{ value: 'poppins', label: 'Poppins' },
+		{ value: 'nunito', label: 'Nunito' },
+		{ value: 'openSans', label: 'Open Sans' }
+	];
+	const fontSizes = [
+		{ value: 'smaller', label: 'Smaller' },
+		{ value: 'small', label: 'Small' },
+		{ value: 'normal', label: 'Normal' },
+		{ value: 'large', label: 'Large' },
+		{ value: 'larger', label: 'Larger' }
+	];
+
+	let selectedFont = 'inter';
+	let selectedFontSize = 'normal';
 </script>
 
 <div class="space-y-5">
@@ -17,17 +33,14 @@
 		<Label class="text-sm">Font</Label>
 		<p class="text-muted-foreground text-xs">Change the editor font.</p>
 		<div class="flex items-center gap-2 pt-2">
-			<Select.Root bind:selected={selectedFont} disabled>
+			<Select.Root type="single" bind:value={selectedFont} items={fonts} disabled>
 				<Select.Trigger>
-					<Select.Value class="text-sm text-foreground/85">{selectedFont.label}</Select.Value>
+					<Select.Value class="text-sm text-foreground/85" />
 				</Select.Trigger>
 				<Select.Content>
-					<Select.Item value="inter">Inter</Select.Item>
-					<Select.Item value="roboto">Roboto</Select.Item>
-					<Select.Item value="lato">Lato</Select.Item>
-					<Select.Item value="poppins">Poppins</Select.Item>
-					<Select.Item value="nunito">Nunito</Select.Item>
-					<Select.Item value="openSans">Open Sans</Select.Item>
+					{#each fonts as font (font.value)}
+						<Select.Item value={font.value} label={font.label}>{font.label}</Select.Item>
+					{/each}
 				</Select.Content>
 			</Select.Root>
 		</div>
@@ -37,16 +50,15 @@
 		<Label class="text-sm">Font size</Label>
 		<p class="text-muted-foreground text-xs">Change the editor font size.</p>
 		<div class="flex items-center gap-2 pt-2">
-			<Select.Root bind:selected={selectedFontSize} disabled>
+			<Select.Root type="single" bind:value={selectedFontSize} items={fontSizes} disabled>
 				<Select.Trigger>
-					<Select.Value class="text-sm text-foreground/85">{selectedFontSize.label}</Select.Value>
+					<Select.Value class="text-sm text-foreground/85" />
 				</Select.Trigger>
 				<Select.Content>
-					<Select.Item value="smaller">Smaller</Select.Item>
-					<Select.Item value="small">Small</Select.Item>
-					<Select.Item value="normal">Normal</Select.Item>
-					<Select.Item value="large">Large</Select.Item>
-					<Select.Item value="larger">Larger</Select.Item>
+					{#each fontSizes as fontSize (fontSize.value)}
+						<Select.Item value={fontSize.value} label={fontSize.label}>{fontSize.label}</Select.Item
+						>
+					{/each}
 				</Select.Content>
 			</Select.Root>
 		</div>

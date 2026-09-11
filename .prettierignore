@@ -1,7 +1,10 @@
 .DS_Store
 .svelte-kit
 node_modules
-/build
+**/build
+**/dist
+**/src-tauri/gen
+**/src-tauri/target
 /package
 .env
 .env.*
