@@ -1,12 +1,15 @@
 <script lang="ts">
-	import { Command as CommandPrimitive } from 'cmdk-sv';
+	import { Command as CommandPrimitive } from 'bits-ui';
 	import { cn } from '../../lib/utils';
 
-	type $$Props = CommandPrimitive.EmptyProps;
-	let className: string | undefined | null = undefined;
-	export { className as class };
+	let {
+		ref = $bindable(null),
+		class: className,
+		children,
+		...rest
+	}: CommandPrimitive.EmptyProps = $props();
 </script>
 
-<CommandPrimitive.Empty class={cn('py-6 text-center text-sm', className)} {...$$restProps}>
-	<slot />
+<CommandPrimitive.Empty bind:ref class={cn('py-6 text-center text-sm', className)} {...rest}>
+	{@render children?.()}
 </CommandPrimitive.Empty>

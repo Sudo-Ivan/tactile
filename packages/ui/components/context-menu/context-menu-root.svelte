@@ -2,7 +2,9 @@
 	import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
 	import { onMount } from 'svelte';
 
-	let open = false;
+	let { children, ...rest }: ContextMenuPrimitive.RootProps = $props();
+
+	let open = $state(false);
 
 	function handleClick(event: MouseEvent) {
 		if (event.button === 0 || event.button === 2) {
@@ -22,11 +24,6 @@
 	});
 </script>
 
-<ContextMenuPrimitive.Root
-	{open}
-	onOpenChange={(value) => (open = value)}
-	closeOnOutsideClick={true}
-	onOutsideClick={(e) => e.preventDefault()}
->
-	<slot />
+<ContextMenuPrimitive.Root bind:open {...rest}>
+	{@render children?.()}
 </ContextMenuPrimitive.Root>

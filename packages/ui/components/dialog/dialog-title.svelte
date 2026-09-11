@@ -2,15 +2,18 @@
 	import { Dialog as DialogPrimitive } from 'bits-ui';
 	import { cn } from '../../lib/utils';
 
-	type $$Props = DialogPrimitive.TitleProps;
-
-	let className: $$Props['class'] = undefined;
-	export { className as class };
+	let {
+		ref = $bindable(null),
+		class: className,
+		children,
+		...rest
+	}: DialogPrimitive.TitleProps = $props();
 </script>
 
 <DialogPrimitive.Title
+	bind:ref
 	class={cn('text-lg font-semibold leading-none tracking-tight', className)}
-	{...$$restProps}
+	{...rest}
 >
-	<slot />
+	{@render children?.()}
 </DialogPrimitive.Title>

@@ -1,22 +1,24 @@
 <script lang="ts">
-	import { Command as CommandPrimitive } from 'cmdk-sv';
+	import { Command as CommandPrimitive } from 'bits-ui';
 	import { cn } from '../../lib/utils';
 
-	type $$Props = CommandPrimitive.CommandProps;
-
-	export let value: $$Props['value'] = undefined;
-
-	let className: string | undefined | null = undefined;
-	export { className as class };
+	let {
+		ref = $bindable(null),
+		value = $bindable(''),
+		class: className,
+		children,
+		...rest
+	}: CommandPrimitive.RootProps = $props();
 </script>
 
 <CommandPrimitive.Root
+	bind:ref
+	bind:value
 	class={cn(
 		'flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground',
 		className
 	)}
-	bind:value
-	{...$$restProps}
+	{...rest}
 >
-	<slot />
+	{@render children?.()}
 </CommandPrimitive.Root>

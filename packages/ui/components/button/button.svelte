@@ -3,23 +3,38 @@
 	import { cn } from '../../lib/utils';
 	import { buttonVariants, type Props } from '.';
 
-	type $$Props = Props;
-
-	let className: $$Props['class'] = undefined;
-	export let variant: $$Props['variant'] = 'default';
-	export let size: $$Props['size'] = 'default';
-	export let scale: $$Props['scale'] = undefined;
-	export let builders: $$Props['builders'] = [];
-	export { className as class };
+	let {
+		ref = $bindable(null),
+		class: className,
+		variant = 'default',
+		size = 'default',
+		scale = undefined,
+		type = 'button',
+		href = undefined,
+		disabled = undefined,
+		children,
+		...rest
+	}: Props = $props();
 </script>
 
-<ButtonPrimitive.Root
-	{builders}
-	class={cn(buttonVariants({ variant, size, scale, className }))}
-	type="button"
-	{...$$restProps}
-	on:click
-	on:keydown
->
-	<slot />
-</ButtonPrimitive.Root>
+{#if href}
+	<ButtonPrimitive.Root
+		bind:ref
+		{href}
+		{disabled}
+		class={cn(buttonVariants({ variant, size, scale }), className)}
+		{...rest}
+	>
+		{@render children?.()}
+	</ButtonPrimitive.Root>
+{:else}
+	<ButtonPrimitive.Root
+		bind:ref
+		{type}
+		{disabled}
+		class={cn(buttonVariants({ variant, size, scale }), className)}
+		{...rest}
+	>
+		{@render children?.()}
+	</ButtonPrimitive.Root>
+{/if}

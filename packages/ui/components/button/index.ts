@@ -1,4 +1,6 @@
 import type { Button as ButtonPrimitive } from 'bits-ui';
+import type { HTMLAnchorAttributes, HTMLButtonAttributes } from 'svelte/elements';
+import type { WithElementRef } from 'bits-ui';
 import { tv, type VariantProps } from 'tailwind-variants';
 import Root from './button.svelte';
 
@@ -35,13 +37,15 @@ type Variant = VariantProps<typeof buttonVariants>['variant'];
 type Size = VariantProps<typeof buttonVariants>['size'];
 type Scale = VariantProps<typeof buttonVariants>['scale'];
 
-type Props = ButtonPrimitive.Props & {
-	variant?: Variant;
-	size?: Size;
-	scale?: Scale;
-};
+type Props = WithElementRef<HTMLButtonAttributes, HTMLButtonElement> &
+	WithElementRef<HTMLAnchorAttributes, HTMLAnchorElement> & {
+		variant?: Variant;
+		size?: Size;
+		scale?: Scale;
+	};
 
-type Events = ButtonPrimitive.Events;
+// events are plain callback props in Svelte 5
+type Events = Props;
 
 export {
 	Root,

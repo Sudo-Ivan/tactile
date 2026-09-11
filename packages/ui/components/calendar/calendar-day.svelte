@@ -3,19 +3,16 @@
 	import { buttonVariants } from '../button/index';
 	import { cn } from '../../lib/utils';
 
-	type $$Props = CalendarPrimitive.DayProps;
-	type $$Events = CalendarPrimitive.DayEvents;
-
-	export let date: $$Props['date'];
-	export let month: $$Props['month'];
-	let className: $$Props['class'] = undefined;
-	export { className as class };
+	let {
+		ref = $bindable(null),
+		class: className,
+		children,
+		...rest
+	}: CalendarPrimitive.DayProps = $props();
 </script>
 
 <CalendarPrimitive.Day
-	on:click
-	{date}
-	{month}
+	bind:ref
 	class={cn(
 		buttonVariants({ variant: 'ghost' }),
 		'h-7 w-7 p-0 font-normal text-xs',
@@ -30,13 +27,6 @@
 		'data-[outside-month]:pointer-events-none data-[outside-month]:text-muted-foreground data-[outside-month]:opacity-50 [&[data-outside-month][data-selected]]:bg-accent/50 [&[data-outside-month][data-selected]]:text-muted-foreground [&[data-outside-month][data-selected]]:opacity-30',
 		className
 	)}
-	{...$$restProps}
-	let:selected
-	let:disabled
-	let:unavailable
-	let:builder
->
-	<slot {selected} {disabled} {unavailable} {builder}>
-		{date.day}
-	</slot>
-</CalendarPrimitive.Day>
+	{...rest}
+	{children}
+/>

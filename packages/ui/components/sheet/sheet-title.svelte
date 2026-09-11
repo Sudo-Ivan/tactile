@@ -2,12 +2,14 @@
 	import { Dialog as SheetPrimitive } from 'bits-ui';
 	import { cn } from '../../lib/utils';
 
-	type $$Props = SheetPrimitive.TitleProps;
-
-	let className: $$Props['class'] = undefined;
-	export { className as class };
+	let {
+		ref = $bindable(null),
+		class: className,
+		children,
+		...rest
+	}: SheetPrimitive.TitleProps = $props();
 </script>
 
-<SheetPrimitive.Title class={cn('text-lg text-foreground', className)} {...$$restProps}>
-	<slot />
+<SheetPrimitive.Title bind:ref class={cn('text-lg text-foreground', className)} {...rest}>
+	{@render children?.()}
 </SheetPrimitive.Title>

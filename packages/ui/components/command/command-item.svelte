@@ -1,24 +1,22 @@
 <script lang="ts">
-	import { Command as CommandPrimitive } from 'cmdk-sv';
+	import { Command as CommandPrimitive } from 'bits-ui';
 	import { cn } from '../../lib/utils';
 
-	type $$Props = CommandPrimitive.ItemProps;
-
-	export let asChild = false;
-
-	let className: string | undefined | null = undefined;
-	export { className as class };
+	let {
+		ref = $bindable(null),
+		class: className,
+		children,
+		...rest
+	}: CommandPrimitive.ItemProps = $props();
 </script>
 
 <CommandPrimitive.Item
-	{asChild}
+	bind:ref
 	class={cn(
 		'relative flex cursor-default select-none items-center font-light rounded-lg h-10 px-1.5 text-sm outline-none aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
 		className
 	)}
-	{...$$restProps}
-	let:action
-	let:attrs
+	{...rest}
 >
-	<slot {action} {attrs} />
+	{@render children?.()}
 </CommandPrimitive.Item>

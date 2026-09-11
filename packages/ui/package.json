@@ -15,9 +15,7 @@
 		"@internationalized/date": "catalog:",
 		"bits-ui": "catalog:",
 		"clsx": "catalog:",
-		"cmdk-sv": "catalog:",
 		"lucide-svelte": "catalog:",
-		"radix-icons-svelte": "^1.2.1",
 		"tailwind-merge": "catalog:",
 		"tailwind-variants": "catalog:"
 	}
