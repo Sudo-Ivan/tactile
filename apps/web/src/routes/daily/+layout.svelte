@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import NotesSidebar from './sidebar.svelte';
-	import Layout from '$lib/components/notes/layout.svelte';
+	import Layout from '@tactile/core/components/notes/layout.svelte';
 
 	interface Props {
 		children?: Snippet;

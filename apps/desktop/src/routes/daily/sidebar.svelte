@@ -1,11 +1,13 @@
 <script lang="ts">
-	import { sidebarResize } from '@/actions/sidebar-resize';
-	import { fetchCollectionEntries } from '@/api/collection';
-	import { createNote, openNote } from '@/api/notes';
-	import { DAILY_DIR, MARKDOWN_EXTENSION } from '@/constants';
+	import { openDailyNote } from '@tactile/core/actions/daily';
+	import { sidebarResize } from '@tactile/core/actions/sidebar-resize';
+	import { fetchCollectionEntries } from '@tactile/core/api/collection';
+	import { dailyDir as dailyDirPath, ensureTodayDailyNote } from '@tactile/core/api/daily';
+	import { closeNote, openNote } from '@tactile/core/api/notes';
 	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
 	import type { FileEntry } from '@/types';
+	import { dailyNoteDate } from '@tactile/core/utils/daily';
 	import { CalendarDate, getLocalTimeZone, today, type DateValue } from '@internationalized/date';
 	import { Calendar } from '@tactile/ui/components/calendar';
 	import Label from '@tactile/ui/components/label/label.svelte';
@@ -18,7 +20,7 @@
 	let entries = $state<FileEntry[]>([]);
 	let stopWatching: UnlistenFn | undefined;
 
-	const dailyDir = $derived(`${appState.collection}/${DAILY_DIR}`);
+	const dailyDir = $derived(dailyDirPath(appState.collection ?? ''));
 
 	// Watch for changes in the collection
 	async function watchCollection() {
@@ -34,21 +36,17 @@
 	}
 
 	async function onCollectionChange(collectionPath: string | undefined) {
-		entries = await fetchCollectionEntries(`${collectionPath}/${DAILY_DIR}`);
+		const dir = dailyDirPath(collectionPath ?? '');
+		entries = await fetchCollectionEntries(dir);
 
 		// Validate if there is a note for today
-		const today = new Date().toISOString().split('T')[0];
-		const dailyExists = entries.some((entry) => entry.path.includes(today));
-
-		if (!dailyExists) {
-			await createNote(`${collectionPath}/${DAILY_DIR}`, today + MARKDOWN_EXTENSION);
-		}
+		const noteName = await ensureTodayDailyNote(dir, entries);
 
 		// Open today's note. On mobile stay on the entry list instead
 		if (isMobile) {
-			appState.activeFile = null;
+			closeNote();
 		} else {
-			openNote(`${collectionPath}/${DAILY_DIR}/${today}${MARKDOWN_EXTENSION}`, true);
+			openNote(`${dir}/${noteName}`, true);
 		}
 
 		if (collectionPath) {
@@ -69,58 +67,17 @@
 
 	// handle open calendar day
 	const handleOpenCalendarDay = async (e: DateValue | undefined) => {
-		if (!e) return;
-
-		// Pad the month and day with a leading zero if they're single digits
-		const paddedMonth = e.month.toString().padStart(2, '0');
-		const paddedDay = e.day.toString().padStart(2, '0');
-
-		// Create the note name with padded month and day
-		const noteName = `${e.year}-${paddedMonth}-${paddedDay}${MARKDOWN_EXTENSION}`;
-
-		// Check if note exists, if not create it - else open it
-		if (!entries.some((entry) => entry.path.includes(noteName))) {
-			createNote(dailyDir, noteName);
-		} else {
-			openNote(`${dailyDir}/${noteName}`, true);
-		}
-
-		// Get note element by data-path
-		let noteElement = document.querySelector(`[data-path="${dailyDir}/${noteName}"]`);
-
-		// If note element is not found, wait for it to be rendered
-		if (!noteElement) {
-			await new Promise((resolve) => setTimeout(resolve, 150));
-		}
-
-		// Get note element again - this is because if the note is newly created, it might not be rendered yet
-		noteElement = document.querySelector(`[data-path="${dailyDir}/${noteName}"]`);
-
-		// Scroll to note element
-		if (noteElement) {
-			const rect = noteElement.getBoundingClientRect();
-			const isAboveView = rect.top < 0;
-			const isBelowView = rect.bottom > window.innerHeight;
-			if (isAboveView || isBelowView) {
-				// Smooth scroll doesn't seem to work well from bottom to top
-				const behavior = isAboveView ? 'auto' : 'smooth';
-				noteElement.scrollIntoView({ behavior, block: 'center' });
-			}
-		}
+		await openDailyNote(e, dailyDir, entries);
 	};
 
 	// Listen to activeFile change and update calendar value
 	$effect(() => {
-		// Extract date string from active file path
-		const dateString = appState.activeFile?.split('/').pop()?.split('.')[0];
-		if (!dateString) return;
-
-		// Parse date string
-		const [year, month, day] = dateString.split('-').map(Number);
-		if (!year || !month || !day) return;
+		// Extract date from the active file name
+		const date = appState.activeFile ? dailyNoteDate(appState.activeFile) : undefined;
+		if (!date || !date.year || !date.month || !date.day) return;
 
 		// Update calendar value
-		calValue = new CalendarDate(year, month, day);
+		calValue = new CalendarDate(date.year, date.month, date.day);
 	});
 </script>
 

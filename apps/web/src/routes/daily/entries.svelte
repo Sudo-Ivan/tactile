@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { deleteNote, openNote } from '@/api/notes';
-	import Icon from '@/components/shared/icon.svelte';
-	import Shortcut from '@/components/shared/shortcut.svelte';
+	import { deleteNote, openNote } from '@tactile/core/api/notes';
+	import Icon from '@tactile/core/components/shared/icon.svelte';
+	import Shortcut from '@tactile/core/components/shared/shortcut.svelte';
 	import { SHORTCUTS } from '@/constants';
 	import { appState } from '@/store.svelte';
 	import type { FileEntry } from '@/types';
 	import { shortcutToString } from '@/utils';
+	import { groupDailyEntries } from '@tactile/core/utils/daily';
 	import Button from '@tactile/ui/components/button/button.svelte';
 	import * as ContextMenu from '@tactile/ui/components/context-menu';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
-	import { SvelteDate } from 'svelte/reactivity';
 
 	interface Props {
 		entries: FileEntry[];
@@ -18,74 +18,7 @@
 
 	let { entries }: Props = $props();
 
-	function groupEntries(entries: FileEntry[]): Record<string, FileEntry[]> {
-		const now = new Date();
-		const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-		const yesterday = new SvelteDate(today);
-		yesterday.setDate(yesterday.getDate() - 1);
-		const thisWeekStart = new SvelteDate(today);
-		thisWeekStart.setDate(thisWeekStart.getDate() - thisWeekStart.getDay());
-		const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-		const grouped: Record<string, FileEntry[]> = {
-			upcoming: [],
-			today: [],
-			yesterday: [],
-			thisWeek: [],
-			thisMonth: [],
-			older: []
-		};
-
-		entries.forEach((entry) => {
-			const fileName = entry.path.split('/').pop() || '';
-			const [year, month, day] = fileName.split('.')[0].split('-').map(Number);
-
-			if (isNaN(year) || isNaN(month) || isNaN(day)) {
-				// If the file name doesn't match the expected format, put it in 'older'
-				grouped.older.push(entry);
-				return;
-			}
-
-			const entryDate = new Date(year, month - 1, day); // month is 0-indexed in JS Date
-
-			if (entryDate > today) {
-				grouped.upcoming.push(entry);
-			} else if (entryDate.getTime() === today.getTime()) {
-				grouped.today.push(entry);
-			} else if (entryDate >= yesterday) {
-				grouped.yesterday.push(entry);
-			} else if (entryDate >= thisWeekStart) {
-				grouped.thisWeek.push(entry);
-			} else if (entryDate >= thisMonthStart) {
-				grouped.thisMonth.push(entry);
-			} else {
-				grouped.older.push(entry);
-			}
-		});
-
-		// Sort function to sort entries by date (newest first)
-		const sortByDate = (a: FileEntry, b: FileEntry) => {
-			const getDate = (entry: FileEntry) => {
-				const [year, month, day] = entry.path
-					.split('/')
-					.pop()!
-					.split('.')[0]
-					.split('-')
-					.map(Number);
-				return new Date(year, month - 1, day).getTime();
-			};
-			return getDate(b) - getDate(a);
-		};
-
-		// Sort each group
-		Object.keys(grouped).forEach((key) => {
-			grouped[key as keyof typeof grouped].sort(sortByDate);
-		});
-
-		return grouped;
-	}
-
-	let groupedEntries = $derived(groupEntries(entries));
+	let groupedEntries = $derived(groupDailyEntries(entries));
 </script>
 
 {#each Object.entries(groupedEntries) as [groupName, groupEntries] (groupName)}

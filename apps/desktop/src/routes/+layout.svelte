@@ -1,20 +1,19 @@
 <script lang="ts">
-	import { loadSettings } from '@/api/settings';
-	import Footer from '@/components/layout/footer.svelte';
+	import { restoreLatestCollection } from '@tactile/core/api/collection';
+	import { loadSettings } from '@tactile/core/api/settings';
+	import Footer from '@tactile/core/components/layout/footer.svelte';
 	import Header from '@/components/layout/header.svelte';
 	import MobileNav from '@/components/layout/mobile-nav.svelte';
-	import Sidebar from '@/components/layout/sidebar.svelte';
-	import Command from '@/components/shared/command-menu/command.svelte';
-	import { COLLECTIONS_FILENAME } from '@/constants';
+	import Sidebar from '@tactile/core/components/layout/sidebar.svelte';
+	import Command from '@tactile/core/components/shared/command-menu/command.svelte';
 	import { isMobile } from '@/platform.svelte';
-	import { appState } from '@/store.svelte';
-	import { validateTactileFolder } from '@/utils/fs';
+	import '@/storage';
+	import { appState, setPlatform } from '@tactile/core/state';
+	import { validateTactileFolder } from '@tactile/core/utils/files';
 	import { updateWindowTheme } from '@/utils/theme';
 	import '@tactile/ui/app.desktop.css';
 	import { setTheme } from '@tauri-apps/api/app';
 	import { platform as osPlatform } from '@tauri-apps/plugin-os';
-	import { BaseDirectory } from '@tauri-apps/api/path';
-	import { readTextFile } from '@tauri-apps/plugin-fs';
 	import { onMount, type Snippet } from 'svelte';
 
 	let { children }: { children?: Snippet } = $props();
@@ -25,27 +24,9 @@
 		document.addEventListener('contextmenu', (event) => event.preventDefault());
 	}
 
-	// Load latest collection
-	async function loadLatestCollection() {
-		const collections = await readTextFile(COLLECTIONS_FILENAME, {
-			baseDir: BaseDirectory.AppData
-		}).catch(() => null);
-
-		if (!collections) return;
-
-		// Get collection with latest lastOpened date
-		const latestCollection = JSON.parse(collections).sort(
-			(a: { lastOpened: string | number | Date }, b: { lastOpened: string | number | Date }) => {
-				return new Date(b.lastOpened).getTime() - new Date(a.lastOpened).getTime();
-			}
-		)[0];
-
-		appState.collection = latestCollection.path;
-	}
-
 	onMount(async () => {
 		// Load latest collection on mount
-		await loadLatestCollection();
+		await restoreLatestCollection();
 
 		// Validate tactile folder
 		await validateTactileFolder(appState.collection!);
@@ -54,17 +35,17 @@
 		loadSettings(true, true);
 
 		// Set platform
-		appState.platform = (await osPlatform()) as 'darwin' | 'linux' | 'windows';
+		setPlatform((await osPlatform()) as 'darwin' | 'linux' | 'windows');
 	});
 
 	// Keep local theme synced
 	$effect(() => {
 		const theme = appState.appTheme;
 
-		// Update app theme, auto maps to null which follows the system theme
+		// Update app theme, system maps to null which follows the OS theme
 		// setTheme is desktop-only, mobile follows the system theme
 		if (!isMobile) {
-			void setTheme(theme === 'auto' ? null : theme);
+			void setTheme(theme === 'system' ? null : theme);
 		}
 
 		// Update window theme

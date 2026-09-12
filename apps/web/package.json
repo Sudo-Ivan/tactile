@@ -37,22 +37,13 @@
 	"dependencies": {
 		"@electric-sql/pglite": "catalog:",
 		"@internationalized/date": "catalog:",
+		"@tactile/core": "workspace:*",
 		"@tactile/storage": "workspace:*",
 		"@tactile/ui": "workspace:^",
 		"@tiptap/core": "catalog:",
-		"@tiptap/extension-character-count": "catalog:",
-		"@tiptap/extension-document": "catalog:",
-		"@tiptap/extension-link": "catalog:",
-		"@tiptap/extension-task-item": "catalog:",
-		"@tiptap/extension-task-list": "catalog:",
-		"@tiptap/extension-typography": "catalog:",
 		"@tiptap/pm": "catalog:",
 		"@tiptap/starter-kit": "catalog:",
-		"clsx": "catalog:",
 		"lucide-svelte": "catalog:",
-		"markdown-it": "catalog:",
-		"mode-watcher": "catalog:",
-		"tailwind-merge": "catalog:",
-		"tiptap-markdown": "catalog:"
+		"mode-watcher": "catalog:"
 	}
 }

@@ -1,6 +1,9 @@
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
-import type { SearchAndReplaceStorage } from './lib/components/shared/editor/extensions/searchAndReplace';
+
+// `markdown` editor storage is declared by @tactile/core (tiptap-markdown's
+// MarkdownStorage); `searchAndReplace` storage is declared by the shared
+// SearchAndReplace extension in @tactile/core.
 
 declare global {
 	namespace App {
@@ -9,15 +12,6 @@ declare global {
 		// interface PageData {}
 		// interface PageState {}
 		// interface Platform {}
-	}
-}
-
-declare module '@tiptap/core' {
-	interface Storage {
-		markdown: {
-			getMarkdown: () => string;
-		};
-		searchAndReplace: SearchAndReplaceStorage;
 	}
 }
 

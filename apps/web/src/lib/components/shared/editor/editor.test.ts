@@ -2,13 +2,13 @@
 import { appState } from '@/store.svelte';
 import { render, cleanup } from '@testing-library/svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import Editor from './editor.svelte';
+import Editor from '@tactile/core/components/shared/editor/editor.svelte';
 
-vi.mock('@/api/notes', () => ({
+vi.mock('@tactile/core/api/notes', () => ({
 	saveNote: vi.fn().mockResolvedValue(undefined)
 }));
 
-const { saveNote } = await import('@/api/notes');
+const { saveNote } = await import('@tactile/core/api/notes');
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 describe('editor component', () => {

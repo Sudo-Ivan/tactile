@@ -1,8 +1,10 @@
 <script lang="ts">
-	import { sidebarResize } from '@/actions/sidebar-resize';
+	import { sidebarResize } from '@tactile/core/actions/sidebar-resize';
+	import TaskEntries from '@tactile/core/components/tasks/task-entries.svelte';
+	import { TASK_MARKER } from '@/constants';
 	import { appState } from '@/store.svelte';
+	import { searchEntries } from '@/utils';
 	import { cn } from '@tactile/ui/lib/utils';
-	import TaskEntries from './task-entries.svelte';
 </script>
 
 <div
@@ -25,14 +27,14 @@
 		data-collection-root
 		data-path={appState.collection}
 	>
-		<TaskEntries />
+		<TaskEntries
+			searchTasks={() => searchEntries(appState.collection!, TASK_MARKER, { mode: 'exact' })}
+		/>
 	</div>
 </div>
 
 <style>
 	:global(body.cursor-col-resize) {
-		/* cursor: col-resize !important;
-		user-select: none !important; */
 		pointer-events: none;
 	}
 </style>

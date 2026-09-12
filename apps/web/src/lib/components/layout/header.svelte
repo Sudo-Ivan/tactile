@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { appState } from '$lib/store.svelte';
-	import { GITHUB_URL } from '@/constants';
+	import { GITHUB_REPO_URL } from '@/constants';
 	import Button from '@tactile/ui/components/button/button.svelte';
 </script>
 
@@ -15,7 +15,7 @@
 	</p>
 	<div class="flex gap-1">
 		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-		<a href="{GITHUB_URL}/releases" target="_blank" rel="noopener noreferrer">
+		<a href="{GITHUB_REPO_URL}/releases" target="_blank" rel="noopener noreferrer">
 			<Button size="sm" scale="sm" class="rounded-full h-[27px] px-2.5">Download</Button>
 		</a>
 	</div>

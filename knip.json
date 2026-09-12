@@ -14,19 +14,21 @@
     "apps/homepage": {
       "entry": ["src/routes/**/+{page,layout,server}.{js,ts,svelte}", "src/app.{html,d.ts}"],
       "project": ["src/**/*.{js,ts,svelte}"],
-      "ignoreDependencies": ["tailwindcss"]
+      "ignoreDependencies": ["tailwindcss"],
+      "ignore": ["src/lib/site.ts"]
     },
     "packages/config-tailwind": {
       "entry": ["theme.css"],
       "ignoreDependencies": ["@tailwindcss/typography"]
     },
     "packages/ui": {
-      "entry": ["components/**/index.ts", "lib/utils.ts"],
+      "entry": ["components/**/index.ts"],
       "project": ["**/*.{js,ts,svelte,css}"]
     },
     "packages/storage": {
       "project": ["src/**/*.ts"]
     }
   },
-  "ignoreDependencies": ["@tactile/tailwind-config"]
+  "ignoreDependencies": ["@tactile/tailwind-config"],
+  "ignoreUnresolved": ["^\\$app/"]
 }

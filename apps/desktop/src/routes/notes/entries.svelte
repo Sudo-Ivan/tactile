@@ -1,12 +1,18 @@
 <script lang="ts">
 	import { longpress } from '@/actions/longpress';
-	import { createFolder, deleteFolder } from '@/api/folders';
-	import { createNote, deleteNote, duplicateNote, openNote } from '@/api/notes';
-	import Icon from '@/components/shared/icon.svelte';
-	import Shortcut from '@/components/shared/shortcut.svelte';
+	import { createEntryDrag } from '@tactile/core/actions/drag';
+	import { createEntryRename } from '@tactile/core/actions/rename.svelte';
+	import { exportDirectoryHtml, exportNoteHtml } from '@tactile/core/api/export';
+	import { createFolder, deleteFolder } from '@tactile/core/api/folders';
+	import { createNote, deleteNote, duplicateNote, openNote } from '@tactile/core/api/notes';
+	import FolderContextMenu from '@tactile/core/components/notes/folder-context-menu.svelte';
+	import NoteContextMenu from '@tactile/core/components/notes/note-context-menu.svelte';
+	import Icon from '@tactile/core/components/shared/icon.svelte';
+	import Shortcut from '@tactile/core/components/shared/shortcut.svelte';
 	import { SHORTCUTS } from '@/constants';
 	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
+	import { dispatchContextMenu } from '@tactile/core/utils/dom';
 	import { showInFolder } from '@/utils/fs';
 	import type { FileEntry } from '@/types';
 	import Button from '@tactile/ui/components/button/button.svelte';
@@ -14,10 +20,6 @@
 	import * as ContextMenu from '@tactile/ui/components/context-menu';
 	import { cn } from '@tactile/ui/lib/utils';
 	import Entries from './entries.svelte';
-	import FolderContextMenu from './folder-context-menu.svelte';
-	import NoteContextMenu from './note-context-menu.svelte';
-	import { createEntryDrag } from './drag';
-	import { createEntryRename } from './rename.svelte';
 
 	let {
 		entries,
@@ -54,19 +56,6 @@
 		return `${(path.split('/').length - (appState.collection ?? '').split('/').length) * 0.75}rem`;
 	}
 
-	// Open the wrapping ContextMenu on long-press by dispatching a synthetic
-	// contextmenu event that bubbles up to the ContextMenu.Trigger element
-	function openContextMenu(event: CustomEvent<{ x: number; y: number }>) {
-		(event.currentTarget as HTMLElement).dispatchEvent(
-			new MouseEvent('contextmenu', {
-				bubbles: true,
-				cancelable: true,
-				clientX: event.detail.x,
-				clientY: event.detail.y
-			})
-		);
-	}
-
 	// Expose the folder toggle handler to the parent through the bindable prop
 	// eslint-disable-next-line no-useless-assignment
 	toggleFolderStates = () => {
@@ -84,7 +73,7 @@
 							class="w-full h-full"
 							role="button"
 							use:longpress
-							onlongpress={openContextMenu}
+							onlongpress={dispatchContextMenu}
 							ondragstart={(e) => drag.handleDragStart(e, entry.name || '')}
 							tabindex="0"
 							ondragend={(e) => {
@@ -164,6 +153,8 @@
 							folderOpenStates[i] = true;
 						}}
 						onDelete={() => deleteFolder(entry.path)}
+						onPrint={() => exportDirectoryHtml(entry.path)}
+						printLabel="Printable HTML"
 					/>
 				</ContextMenu.Root>
 				<Collapsible.Content
@@ -179,7 +170,7 @@
 						class="w-full h-full"
 						role="button"
 						use:longpress
-						onlongpress={openContextMenu}
+						onlongpress={dispatchContextMenu}
 						ondragstart={(e) => drag.handleDragStart(e, entry.name || '')}
 						tabindex="0"
 						ondragend={(e) => {
@@ -226,6 +217,8 @@
 					{entries}
 					onRename={() => renamer.rename(entry, 'note')}
 					onDelete={() => deleteNote(entry.path)}
+					onPrint={() => exportNoteHtml(entry.path)}
+					printLabel="Printable HTML"
 				/>
 			</ContextMenu.Root>
 		{/if}
@@ -248,7 +241,6 @@
 		width: fit-content;
 		height: fit-content;
 		border-radius: calc(var(--radius) - 2px);
-		z-index: 100;
 	}
 
 	:global([data-highlighted]) {

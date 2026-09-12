@@ -1,8 +1,7 @@
-import { emit } from '@tauri-apps/api/event';
 import { WINDOW_THEME_EVENT } from '../constants';
-import { appState } from '../store.svelte';
+import { emit } from '@tauri-apps/api/event';
 
-function hslToHex(hsl: string): string {
+export function hslToHex(hsl: string): string {
 	// Extract the H, S, and L values from the HSL string
 	const [h, sPercent, lPercent] = hsl
 		.replace(/%/g, '') // Remove percentage signs
@@ -35,21 +34,4 @@ export function updateWindowTheme() {
 	emit(WINDOW_THEME_EVENT, hex).catch((error) => {
 		console.error('Failed to emit event:', error);
 	});
-}
-
-export function toggleTheme() {
-	// Theme options
-	const themes = ['auto', 'light', 'dark'];
-
-	// Current theme
-	const currentTheme = appState.appTheme;
-
-	// Get index of current theme
-	const index = themes.indexOf(currentTheme);
-
-	// Get next theme
-	const nextTheme = themes[(index + 1) % themes.length] as 'auto' | 'light' | 'dark';
-
-	// Update theme
-	appState.appTheme = nextTheme;
 }

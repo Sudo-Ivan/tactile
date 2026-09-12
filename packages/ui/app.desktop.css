@@ -1,37 +1,10 @@
-@import '@tactile/tailwind-config/theme.css';
-@import './theme.css';
+@import './base.css';
 
-/* Component classes live in this package, outside the importing app's
-   module graph. Without an explicit source Tailwind never sees them, so
-   utilities used only here (bg-primary, text-primary-foreground, dialog
-   positioning, tooltip chrome, ...) silently disappear from the build. */
-@source './components';
-@source './lib';
-
+/* The desktop app drives the theme by setting the native window theme
+   (tauri setTheme in routes/+layout.svelte), which is reflected in the
+   webview as prefers-color-scheme. So dark tokens are media-query scoped
+   rather than class-scoped like the web app. */
 @layer base {
-	:root {
-		--background: var(--background-light);
-		--secondary-background: var(--secondary-background-light);
-		--foreground: var(--foreground-light);
-		--muted: var(--muted-light);
-		--muted-foreground: var(--muted-foreground-light);
-		--popover: var(--popover-light);
-		--popover-foreground: var(--popover-foreground-light);
-		--card: var(--card-light);
-		--card-foreground: var(--card-foreground-light);
-		--border: var(--border-light);
-		--input: var(--input-light);
-		--primary: var(--primary-light);
-		--primary-foreground: var(--primary-foreground-light);
-		--secondary: var(--secondary-light);
-		--secondary-foreground: var(--secondary-foreground-light);
-		--accent: var(--accent-light);
-		--accent-foreground: var(--accent-foreground-light);
-		--destructive: var(--destructive-light);
-		--destructive-foreground: var(--destructive-foreground-light);
-		--ring: var(--ring-light);
-	}
-
 	@media (prefers-color-scheme: dark) {
 		:root {
 			--background: var(--background-dark);
@@ -55,14 +28,5 @@
 			--destructive-foreground: var(--destructive-foreground-dark);
 			--ring: var(--ring-dark);
 		}
-	}
-}
-
-@layer base {
-	* {
-		@apply border-border;
-	}
-	body {
-		@apply bg-background text-foreground select-none antialiased;
 	}
 }

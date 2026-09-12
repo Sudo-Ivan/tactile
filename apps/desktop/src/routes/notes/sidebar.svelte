@@ -1,29 +1,45 @@
 <script lang="ts">
-	import { sidebarResize } from '@/actions/sidebar-resize';
-	import { fetchCollectionEntries } from '@/api/collection';
-	import { createFolder } from '@/api/folders';
-	import { createNote, openNote } from '@/api/notes';
-	import Icon from '@/components/shared/icon.svelte';
-	import Shortcut from '@/components/shared/shortcut.svelte';
-	import Tooltip from '@/components/shared/tooltip.svelte';
-	import { SHORTCUTS } from '@/constants';
+	import { sidebarResize } from '@tactile/core/actions/sidebar-resize';
+	import { fetchCollectionEntries } from '@tactile/core/api/collection';
+	import { createFolder } from '@tactile/core/api/folders';
+	import { closeNote, createNote, openNote } from '@tactile/core/api/notes';
+	import Icon from '@tactile/core/components/shared/icon.svelte';
+	import Shortcut from '@tactile/core/components/shared/shortcut.svelte';
+	import Tooltip from '@tactile/core/components/shared/tooltip.svelte';
+	import { SEARCH_FILES_COMMAND, SHORTCUTS } from '@/constants';
 	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
 	import type { FileEntry } from '@/types';
-	import type { SearchResultParams } from '@/utils/search';
+	import SearchResults from '@tactile/core/components/notes/search-results.svelte';
+	import SidebarSearch, {
+		type CollectionSearch
+	} from '@tactile/core/components/notes/sidebar-search.svelte';
+	import type { SearchResultParams } from '@tactile/core/utils/search';
 	import { Button } from '@tactile/ui/components/button';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
+	import { invoke } from '@tauri-apps/api/core';
 	import type { UnlistenFn } from '@tauri-apps/api/event';
 	import { watchImmediate } from '@tauri-apps/plugin-fs';
 	import Entries from './entries.svelte';
-	import SearchPanel from './search-panel.svelte';
-	import SearchResults from './search-results.svelte';
 
-	let searchResults = $state<SearchResultParams[]>([]);
-	let searchLoading = $state(false);
-	let searchQuery = $state('');
-	let searchOptions = $state({ caseSensitive: false, wholeWord: false });
+	let search = $state<CollectionSearch>({
+		value: '',
+		loading: false,
+		caseSensitive: false,
+		wholeWord: false,
+		results: []
+	});
+
+	// Content search runs in Rust through the search_files tauri command.
+	const searchFiles = (query: string, options: { caseSensitive: boolean; wholeWord: boolean }) =>
+		invoke(SEARCH_FILES_COMMAND, {
+			dirPath: appState.collection,
+			query,
+			caseSensitive: options.caseSensitive,
+			matchWord: options.wholeWord,
+			recursive: true
+		}) as Promise<SearchResultParams[]>;
 	let entries = $state<FileEntry[]>([]);
 	let folderToggleState = $state<'collapse' | 'expand'>();
 	let toggleFolderStates = $state<() => void>(() => {});
@@ -50,11 +66,11 @@
 
 		// Open the first note. On mobile stay on the file list instead
 		if (isMobile) {
-			appState.activeFile = null;
+			closeNote();
 		} else if (firstNote) {
 			openNote(firstNote.path);
 		} else {
-			appState.activeFile = null;
+			closeNote();
 		}
 
 		if (collectionPath) {
@@ -191,12 +207,7 @@
 			</Tooltip>
 		</div>
 		<!-- Search -->
-		<SearchPanel
-			bind:results={searchResults}
-			bind:loading={searchLoading}
-			bind:query={searchQuery}
-			bind:options={searchOptions}
-		/>
+		<SidebarSearch bind:search onSearch={searchFiles} />
 	</div>
 
 	<!-- Folders -->
@@ -207,7 +218,7 @@
 		data-path={appState.collection}
 	>
 		{#if appState.collectionSearchActive}
-			<SearchResults results={searchResults} query={searchQuery} loading={searchLoading} />
+			<SearchResults results={search.results} query={search.value} loading={search.loading} />
 		{:else}
 			{#if entries.length === 0}
 				<div class="w-full h-full flex flex-col gap-1 items-center justify-center">

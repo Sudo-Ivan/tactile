@@ -5,8 +5,8 @@ import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { flushSync } from 'svelte';
-import EditorSearch from './search.svelte';
-import { SearchAndReplace } from './extensions/searchAndReplace';
+import EditorSearch from '@tactile/core/components/shared/editor/search.svelte';
+import { SearchAndReplace } from '@tactile/core/components/shared/editor/extensions/searchAndReplace';
 
 // The editor store is rewritten on every transaction to drive isActive
 // reactivity. Regression test: an effect that reads `instance` while calling

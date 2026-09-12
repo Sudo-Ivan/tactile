@@ -4,15 +4,18 @@ import { render, cleanup } from '@testing-library/svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Entries from './entries.svelte';
 
-vi.mock('@/api/notes', () => ({
+vi.mock('@tactile/core/api/notes', () => ({
 	createNote: vi.fn(),
 	deleteNote: vi.fn(),
 	duplicateNote: vi.fn(),
+	listNoteVersions: vi.fn().mockResolvedValue([]),
 	moveNote: vi.fn(),
-	openNote: vi.fn()
+	openNote: vi.fn(),
+	openNoteHistory: vi.fn(),
+	restoreNoteVersion: vi.fn()
 }));
 
-vi.mock('@/api/folders', () => ({
+vi.mock('@tactile/core/api/folders', () => ({
 	createFolder: vi.fn(),
 	deleteFolder: vi.fn(),
 	moveFolder: vi.fn(),

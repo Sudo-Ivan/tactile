@@ -1,11 +1,10 @@
-import {
-	createBrowserBackend,
-	ensureFormatVersion,
-	isInternalPath,
-	isUnder,
-	type StorageBackend,
-	type Unsubscribe
-} from '@tactile/storage';
+import { createBrowserBackend, ensureFormatVersion, type StorageBackend } from '@tactile/storage';
+import { printNote } from '@tactile/core/api/export';
+import { registerPlatform } from '@tactile/core/platform';
+import { registerStorageProvider } from '@tactile/core/storage';
+import { COLLECTIONS_PATH, STORAGE_KEYS } from '@/constants';
+import { downloadBlob } from '@tactile/core/utils/download';
+import { setMode, userPrefersMode } from 'mode-watcher';
 import { migrateFromPGlite } from './migrate';
 import { seedIfEmpty } from './seed';
 
@@ -14,12 +13,38 @@ let initPromise: Promise<StorageBackend> | null = null;
 
 // The storage backend singleton. OPFS where available, IndexedDB otherwise,
 // wrapped in versioning. Resolves on first use.
-export function getStorage(): Promise<StorageBackend> {
+function getStorage(): Promise<StorageBackend> {
 	if (!backendPromise) {
 		backendPromise = Promise.resolve(createBrowserBackend({ rootName: 'tactile' }));
 	}
 	return backendPromise;
 }
+
+// Hand the backend and the browser platform capabilities to @tactile/core so
+// its api/utils modules work identically on both apps.
+registerStorageProvider(getStorage);
+registerPlatform({
+	readAppSettings: () => window.localStorage.getItem(STORAGE_KEYS.appSettings),
+	writeAppSettings: (json) => window.localStorage.setItem(STORAGE_KEYS.appSettings, json),
+	readCollections: async () => {
+		const storage = await getStorage();
+		return storage.readTextFile(COLLECTIONS_PATH).catch(() => null);
+	},
+	writeCollections: async (json) => {
+		const storage = await getStorage();
+		await storage.mkdir('/.tactile', { recursive: true });
+		await storage.writeTextFile(COLLECTIONS_PATH, json, { keepVersion: false });
+	},
+	saveExport: (name, data, mime) => downloadBlob(name, data as BlobPart, mime),
+
+	// UI/chrome capabilities consumed by shared components. The web app
+	// always renders the fixed header and uses mode-watcher for themes.
+	hasHeader: () => true,
+	getThemeMode: () => userPrefersMode.current,
+	setThemeMode: (mode) => setMode(mode),
+	printNote: (path) => printNote(path),
+	printNoteLabel: 'Export note as PDF'
+});
 
 // Full startup: backend, format version, PGlite migration, seed.
 // Idempotent; concurrent callers share one promise.
@@ -38,26 +63,4 @@ export function initStorage(): Promise<StorageBackend> {
 	return initPromise;
 }
 
-// Subscribe to storage changes under a collection path. Debounced so a burst
-// of writes (imports, folder moves) triggers one refresh.
-export async function subscribeCollectionChanges(
-	collectionPath: string,
-	cb: () => void,
-	debounceMs = 120
-): Promise<Unsubscribe> {
-	const backend = await getStorage();
-	let timer: ReturnType<typeof setTimeout> | undefined;
-	return backend.onDidChange((event) => {
-		// Internal writes (settings, version snapshots) should not trigger
-		// file-tree refreshes, but a rename into .tactile/trash still needs to
-		// refresh because the source path leaves the visible tree.
-		const relevant =
-			(isUnder(event.path, collectionPath) && !isInternalPath(event.path)) ||
-			(event.oldPath !== undefined &&
-				isUnder(event.oldPath, collectionPath) &&
-				!isInternalPath(event.oldPath));
-		if (!relevant) return;
-		clearTimeout(timer);
-		timer = setTimeout(cb, debounceMs);
-	});
-}
+export { subscribeCollectionChanges } from '@tactile/core/storage';

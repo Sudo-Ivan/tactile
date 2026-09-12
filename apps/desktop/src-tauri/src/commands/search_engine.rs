@@ -31,7 +31,9 @@ pub struct SearchResult {
     pub path: String,
     /// 'name' matched the file name, 'content' matched a line.
     pub kind: String,
-    /// 1-based line number for content matches.
+    /// 1-based line number for content matches. Serialized as `line` to
+    /// match the shared SearchResultParams type in @tactile/core.
+    #[serde(rename = "line")]
     pub line_number: Option<usize>,
     pub context_preview: String,
     pub score: i32,

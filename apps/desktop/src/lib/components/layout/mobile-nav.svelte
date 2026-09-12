@@ -2,12 +2,12 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import Icon from '$lib/components/shared/icon.svelte';
+	import Icon from '@tactile/core/components/shared/icon.svelte';
 	import { type AppRoutePath, ROUTES } from '@/constants';
 	import { appState } from '@/store.svelte';
-	import { dispatchShortcut } from '@/utils/keyboard';
+	import { dispatchShortcut } from '@tactile/core/utils/keyboard';
 	import { cn } from '@tactile/ui/lib/utils';
-	import SettingsModal from '../settings/settings-modal.svelte';
+	import SettingsModal from '@tactile/core/components/settings/settings-modal.svelte';
 
 	const tabs: {
 		route: AppRoutePath;

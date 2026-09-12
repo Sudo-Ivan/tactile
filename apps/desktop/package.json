@@ -11,7 +11,8 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check . && eslint .",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"test": "vitest run"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-static": "catalog:",
@@ -30,31 +31,19 @@
 		"svelte-check": "catalog:",
 		"tailwindcss": "catalog:",
 		"typescript": "catalog:",
-		"vite": "catalog:"
+		"vite": "catalog:",
+		"vitest": "^5.0.0"
 	},
 	"type": "module",
 	"dependencies": {
 		"@internationalized/date": "catalog:",
+		"@tactile/core": "workspace:*",
 		"@tactile/storage": "workspace:*",
 		"@tactile/ui": "workspace:^",
 		"@tauri-apps/api": "catalog:",
 		"@tauri-apps/plugin-dialog": "catalog:",
 		"@tauri-apps/plugin-fs": "catalog:",
 		"@tauri-apps/plugin-os": "catalog:",
-		"@tauri-apps/plugin-shell": "catalog:",
-		"@tiptap/core": "catalog:",
-		"@tiptap/extension-character-count": "catalog:",
-		"@tiptap/extension-document": "catalog:",
-		"@tiptap/extension-link": "catalog:",
-		"@tiptap/extension-task-item": "catalog:",
-		"@tiptap/extension-task-list": "catalog:",
-		"@tiptap/extension-typography": "catalog:",
-		"@tiptap/pm": "catalog:",
-		"@tiptap/starter-kit": "catalog:",
-		"clsx": "catalog:",
-		"lucide-svelte": "catalog:",
-		"markdown-it": "catalog:",
-		"tailwind-merge": "catalog:",
-		"tiptap-markdown": "catalog:"
+		"@tauri-apps/plugin-shell": "catalog:"
 	}
 }

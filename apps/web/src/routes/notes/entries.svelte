@@ -17,14 +17,11 @@
 			folderOpenStates = entries.map((_, i) => folderOpenStates[i] ?? false);
 		}
 	});
-
-	// Get all directories in the collection
-	let directories = $derived(entries.filter((entry) => entry.children));
 </script>
 
 {#if folderOpenStates.length === entries.length}
 	{#each entries as entry, i (entry.path)}
-		<EntryItem {entry} {directories} bind:open={folderOpenStates[i]}>
+		<EntryItem {entry} {entries} bind:open={folderOpenStates[i]}>
 			{#if entry.children}
 				<Entries entries={entry.children} />
 			{/if}

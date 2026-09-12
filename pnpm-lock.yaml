@@ -54,9 +54,6 @@ catalogs:
     '@tiptap/extension-document':
       specifier: ^3.31.3
       version: 3.31.3
-    '@tiptap/extension-link':
-      specifier: ^3.31.3
-      version: 3.31.3
     '@tiptap/extension-task-item':
       specifier: ^3.31.3
       version: 3.31.3
@@ -173,6 +170,9 @@ importers:
       '@internationalized/date':
         specifier: 'catalog:'
         version: 3.12.4
+      '@tactile/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@tactile/storage':
         specifier: workspace:*
         version: link:../../packages/storage
@@ -194,48 +194,6 @@ importers:
       '@tauri-apps/plugin-shell':
         specifier: 'catalog:'
         version: 2.3.6
-      '@tiptap/core':
-        specifier: 'catalog:'
-        version: 3.31.3(@tiptap/pm@3.31.3)
-      '@tiptap/extension-character-count':
-        specifier: 'catalog:'
-        version: 3.31.3(@tiptap/extensions@3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3))
-      '@tiptap/extension-document':
-        specifier: 'catalog:'
-        version: 3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))
-      '@tiptap/extension-link':
-        specifier: 'catalog:'
-        version: 3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3)
-      '@tiptap/extension-task-item':
-        specifier: 'catalog:'
-        version: 3.31.3(@tiptap/extension-list@3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3))
-      '@tiptap/extension-task-list':
-        specifier: 'catalog:'
-        version: 3.31.3(@tiptap/extension-list@3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3))
-      '@tiptap/extension-typography':
-        specifier: 'catalog:'
-        version: 3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))
-      '@tiptap/pm':
-        specifier: 'catalog:'
-        version: 3.31.3
-      '@tiptap/starter-kit':
-        specifier: 'catalog:'
-        version: 3.31.3
-      clsx:
-        specifier: 'catalog:'
-        version: 2.1.1
-      lucide-svelte:
-        specifier: 'catalog:'
-        version: 1.0.1(svelte@5.57.0(@typescript-eslint/types@8.70.0))
-      markdown-it:
-        specifier: 'catalog:'
-        version: 15.0.1
-      tailwind-merge:
-        specifier: 'catalog:'
-        version: 3.6.0
-      tiptap-markdown:
-        specifier: 'catalog:'
-        version: 0.9.0(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))
     devDependencies:
       '@sveltejs/adapter-static':
         specifier: 'catalog:'
@@ -288,6 +246,9 @@ importers:
       vite:
         specifier: 'catalog:'
         version: 8.3.0(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0)
+      vitest:
+        specifier: ^5.0.0
+        version: 5.0.0(@types/node@26.5.1)(jsdom@30.0.1)(vite@8.3.0(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
 
   apps/homepage:
     dependencies:
@@ -349,6 +310,9 @@ importers:
       '@internationalized/date':
         specifier: 'catalog:'
         version: 3.12.4
+      '@tactile/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@tactile/storage':
         specifier: workspace:*
         version: link:../../packages/storage
@@ -358,48 +322,18 @@ importers:
       '@tiptap/core':
         specifier: 'catalog:'
         version: 3.31.3(@tiptap/pm@3.31.3)
-      '@tiptap/extension-character-count':
-        specifier: 'catalog:'
-        version: 3.31.3(@tiptap/extensions@3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3))
-      '@tiptap/extension-document':
-        specifier: 'catalog:'
-        version: 3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))
-      '@tiptap/extension-link':
-        specifier: 'catalog:'
-        version: 3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3)
-      '@tiptap/extension-task-item':
-        specifier: 'catalog:'
-        version: 3.31.3(@tiptap/extension-list@3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3))
-      '@tiptap/extension-task-list':
-        specifier: 'catalog:'
-        version: 3.31.3(@tiptap/extension-list@3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3))
-      '@tiptap/extension-typography':
-        specifier: 'catalog:'
-        version: 3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))
       '@tiptap/pm':
         specifier: 'catalog:'
         version: 3.31.3
       '@tiptap/starter-kit':
         specifier: 'catalog:'
         version: 3.31.3
-      clsx:
-        specifier: 'catalog:'
-        version: 2.1.1
       lucide-svelte:
         specifier: 'catalog:'
         version: 1.0.1(svelte@5.57.0(@typescript-eslint/types@8.70.0))
-      markdown-it:
-        specifier: 'catalog:'
-        version: 15.0.1
       mode-watcher:
         specifier: 'catalog:'
         version: 1.1.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))
-      tailwind-merge:
-        specifier: 'catalog:'
-        version: 3.6.0
-      tiptap-markdown:
-        specifier: 'catalog:'
-        version: 0.9.0(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))
     devDependencies:
       '@sveltejs/adapter-static':
         specifier: 'catalog:'
@@ -492,6 +426,67 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0
 
+  packages/core:
+    dependencies:
+      '@tactile/storage':
+        specifier: workspace:*
+        version: link:../storage
+      '@tactile/ui':
+        specifier: workspace:*
+        version: link:../ui
+      '@tiptap/core':
+        specifier: 'catalog:'
+        version: 3.31.3(@tiptap/pm@3.31.3)
+      '@tiptap/extension-character-count':
+        specifier: 'catalog:'
+        version: 3.31.3(@tiptap/extensions@3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3))
+      '@tiptap/extension-document':
+        specifier: 'catalog:'
+        version: 3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))
+      '@tiptap/extension-task-item':
+        specifier: 'catalog:'
+        version: 3.31.3(@tiptap/extension-list@3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3))
+      '@tiptap/extension-task-list':
+        specifier: 'catalog:'
+        version: 3.31.3(@tiptap/extension-list@3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3))
+      '@tiptap/extension-typography':
+        specifier: 'catalog:'
+        version: 3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))
+      '@tiptap/pm':
+        specifier: 'catalog:'
+        version: 3.31.3
+      '@tiptap/starter-kit':
+        specifier: 'catalog:'
+        version: 3.31.3
+      lucide-svelte:
+        specifier: 'catalog:'
+        version: 1.0.1(svelte@5.57.0(@typescript-eslint/types@8.70.0))
+      markdown-it:
+        specifier: 'catalog:'
+        version: 15.0.1
+      tiptap-markdown:
+        specifier: 'catalog:'
+        version: 0.9.0(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))
+    devDependencies:
+      '@sveltejs/vite-plugin-svelte':
+        specifier: 'catalog:'
+        version: 7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
+      '@tactile/eslint-config':
+        specifier: workspace:*
+        version: link:../config-eslint
+      svelte:
+        specifier: 'catalog:'
+        version: 5.57.0(@typescript-eslint/types@8.70.0)
+      svelte-check:
+        specifier: 'catalog:'
+        version: 4.7.6(picomatch@4.0.7)(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@5.9.3)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: ^5.0.0
+        version: 5.0.0(@types/node@26.5.1)(jsdom@30.0.1)(vite@8.3.0(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
+
   packages/storage:
     devDependencies:
       '@tactile/eslint-config':
@@ -500,6 +495,9 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
+      vitest:
+        specifier: ^5.0.0
+        version: 5.0.0(@types/node@26.5.1)(jsdom@30.0.1)(vite@8.3.0(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
 
   packages/ui:
     dependencies:
@@ -522,21 +520,24 @@ importers:
         specifier: 'catalog:'
         version: 3.3.1(tailwind-merge@3.6.0)(tailwindcss@4.3.3)
     devDependencies:
+      '@sveltejs/vite-plugin-svelte':
+        specifier: 'catalog:'
+        version: 7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
       '@tactile/eslint-config':
         specifier: workspace:*
         version: link:../config-eslint
-      '@tailwindcss/typography':
-        specifier: 'catalog:'
-        version: 0.5.20(tailwindcss@4.3.3)
       svelte:
         specifier: 'catalog:'
         version: 5.57.0(@typescript-eslint/types@8.70.0)
+      svelte-check:
+        specifier: 'catalog:'
+        version: 4.7.6(picomatch@4.0.7)(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@5.9.3)
       tailwindcss:
         specifier: 'catalog:'
         version: 4.3.3
-      tw-animate-css:
-        specifier: 1.4.0
-        version: 1.4.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
       vitest:
         specifier: ^5.0.0
         version: 5.0.0(@types/node@26.5.1)(jsdom@30.0.1)(vite@8.3.0(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))

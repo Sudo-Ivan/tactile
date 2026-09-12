@@ -1,21 +1,24 @@
 <script lang="ts">
-	import { sidebarResize } from '@/actions/sidebar-resize';
-	import { fetchCollectionEntries } from '@/api/collection';
-	import { createFolder } from '@/api/folders';
-	import { createNote, openNote } from '@/api/notes';
-	import Icon from '@/components/shared/icon.svelte';
-	import Shortcut from '@/components/shared/shortcut.svelte';
-	import Tooltip from '@/components/shared/tooltip.svelte';
+	import { sidebarResize } from '@tactile/core/actions/sidebar-resize';
+	import { fetchCollectionEntries } from '@tactile/core/api/collection';
+	import { createFolder } from '@tactile/core/api/folders';
+	import { closeNote, createNote, openNote } from '@tactile/core/api/notes';
+	import Icon from '@tactile/core/components/shared/icon.svelte';
+	import Shortcut from '@tactile/core/components/shared/shortcut.svelte';
+	import Tooltip from '@tactile/core/components/shared/tooltip.svelte';
 	import { SHORTCUTS } from '@/constants';
+	import SearchResults from '@tactile/core/components/notes/search-results.svelte';
+	import SidebarSearch, {
+		type CollectionSearch
+	} from '@tactile/core/components/notes/sidebar-search.svelte';
 	import { subscribeCollectionChanges } from '@/storage';
 	import { appState } from '@/store.svelte';
+	import { searchEntries } from '@/utils';
 	import { Button } from '@tactile/ui/components/button';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
 	import { onDestroy, untrack } from 'svelte';
 	import Entries from './entries.svelte';
-	import SearchResults from './search-results.svelte';
-	import SidebarSearch, { type CollectionSearch } from './sidebar-search.svelte';
 
 	let search = $state<CollectionSearch>({
 		value: '',
@@ -56,7 +59,7 @@
 			if (firstNote) {
 				openNote(firstNote.path);
 			} else {
-				appState.activeFile = null;
+				closeNote();
 			}
 
 			if (stopWatching) stopWatching();
@@ -159,7 +162,14 @@
 			</Tooltip>
 		</div>
 		<!-- Search -->
-		<SidebarSearch bind:search />
+		<SidebarSearch
+			bind:search
+			onSearch={(query, options) =>
+				searchEntries(appState.collection!, query, {
+					caseSensitive: options.caseSensitive,
+					mode: options.wholeWord ? 'word' : 'fuzzy'
+				})}
+		/>
 	</div>
 
 	<!-- Folders -->
@@ -184,8 +194,6 @@
 
 <style>
 	:global(body.cursor-col-resize) {
-		/* cursor: col-resize !important;
-		user-select: none !important; */
 		pointer-events: none;
 	}
 </style>

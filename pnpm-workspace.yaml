@@ -22,7 +22,6 @@ catalog:
   svelte: ^5.57.0
   '@sveltejs/kit': ^2.70.3
   '@sveltejs/vite-plugin-svelte': ^7.3.0
-  '@sveltejs/adapter-auto': ^7.0.1
   '@sveltejs/adapter-static': ^3.0.10
   vite: ^8.3.0
   svelte-check: ^4.7.6
@@ -42,7 +41,6 @@ catalog:
   '@tiptap/core': ^3.31.3
   '@tiptap/extension-character-count': ^3.31.3
   '@tiptap/extension-document': ^3.31.3
-  '@tiptap/extension-link': ^3.31.3
   '@tiptap/extension-task-item': ^3.31.3
   '@tiptap/extension-task-list': ^3.31.3
   '@tiptap/extension-typography': ^3.31.3

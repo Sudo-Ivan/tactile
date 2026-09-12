@@ -1,0 +1,53 @@
+{
+	"name": "@tactile/core",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./types": "./src/types.ts",
+		"./constants": "./src/constants.ts",
+		"./platform": "./src/platform.ts",
+		"./state": "./src/state/app.svelte.ts",
+		"./state/editor": "./src/state/editor.svelte.ts",
+		"./storage": "./src/storage/index.ts",
+		"./api": "./src/api/index.ts",
+		"./api/*": "./src/api/*.ts",
+		"./actions": "./src/actions/index.ts",
+		"./actions/*": "./src/actions/*.ts",
+		"./utils": "./src/utils/index.ts",
+		"./utils/device": "./src/utils/device.svelte.ts",
+		"./utils/*": "./src/utils/*.ts",
+		"./commands": "./src/commands/index.ts",
+		"./components/*.svelte": "./src/components/*.svelte",
+		"./components/*": "./src/components/*.ts"
+	},
+	"scripts": {
+		"lint": "eslint .",
+		"check": "svelte-check --tsconfig ./tsconfig.json",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@tactile/storage": "workspace:*",
+		"@tactile/ui": "workspace:*",
+		"@tiptap/core": "catalog:",
+		"@tiptap/extension-character-count": "catalog:",
+		"@tiptap/extension-document": "catalog:",
+		"@tiptap/extension-task-item": "catalog:",
+		"@tiptap/extension-task-list": "catalog:",
+		"@tiptap/extension-typography": "catalog:",
+		"@tiptap/pm": "catalog:",
+		"@tiptap/starter-kit": "catalog:",
+		"lucide-svelte": "catalog:",
+		"markdown-it": "catalog:",
+		"tiptap-markdown": "catalog:"
+	},
+	"devDependencies": {
+		"@sveltejs/vite-plugin-svelte": "catalog:",
+		"@tactile/eslint-config": "workspace:*",
+		"svelte": "catalog:",
+		"svelte-check": "catalog:",
+		"typescript": "catalog:",
+		"vitest": "^5.0.0"
+	}
+}

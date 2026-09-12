@@ -1,12 +1,11 @@
 <script lang="ts">
-	import { getCollections } from '@/api/collection';
-	import { loadSettings } from '@/api/settings';
-	import Footer from '@/components/layout/footer.svelte';
+	import { restoreLatestCollection } from '@tactile/core/api/collection';
+	import { loadSettings } from '@tactile/core/api/settings';
+	import Footer from '@tactile/core/components/layout/footer.svelte';
 	import Header from '@/components/layout/header.svelte';
-	import Sidebar from '@/components/layout/sidebar.svelte';
-	import Command from '@/components/shared/command-menu/command.svelte';
-	import Icon from '@/components/shared/icon.svelte';
-	import { appState } from '@/store.svelte';
+	import Sidebar from '@tactile/core/components/layout/sidebar.svelte';
+	import Command from '@tactile/core/components/shared/command-menu/command.svelte';
+	import Icon from '@tactile/core/components/shared/icon.svelte';
 	import { initStorage } from '@/storage';
 	import { createDeviceDetector } from '@/utils';
 	import '@tactile/ui/app.web.css';
@@ -28,20 +27,6 @@
 	let storageState = $state<'loading' | 'ready' | 'error'>('loading');
 	let storageError = $state<string>('');
 
-	// Load latest collection
-	async function loadLatestCollection() {
-		const collections = await getCollections();
-
-		if (!collections || collections.length === 0) return;
-
-		// Get collection with latest lastOpened date
-		const latestCollection = collections.reduce((prev, current) =>
-			prev.lastOpened > current.lastOpened ? prev : current
-		);
-
-		appState.collection = latestCollection.path;
-	}
-
 	onMount(async () => {
 		// Storage init runs format check, PGlite migration and seeding.
 		try {
@@ -55,7 +40,7 @@
 		}
 
 		// Load latest collection on mount
-		await loadLatestCollection();
+		await restoreLatestCollection();
 
 		// Load app & collection settings
 		loadSettings(true, true);

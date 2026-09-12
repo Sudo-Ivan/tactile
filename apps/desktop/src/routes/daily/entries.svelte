@@ -1,96 +1,24 @@
 <script lang="ts">
 	import { longpress } from '@/actions/longpress';
-	import { deleteNote, openNote } from '@/api/notes';
-	import Icon from '@/components/shared/icon.svelte';
-	import Shortcut from '@/components/shared/shortcut.svelte';
+	import { deleteNote, openNote } from '@tactile/core/api/notes';
+	import Icon from '@tactile/core/components/shared/icon.svelte';
+	import Shortcut from '@tactile/core/components/shared/shortcut.svelte';
 	import { SHORTCUTS } from '@/constants';
 	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
 	import type { FileEntry } from '@/types';
 	import { fileManagerLabel, showInFolder } from '@/utils/fs';
-	import { shortcutToString } from '@/utils/keyboard';
+	import { groupDailyEntries } from '@tactile/core/utils/daily';
+	import { dispatchContextMenu } from '@tactile/core/utils/dom';
+	import { shortcutToString } from '@tactile/core/utils/keyboard';
 	import Button from '@tactile/ui/components/button/button.svelte';
 	import * as ContextMenu from '@tactile/ui/components/context-menu';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
-	import { SvelteDate } from 'svelte/reactivity';
 
 	let { entries }: { entries: FileEntry[] } = $props();
 
-	function entryDate(entry: FileEntry) {
-		const [year, month, day] = entry.path.split('/').pop()!.split('.')[0].split('-').map(Number);
-		return new SvelteDate(year, month - 1, day);
-	}
-
-	function groupEntries(entries: FileEntry[]): Record<string, FileEntry[]> {
-		const now = new SvelteDate();
-		const today = new SvelteDate(now.getFullYear(), now.getMonth(), now.getDate());
-		const yesterday = new SvelteDate(today);
-		yesterday.setDate(yesterday.getDate() - 1);
-		const thisWeekStart = new SvelteDate(today);
-		thisWeekStart.setDate(thisWeekStart.getDate() - thisWeekStart.getDay());
-		const thisMonthStart = new SvelteDate(now.getFullYear(), now.getMonth(), 1);
-
-		const grouped: Record<string, FileEntry[]> = {
-			upcoming: [],
-			today: [],
-			yesterday: [],
-			thisWeek: [],
-			thisMonth: [],
-			older: []
-		};
-
-		entries.forEach((entry) => {
-			const [year, month, day] = entry.path.split('/').pop()!.split('.')[0].split('-').map(Number);
-
-			if (isNaN(year) || isNaN(month) || isNaN(day)) {
-				// If the file name doesn't match the expected format, put it in 'older'
-				grouped.older.push(entry);
-				return;
-			}
-
-			const date = entryDate(entry); // month is 0-indexed in JS Date
-			const time = date.getTime();
-
-			if (time > today.getTime()) {
-				grouped.upcoming.push(entry);
-			} else if (time === today.getTime()) {
-				grouped.today.push(entry);
-			} else if (time >= yesterday.getTime()) {
-				grouped.yesterday.push(entry);
-			} else if (time >= thisWeekStart.getTime()) {
-				grouped.thisWeek.push(entry);
-			} else if (time >= thisMonthStart.getTime()) {
-				grouped.thisMonth.push(entry);
-			} else {
-				grouped.older.push(entry);
-			}
-		});
-
-		// Sort each group by date (newest first)
-		Object.keys(grouped).forEach((key) => {
-			grouped[key as keyof typeof grouped].sort(
-				(a, b) => entryDate(b).getTime() - entryDate(a).getTime()
-			);
-		});
-
-		return grouped;
-	}
-
-	const groupedEntries = $derived(groupEntries(entries));
-
-	// Open the wrapping ContextMenu on long-press by dispatching a synthetic
-	// contextmenu event that bubbles up to the ContextMenu.Trigger element
-	function openContextMenu(event: CustomEvent<{ x: number; y: number }>) {
-		(event.currentTarget as HTMLElement).dispatchEvent(
-			new MouseEvent('contextmenu', {
-				bubbles: true,
-				cancelable: true,
-				clientX: event.detail.x,
-				clientY: event.detail.y
-			})
-		);
-	}
+	const groupedEntries = $derived(groupDailyEntries(entries));
 </script>
 
 {#each Object.entries(groupedEntries) as [groupName, groupEntries] (groupName)}
@@ -114,7 +42,7 @@
 							role="button"
 							tabindex="0"
 							use:longpress
-							onlongpress={openContextMenu}
+							onlongpress={dispatchContextMenu}
 						>
 							<Button
 								size="sm"

@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { getCollections } from '$lib/api/collection';
-	import Shortcut from '@/components/shared/shortcut.svelte';
+	import { getCollections } from '@tactile/core/api/collection';
+	import Shortcut from '@tactile/core/components/shared/shortcut.svelte';
 	import { GITHUB_SPONSOR_URL, ROUTES, SHORTCUTS } from '@/constants';
 	import { isMobile } from '@/platform.svelte';
-	import { dispatchShortcut, shortcutToString } from '@/utils/keyboard';
+	import { dispatchShortcut, shortcutToString } from '@tactile/core/utils/keyboard';
 	import { cn } from '@tactile/ui/lib/utils';
 	import { open as browserOpen } from '@tauri-apps/plugin-shell';
 	import { onMount } from 'svelte';

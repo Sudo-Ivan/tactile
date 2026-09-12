@@ -1,39 +1,10 @@
-@import '@tactile/tailwind-config/theme.css';
-@import './theme.css';
+@import './base.css';
 
-/* Component classes live in this package, outside the importing app's
-   module graph. Without an explicit source Tailwind never sees them, so
-   utilities used only here (bg-primary, text-primary-foreground, dialog
-   positioning, tooltip chrome, ...) silently disappear from the build. */
-@source './components';
-@source './lib';
-
+/* The web app toggles dark mode with a .dark class (mode-watcher), so the
+   dark variant and the dark token set are class-scoped. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
-	:root {
-		--background: var(--background-light);
-		--secondary-background: var(--secondary-background-light);
-		--foreground: var(--foreground-light);
-		--muted: var(--muted-light);
-		--muted-foreground: var(--muted-foreground-light);
-		--popover: var(--popover-light);
-		--popover-foreground: var(--popover-foreground-light);
-		--card: var(--card-light);
-		--card-foreground: var(--card-foreground-light);
-		--border: var(--border-light);
-		--input: var(--input-light);
-		--primary: var(--primary-light);
-		--primary-foreground: var(--primary-foreground-light);
-		--secondary: var(--secondary-light);
-		--secondary-foreground: var(--secondary-foreground-light);
-		--accent: var(--accent-light);
-		--accent-foreground: var(--accent-foreground-light);
-		--destructive: var(--destructive-light);
-		--destructive-foreground: var(--destructive-foreground-light);
-		--ring: var(--ring-light);
-	}
-
 	.dark {
 		--background: var(--background-dark);
 		--secondary-background: var(--secondary-background-dark);
@@ -55,14 +26,5 @@
 		--destructive: var(--destructive-dark);
 		--destructive-foreground: var(--destructive-foreground-dark);
 		--ring: var(--ring-dark);
-	}
-}
-
-@layer base {
-	* {
-		@apply border-border;
-	}
-	body {
-		@apply bg-background text-foreground select-none antialiased;
 	}
 }

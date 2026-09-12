@@ -1,9 +1,12 @@
 <script lang="ts">
-	import { sidebarResize } from '@/actions/sidebar-resize';
+	import { sidebarResize } from '@tactile/core/actions/sidebar-resize';
+	import TaskEntries from '@tactile/core/components/tasks/task-entries.svelte';
+	import { SEARCH_FILES_COMMAND, TASK_MARKER } from '@/constants';
 	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
+	import type { SearchResultParams } from '@tactile/core/utils/search';
 	import { cn } from '@tactile/ui/lib/utils';
-	import TaskEntries from './task-entries.svelte';
+	import { invoke } from '@tauri-apps/api/core';
 </script>
 
 <div
@@ -34,6 +37,18 @@
 		data-collection-root
 		data-path={appState.collection}
 	>
-		<TaskEntries />
+		<TaskEntries
+			searchTasks={() =>
+				invoke(SEARCH_FILES_COMMAND, {
+					dirPath: appState.collection,
+					query: TASK_MARKER,
+					caseSensitive: false,
+					matchWord: false,
+					recursive: true,
+					// Literal matching only: fuzzy search would treat the task
+					// marker's punctuation as a subsequence and catch unrelated lines.
+					mode: 'exact'
+				}) as Promise<SearchResultParams[]>}
+		/>
 	</div>
 </div>
