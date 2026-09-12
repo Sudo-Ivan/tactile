@@ -8,6 +8,13 @@ import (
 	"time"
 )
 
+// Sweep tunables: buckets are dropped once they have been full and idle
+// for bucketMaxIdle, checked at most once per sweepInterval.
+const (
+	sweepInterval = time.Minute
+	bucketMaxIdle = 10 * time.Minute
+)
+
 type bucket struct {
 	tokens float64
 	last   time.Time
@@ -63,12 +70,12 @@ func (l *Limiter) AllowN(key string, n float64) bool {
 // sweepLocked drops buckets that have been full and idle for ten minutes,
 // bounding memory use against key-spraying.
 func (l *Limiter) sweepLocked(now time.Time) {
-	if now.Sub(l.lastSweep) < time.Minute {
+	if now.Sub(l.lastSweep) < sweepInterval {
 		return
 	}
 	l.lastSweep = now
 	for k, b := range l.buckets {
-		if b.tokens >= l.burst && now.Sub(b.last) > 10*time.Minute {
+		if b.tokens >= l.burst && now.Sub(b.last) > bucketMaxIdle {
 			delete(l.buckets, k)
 		}
 	}

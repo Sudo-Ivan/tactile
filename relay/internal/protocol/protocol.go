@@ -13,6 +13,17 @@ import (
 // Version is the protocol version implemented by this package.
 const Version = 1
 
+// REST API paths. The server mounts handlers on these patterns and the
+// client builds request URLs from the same constants, so the two can
+// never drift.
+const (
+	PathInfo   = "/v1/info"
+	PathHealth = "/v1/health"
+	PathWS     = "/v1/ws"
+	PathBlobs  = "/v1/blobs"
+	PathBlob   = "/v1/blobs/{id}" // mux pattern; clients append "/" + id to PathBlobs
+)
+
 // Message types, client to server.
 const (
 	TypeAuth   = "auth"   // authenticate this connection

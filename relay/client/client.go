@@ -89,6 +89,17 @@ func WithUserAgent(ua string) Option {
 // clients from scrapers.
 const DefaultUA = "tactile-client/1"
 
+// HTTP client tunables. Conns are pooled and reused across relays; the
+// default MaxIdleConnsPerHost of 2 would churn dials under parallel
+// fan-out.
+const (
+	httpClientTimeout   = 15 * time.Second
+	maxIdleConns        = 256
+	maxIdleConnsPerHost = 64
+	idleConnTimeout     = 90 * time.Second
+	tlsHandshakeTimeout = 10 * time.Second
+)
+
 // New builds a client. relays are base URLs like http://127.0.0.1:8471.
 func New(relays []string, priv ed25519.PrivateKey, opts ...Option) *Client {
 	var pub identity.PubKey
@@ -99,15 +110,12 @@ func New(relays []string, priv ed25519.PrivateKey, opts ...Option) *Client {
 		pub:    pub,
 		ua:     DefaultUA,
 		hc: &http.Client{
-			Timeout: 15 * time.Second,
+			Timeout: httpClientTimeout,
 			Transport: &http.Transport{
-				// Conns are pooled and reused across relays; the default
-				// MaxIdleConnsPerHost of 2 would churn dials under parallel
-				// fan-out.
-				MaxIdleConns:        256,
-				MaxIdleConnsPerHost: 64,
-				IdleConnTimeout:     90 * time.Second,
-				TLSHandshakeTimeout: 10 * time.Second,
+				MaxIdleConns:        maxIdleConns,
+				MaxIdleConnsPerHost: maxIdleConnsPerHost,
+				IdleConnTimeout:     idleConnTimeout,
+				TLSHandshakeTimeout: tlsHandshakeTimeout,
 				ForceAttemptHTTP2:   true,
 			},
 		},
@@ -185,7 +193,7 @@ func (c *Client) Probe(ctx context.Context) map[string]*Info {
 		go func(u string) {
 			defer wg.Done()
 			start := time.Now()
-			req, _ := http.NewRequestWithContext(ctx, http.MethodGet, u+"/v1/info", nil)
+			req, _ := http.NewRequestWithContext(ctx, http.MethodGet, u+protocol.PathInfo, nil)
 			c.setHeaders(req)
 			res, err := c.hc.Do(req)
 			if err != nil {
@@ -268,7 +276,7 @@ func (c *Client) Put(ctx context.Context, id [32]byte, payload []byte, ttlSecond
 var errExists = errors.New("client: blob already stored")
 
 func (c *Client) putOne(ctx context.Context, u string, id [32]byte, payload []byte, ttl int64, sig string) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, u+"/v1/blobs", bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, u+protocol.PathBlobs, bytes.NewReader(payload))
 	if err != nil {
 		return err
 	}
@@ -324,7 +332,7 @@ func (c *Client) GetRange(ctx context.Context, id [32]byte, start, end int64) ([
 			spec += strconv.FormatInt(end-1, 10)
 		}
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet,
-			u+"/v1/blobs/"+base64.RawURLEncoding.EncodeToString(id[:])+"?raw=1", nil)
+			u+protocol.PathBlobs+"/"+base64.RawURLEncoding.EncodeToString(id[:])+"?raw=1", nil)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -373,7 +381,7 @@ func (c *Client) getOne(ctx context.Context, u string, id [32]byte) ([]byte, err
 	msg = append(msg, id[:]...)
 	msg = append(msg, ts...)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
-		u+"/v1/blobs/"+base64.RawURLEncoding.EncodeToString(id[:]), nil)
+		u+protocol.PathBlobs+"/"+base64.RawURLEncoding.EncodeToString(id[:]), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -453,7 +461,7 @@ func (c *Client) listOne(ctx context.Context, u string) ([]ListItem, error) {
 	ts := strconv.FormatInt(time.Now().Unix(), 10)
 	msg := append(append([]byte{}, protocol.DomainREST...), []byte("LIST")...)
 	msg = append(msg, ts...)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u+"/v1/blobs", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u+protocol.PathBlobs, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -500,7 +508,7 @@ func (c *Client) Delete(ctx context.Context, id [32]byte) error {
 	for _, u := range c.ranked() {
 		start := time.Now()
 		req, err := http.NewRequestWithContext(ctx, http.MethodDelete,
-			u+"/v1/blobs/"+base64.RawURLEncoding.EncodeToString(id[:]), nil)
+			u+protocol.PathBlobs+"/"+base64.RawURLEncoding.EncodeToString(id[:]), nil)
 		if err != nil {
 			continue
 		}

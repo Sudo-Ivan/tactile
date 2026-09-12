@@ -90,23 +90,23 @@ func New(cfg config.Config, st store.Backend) (*Server, error) {
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /v1/info", s.handleInfo)
-	mux.HandleFunc("GET /v1/health", s.handleHealth)
-	mux.HandleFunc("GET /v1/ws", s.handleWS)
-	mux.HandleFunc("HEAD /v1/blobs/{id}", s.handleHead)
-	mux.HandleFunc("PUT /v1/blobs", s.handlePut)
-	mux.HandleFunc("GET /v1/blobs", s.handleList)
-	mux.HandleFunc("GET /v1/blobs/{id}", s.handleGet)
-	mux.HandleFunc("DELETE /v1/blobs/{id}", s.handleDelete)
+	mux.HandleFunc("GET "+protocol.PathInfo, s.handleInfo)
+	mux.HandleFunc("GET "+protocol.PathHealth, s.handleHealth)
+	mux.HandleFunc("GET "+protocol.PathWS, s.handleWS)
+	mux.HandleFunc("HEAD "+protocol.PathBlob, s.handleHead)
+	mux.HandleFunc("PUT "+protocol.PathBlobs, s.handlePut)
+	mux.HandleFunc("GET "+protocol.PathBlobs, s.handleList)
+	mux.HandleFunc("GET "+protocol.PathBlob, s.handleGet)
+	mux.HandleFunc("DELETE "+protocol.PathBlob, s.handleDelete)
 
 	s.http = &http.Server{
 		Addr:              cfg.Addr,
 		Handler:           mux,
-		ReadHeaderTimeout: 10 * time.Second,
-		ReadTimeout:       30 * time.Second,
+		ReadHeaderTimeout: cfg.ReadHeaderTimeout,
+		ReadTimeout:       cfg.ReadTimeout,
 		// WriteTimeout must stay zero: WebSocket conns are long-lived.
-		IdleTimeout:    60 * time.Second,
-		MaxHeaderBytes: 16 << 10,
+		IdleTimeout:    cfg.IdleTimeout,
+		MaxHeaderBytes: cfg.MaxHeaderBytes,
 	}
 	return s, nil
 }
@@ -136,7 +136,7 @@ func (s *Server) Close() error {
 	for _, c := range conns {
 		c.close()
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.cfg.ShutdownTimeout)
 	defer cancel()
 	err := s.http.Shutdown(ctx)
 	_ = s.store.Close()
@@ -311,7 +311,7 @@ func (s *Server) releaseConn(ip string) {
 func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
 	used := s.store.TotalBytes()
 	writeJSON(w, http.StatusOK, map[string]any{
-		"version":              1,
+		"version":              protocol.Version,
 		"relay_id":             s.relayID,
 		"pow_bits":             s.cfg.PoWBits,
 		"max_blob_size":        s.cfg.MaxBlobSize,

@@ -17,6 +17,18 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// WebSocket tunables.
+const (
+	wsReadBufferSize   = 8 << 10
+	wsWriteBufferSize  = 8 << 10
+	wsHandshakeTimeout = 10 * time.Second
+	pingInterval       = 2 * time.Minute
+	writeDeadline      = 10 * time.Second
+	readDeadline       = 5 * time.Minute
+	maxPoWNonceLen     = 32
+	maxSignalPayload   = 64 << 10
+)
+
 // writeBufPool shares write buffers across connections. With pooled
 // buffers a conn only holds one while actually writing, which keeps idle
 // conns cheaper when thousands are live.
@@ -25,10 +37,10 @@ var writeBufPool sync.Pool
 var upgrader = websocket.Upgrader{
 	// Blind relay: any origin may connect, there is no session to hijack.
 	CheckOrigin:       func(r *http.Request) bool { return true },
-	ReadBufferSize:    8 << 10,
-	WriteBufferSize:   8 << 10,
+	ReadBufferSize:    wsReadBufferSize,
+	WriteBufferSize:   wsWriteBufferSize,
 	WriteBufferPool:   &writeBufPool,
-	HandshakeTimeout:  10 * time.Second,
+	HandshakeTimeout:  wsHandshakeTimeout,
 	EnableCompression: true, // permessage-deflate; payloads are ciphertext but signaling JSON compresses well
 }
 
@@ -86,17 +98,17 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *conn) writePump() {
-	ping := time.NewTicker(2 * time.Minute)
+	ping := time.NewTicker(pingInterval)
 	defer ping.Stop()
 	for {
 		select {
 		case msg := <-c.send:
-			_ = c.ws.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			_ = c.ws.SetWriteDeadline(time.Now().Add(writeDeadline))
 			if err := c.ws.WriteMessage(websocket.TextMessage, msg); err != nil {
 				return
 			}
 		case <-ping.C:
-			_ = c.ws.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			_ = c.ws.SetWriteDeadline(time.Now().Add(writeDeadline))
 			if err := c.ws.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
@@ -174,10 +186,10 @@ func (c *conn) readPump(ip string) {
 
 	c.ws.SetReadLimit(int64(cfg.MaxMsgSize))
 	c.ws.SetPongHandler(func(string) error {
-		return c.ws.SetReadDeadline(time.Now().Add(5 * time.Minute))
+		return c.ws.SetReadDeadline(time.Now().Add(readDeadline))
 	})
 	for {
-		_ = c.ws.SetReadDeadline(time.Now().Add(5 * time.Minute))
+		_ = c.ws.SetReadDeadline(time.Now().Add(readDeadline))
 		_, data, err := c.ws.ReadMessage()
 		if err != nil {
 			return
@@ -221,7 +233,7 @@ func (c *conn) handleAuth(m *protocol.Auth) {
 	var nonce []byte
 	if c.srv.cfg.PoWBits > 0 {
 		nonce, err = base64.StdEncoding.DecodeString(m.PoWNonce)
-		if err != nil || len(nonce) == 0 || len(nonce) > 32 {
+		if err != nil || len(nonce) == 0 || len(nonce) > maxPoWNonceLen {
 			c.sendErr(protocol.CodeBadPoW, "bad pow nonce")
 			return
 		}
@@ -416,7 +428,7 @@ func (c *conn) handleList() {
 
 func (c *conn) handleSignal(m *protocol.Signal) {
 	payload, err := base64.StdEncoding.DecodeString(m.Payload)
-	if err != nil || len(payload) == 0 || len(payload) > 64<<10 {
+	if err != nil || len(payload) == 0 || len(payload) > maxSignalPayload {
 		c.sendErr(protocol.CodeBadRequest, "bad signal payload")
 		return
 	}

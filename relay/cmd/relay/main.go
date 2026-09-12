@@ -5,7 +5,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"strings"
@@ -60,16 +60,16 @@ Flags:
 		return
 	}
 	if err := config.ApplyEnv(fs); err != nil {
-		log.Fatalf("env config: %v", err)
+		fatal("env config", err)
 	}
 	if mintTier != "" {
 		if cfg.TokenSecrets == "" {
-			log.Fatal("-mint needs -token-secrets or TACTILE_RELAY_TOKEN_SECRETS")
+			fatal("-mint needs -token-secrets or TACTILE_RELAY_TOKEN_SECRETS", nil)
 		}
 		secret := []byte(strings.TrimSpace(strings.Split(cfg.TokenSecrets, ",")[0]))
 		tok, err := tier.Mint(secret, mintTier, time.Duration(mintDays)*24*time.Hour)
 		if err != nil {
-			log.Fatalf("mint: %v", err)
+			fatal("mint", err)
 		}
 		fmt.Println(tok)
 		return
@@ -77,11 +77,11 @@ Flags:
 
 	st, err := openBackend(cfg)
 	if err != nil {
-		log.Fatalf("open store: %v", err)
+		fatal("open store", err)
 	}
 	srv, err := server.New(cfg, st)
 	if err != nil {
-		log.Fatalf("server: %v", err)
+		fatal("server", err)
 	}
 
 	go func() {
@@ -91,10 +91,21 @@ Flags:
 		_ = srv.Close()
 	}()
 
-	log.Printf("relay %s listening on %s, backend %s", srv.RelayID(), cfg.Addr, cfg.Backend)
+	slog.Info("relay listening", "relay_id", srv.RelayID(), "addr", cfg.Addr, "backend", cfg.Backend)
 	if err := srv.ListenAndServe(); err != nil {
-		log.Fatal(err)
+		fatal("serve", err)
 	}
+}
+
+// fatal logs msg (with err when non-nil) and exits nonzero, like
+// log.Fatal did.
+func fatal(msg string, err error) {
+	if err != nil {
+		slog.Error(msg, "err", err)
+	} else {
+		slog.Error(msg)
+	}
+	os.Exit(1)
 }
 
 func openBackend(cfg config.Config) (store.Backend, error) {

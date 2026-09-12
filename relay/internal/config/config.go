@@ -35,6 +35,14 @@ type Config struct {
 	SweepInterval  time.Duration // expired blob sweep period
 	TrustedProxies string        // comma-separated CIDRs/IPs allowed to set X-Forwarded-For
 
+	// HTTP server limits. WriteTimeout stays unset: WebSocket conns are
+	// long-lived.
+	ReadHeaderTimeout time.Duration // per-request header read deadline
+	ReadTimeout       time.Duration // full request read deadline
+	IdleTimeout       time.Duration // keep-alive idle timeout
+	MaxHeaderBytes    int           // request header size cap, bytes
+	ShutdownTimeout   time.Duration // graceful shutdown window
+
 	// S3 backend. When Bucket is set the relay stores blobs in S3 instead
 	// of the filesystem.
 	Backend     string // "fs" (default) or "s3"
@@ -61,8 +69,8 @@ func Default() Config {
 		MaxMsgSize:     24 << 20, // fits a base64'd max-size blob
 		MinTTL:         time.Hour,
 		MaxTTL:         90 * 24 * time.Hour,
-		IdentityQuota:  5 << 30,  // 5 GiB per identity
-		MaxStorage:     1 << 40,  // 1 TiB total
+		IdentityQuota:  5 << 30, // 5 GiB per identity
+		MaxStorage:     1 << 40, // 1 TiB total
 		PoWBits:        18,
 		ChallengeTTL:   60 * time.Second,
 		SendQueue:      64,
@@ -71,6 +79,12 @@ func Default() Config {
 		MsgRatePerSec:  30,
 		SweepInterval:  time.Minute,
 		Backend:        "fs",
+
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		MaxHeaderBytes:    16 << 10,
+		ShutdownTimeout:   5 * time.Second,
 	}
 }
 
@@ -94,6 +108,16 @@ func (c *Config) Flags(fs *flag.FlagSet) {
 	fs.DurationVar(&c.SweepInterval, "sweep-interval", c.SweepInterval, "expired blob sweep period")
 	fs.StringVar(&c.TrustedProxies, "trusted-proxies", c.TrustedProxies,
 		"comma-separated proxy IPs/CIDRs trusted to provide X-Forwarded-For")
+	fs.DurationVar(&c.ReadHeaderTimeout, "read-header-timeout", c.ReadHeaderTimeout,
+		"HTTP request header read deadline")
+	fs.DurationVar(&c.ReadTimeout, "read-timeout", c.ReadTimeout,
+		"HTTP full request read deadline")
+	fs.DurationVar(&c.IdleTimeout, "idle-timeout", c.IdleTimeout,
+		"HTTP keep-alive idle timeout")
+	fs.IntVar(&c.MaxHeaderBytes, "max-header-bytes", c.MaxHeaderBytes,
+		"HTTP request header size cap in bytes")
+	fs.DurationVar(&c.ShutdownTimeout, "shutdown-timeout", c.ShutdownTimeout,
+		"graceful shutdown window")
 	fs.StringVar(&c.Backend, "backend", c.Backend, "storage backend: fs or s3")
 	fs.StringVar(&c.S3Endpoint, "s3-endpoint", c.S3Endpoint, "S3 endpoint URL")
 	fs.StringVar(&c.S3Region, "s3-region", c.S3Region, "S3 region (auto for R2)")

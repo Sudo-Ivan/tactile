@@ -17,8 +17,13 @@ import (
 	"github.com/Sudo-Ivan/tactile/relay/client"
 )
 
+const (
+	defaultRelays = "http://127.0.0.1:8471" // -relays default
+	poolSize      = 256                     // warmup blob pool, cycled by readers
+)
+
 func main() {
-	relays := flag.String("relays", "http://127.0.0.1:8471", "comma-separated relay URLs")
+	relays := flag.String("relays", defaultRelays, "comma-separated relay URLs")
 	workers := flag.Int("workers", 64, "concurrent workers")
 	duration := flag.Duration("duration", 10*time.Second, "test duration")
 	payload := flag.Int("payload", 512, "blob payload bytes")
@@ -30,8 +35,7 @@ func main() {
 	c := client.New(urls, priv)
 
 	// Warmup: one shared identity, a pool of blobs to read.
-	const pool = 256
-	var ids [pool][32]byte
+	var ids [poolSize][32]byte
 	body := make([]byte, *payload)
 	rand.Read(body)
 	if *mode != "put" {
@@ -71,7 +75,7 @@ func main() {
 					rand.Read(id[:])
 					err = c.Put(context.Background(), id, body, 3600, 1)
 				default:
-					id = ids[int(seq)%pool]
+					id = ids[int(seq)%poolSize]
 					_, err = c.Get(context.Background(), id)
 				}
 				lat[w] = append(lat[w], time.Since(start))
