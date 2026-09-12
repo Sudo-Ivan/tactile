@@ -52,20 +52,19 @@
 <p class="text-secondary-foreground/70 text-center leading-relaxed text-sm sm:text-base z-10">
 	Tactile is a
 	<Tooltip type="privacy">
-		<span class="underline decoration-dotted cursor-not-allowed">local-first & privacy-focused</span
-		>,
+		<span class="cursor-not-allowed">local-first & privacy-focused</span>,
 	</Tooltip>
 	<Tooltip type="github">
-		<span class="underline decoration-dotted cursor-help">open-source</span>
+		<span class="cursor-help">open-source</span>
 	</Tooltip>
 	home for your markdown notes.<br class="hidden md:block" />
 	Minimal,
 	<Tooltip type="lightweight">
-		<span class="underline decoration-dotted cursor-copy">lightweight</span></Tooltip
+		<span class="cursor-copy">lightweight</span></Tooltip
 	> and
 
 	<Tooltip type="rust">
-		<span class="underline decoration-dotted cursor-wait">fast</span>
+		<span class="cursor-wait">fast</span>
 	</Tooltip>, with encrypted sync when you want it.
 </p>
 

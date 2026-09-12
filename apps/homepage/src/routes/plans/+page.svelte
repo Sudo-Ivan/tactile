@@ -10,13 +10,14 @@
 			name: 'Free',
 			price: '$0',
 			period: 'forever',
-			blurb: 'Local-first notes plus community relay sync.',
+			blurb: 'Everything you need. Your notes stay yours.',
 			features: [
-				'Full app, web and desktop',
-				'64 MiB relay storage',
-				'30-day blob retention',
-				'1 MiB max blob',
-				'Run your own relay, free'
+				'The full app, on web and desktop',
+				'5 GB of sync storage',
+				'Unlimited device-to-device and live sync',
+				'Devices can stay offline for 90 days',
+				'Files up to 16 MB each',
+				'Self-host sync and publish for free'
 			],
 			cta: 'Download',
 			href: resolve('/download'),
@@ -26,12 +27,13 @@
 			name: 'Supporter',
 			price: '$12',
 			period: 'per year',
-			blurb: 'For people who keep a device off for a while.',
+			blurb: 'More room for your notes, plus publishing.',
 			features: [
 				'Everything in Free',
-				'256 MiB relay storage',
-				'90-day blob retention',
-				'4 MiB max blob, enough for images',
+				'100 GB of sync storage',
+				'Devices can stay offline for 1 year',
+				'Files up to 64 MB each',
+				'Publish notes as public sites',
 				'Supports development'
 			],
 			cta: 'Get Supporter',
@@ -42,13 +44,14 @@
 			name: 'Pro',
 			price: '$30',
 			period: 'per year',
-			blurb: 'Heavy vaults and long-offline devices.',
+			blurb: 'Big libraries and heavy publishing.',
 			features: [
 				'Everything in Supporter',
-				'1 GiB relay storage',
-				'1-year blob retention',
-				'8 MiB max blob',
-				'Priority capacity on hosted relays'
+				'500 GB of sync storage',
+				'Devices can stay offline for 5 years',
+				'Files up to 256 MB each',
+				'More sites and custom domains',
+				'Priority capacity on hosted servers'
 			],
 			cta: 'Get Pro',
 			href: SPONSOR_URL,
@@ -59,7 +62,7 @@
 
 <Seo
 	title="Plans - Tactile"
-	description="Tactile is free and open source. Optional paid sync tiers buy more relay capacity, not your data."
+	description="Tactile is free and open source. Paid plans add more sync storage and note publishing on hosted servers, never access to your data."
 	path="/plans"
 />
 
@@ -71,8 +74,8 @@
 		<p
 			class="text-secondary-foreground/70 text-sm sm:text-base leading-relaxed mt-3 max-w-xl mx-auto"
 		>
-			The app is free and open source, always. Paid tiers buy capacity on the hosted relays, and
-			everything works the same if you run your own.
+			Tactile is free and open source, always. Paid plans simply give you more room on our hosted
+			sync and publishing servers. Everything works the same if you host it yourself.
 		</p>
 	</div>
 
@@ -111,41 +114,48 @@
 
 	<div class="w-full max-w-3xl text-left flex flex-col gap-6">
 		<div class="rounded-xl border border-border/60 bg-background/40 p-6">
-			<h3 class="text-foreground font-medium mb-2">How paid sync works</h3>
+			<h3 class="text-foreground font-medium mb-2">How paying works</h3>
 			<p class="text-secondary-foreground/70 text-sm leading-relaxed">
-				You buy a code, you paste it into the app, done. The code is a signed token that grants
-				quota and retention on our relays. There is no account to create, no email to give, and the
-				relay cannot read your notes either way - everything it stores is already encrypted on your
-				device.
+				You buy a code and paste it into the app. Done. There is no account to create and no email
+				to hand over. Our servers only ever store encrypted data they cannot read, so a paid plan
+				buys space, never access to your notes.
+			</p>
+		</div>
+		<div class="rounded-xl border border-border/60 bg-background/40 p-6">
+			<h3 class="text-foreground font-medium mb-2">Publishing</h3>
+			<p class="text-secondary-foreground/70 text-sm leading-relaxed">
+				Supporter and Pro can turn any note into a small public website with its own address, or
+				your own domain. Sites count toward the same storage limit as sync, so there is only one
+				number to think about.
 			</p>
 		</div>
 		<div class="rounded-xl border border-border/60 bg-background/40 p-6">
 			<h3 class="text-foreground font-medium mb-2">Self-host instead</h3>
 			<p class="text-secondary-foreground/70 text-sm leading-relaxed">
-				The relay is a single open-source Go binary with filesystem or S3 storage. Run it on a
-				Raspberry Pi, a VPS, or your NAS and point Tactile at it. Self-hosted relays are fully free,
-				and your devices can use several relays at once.
+				The sync server and the publish server are single open-source programs. Run them on a
+				Raspberry Pi, a VPS, or your NAS and point Tactile at them. Self-hosting is always free, and
+				your devices can use several servers at once.
 			</p>
 		</div>
 		<div class="rounded-xl border border-border/60 bg-background/40 p-6">
 			<h3 class="text-foreground font-medium mb-2">Fair questions</h3>
 			<dl class="text-sm text-secondary-foreground/70 flex flex-col gap-3">
 				<div>
-					<dt class="text-foreground/90 font-medium">What happens when a plan lapses?</dt>
+					<dt class="text-foreground/90 font-medium">What happens when a plan ends?</dt>
 					<dd>
-						Your blobs keep their remaining retention and you drop back to free-tier limits. Nothing
-						is deleted early.
+						You go back to the free limits. Anything already synced stays until it expires
+						naturally; nothing is deleted early.
 					</dd>
 				</div>
 				<div>
-					<dt class="text-foreground/90 font-medium">Is sync required?</dt>
-					<dd>No. Tactile is fully local-first; sync is optional and self-hostable.</dd>
+					<dt class="text-foreground/90 font-medium">Do I have to sync or publish?</dt>
+					<dd>No. Tactile works fully offline. Sync and publishing are optional extras.</dd>
 				</div>
 				<div>
-					<dt class="text-foreground/90 font-medium">Can anyone else run a paid relay?</dt>
+					<dt class="text-foreground/90 font-medium">Can anyone else run a paid server?</dt>
 					<dd>
-						Yes. Tokens are minted with an operator secret, so independent relay operators can run
-						their own paid tiers.
+						Yes. Anyone can run their own sync or publish server and set their own prices, free or
+						paid.
 					</dd>
 				</div>
 			</dl>
