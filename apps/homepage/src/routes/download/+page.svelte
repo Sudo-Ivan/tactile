@@ -5,6 +5,8 @@
 	import { onMount } from 'svelte';
 	import { cubicInOut } from 'svelte/easing';
 	import { browser } from '$app/environment';
+	import Seo from '$lib/components/seo.svelte';
+	import { APP_URL } from '$lib/site';
 
 	type PlatformId = 'mac' | 'windows' | 'web' | 'mobile';
 
@@ -79,6 +81,12 @@
 		detectPlatform();
 	});
 </script>
+
+<Seo
+	title="Download - Tactile"
+	description="Get Tactile for macOS, or run the web app in your browser. Windows and Linux builds are coming."
+	path="/download"
+/>
 
 <div
 	class="flex h-fit min-h-0 w-full flex-col items-center justify-center gap-4 max-w-screen-2xl sm:pb-[100px] z-10"
@@ -189,7 +197,8 @@
 						>
 					</div>
 				{:else if selected === 'web'}
-					<a href="/app" rel="noopener noreferrer" target="_blank">
+					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+					<a href={APP_URL} rel="noopener noreferrer" target="_blank">
 						<Button class="flex items-center gap-2 rounded-[0.55rem] w-full sm:w-fit" scale="sm"
 							>Open Web App</Button
 						>

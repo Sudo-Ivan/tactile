@@ -2,52 +2,12 @@
 	import '@tactile/ui/app.web.css';
 	import { Button } from '@tactile/ui/components/button';
 	import type { Snippet } from 'svelte';
+	import { resolve } from '$app/paths';
+	import { APP_URL, REPO_URL, SPONSOR_URL } from '$lib/site';
 
 	let { children }: { children?: Snippet } = $props();
 	const currentYear = new Date().getFullYear();
 </script>
-
-<svelte:head>
-	<title>Tactile - Write Notes at the speed of touch</title>
-	<meta
-		name="description"
-		content="Tactile is a new local-first & privacy-focused home for your markdown notes. It's a minimalistic, lightweight and fast note-taking app that's designed to be distraction-free."
-	/>
-	<meta
-		name="keywords"
-		content="Tactile, Note-taking, Markdown, Local-first, Privacy-focused, Open-source, Online Markdown Editor, Fast Note-taking, Minimalistic Design"
-	/>
-	<meta name="author" content="Tactile" />
-	<meta name="robots" content="index, follow" />
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<meta name="theme-color" content="#0F0F0F" />
-	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
-	<!-- Open Graph -->
-	<meta property="og:site_name" content="Tactile" />
-	<meta property="og:locale" content="en" />
-	<meta property="og:type" content="website" />
-	<meta property="og:url" content="https://github.com/Sudo-Ivan/tactile/" />
-	<meta property="og:title" content="Tactile - Write Notes at the speed of touch" />
-	<meta
-		property="og:description"
-		content="Tactile is a new local-first & privacy-focused home for your markdown notes. It's a minimalistic, lightweight and fast note-taking app that's designed to be distraction-free."
-	/>
-	<meta property="og:image" content="https://github.com/Sudo-Ivan/tactile/landing.png" />
-	<meta property="og:image:alt" content="Tactile - Markdown Editor" />
-	<meta property="og:image:width" content="1200" />
-	<meta property="og:image:height" content="627" />
-
-	<!-- Twitter -->
-	<meta property="twitter:card" content="summary_large_image" />
-	<meta property="twitter:url" content="https://github.com/Sudo-Ivan/tactile/" />
-	<meta property="twitter:title" content="Tactile - Write Notes at the speed of touch" />
-	<meta
-		property="twitter:description"
-		content="Tactile is a new local-first & privacy-focused home for your markdown notes. It's a minimalistic, lightweight and fast note-taking app that's designed to be distraction-free."
-	/>
-	<meta property="twitter:image" content="https://github.com/Sudo-Ivan/tactile/landing.png" />
-</svelte:head>
 
 <div
 	class="flex min-h-[100dvh] w-full flex-col items-center bg-gradient-to-b from-transparent to-neutral-950 justify-between select-text px-4 selection:text-primary-foreground selection:bg-primary bg-[#FAFAF9] dark:bg-background"
@@ -55,7 +15,7 @@
 	<!-- Header -->
 	<header class="flex items-center justify-between w-full h-16 z-10 max-w-screen-2xl">
 		<!-- Logo & Name -->
-		<a class="flex items-center justify-center gap-2" href="/">
+		<a class="flex items-center justify-center gap-2" href={resolve('/')}>
 			<img src="/icon.svg" alt="Tactile" class="w-9 h-9 border border-border/80 rounded-lg" />
 			<span class="text-xl sm:text-2xl font-medium text-foreground font-['Gambarino-Regular']"
 				>Tactile</span
@@ -64,11 +24,18 @@
 
 		<!-- CTA's -->
 		<div class="flex items-center gap-2">
-			<a href="/github" target="_blank" rel="noopener noreferrer">
+			<a
+				href={resolve('/plans')}
+				class="hidden sm:inline text-sm text-secondary-foreground/70 hover:text-foreground transition-all mr-2"
+				>Plans</a
+			>
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+			<a href={REPO_URL} target="_blank" rel="noopener noreferrer">
 				<Button variant="secondary" size="sm" scale="sm" class="rounded-full">Star on Github</Button
 				>
 			</a>
-			<a href="/app" target="_blank" rel="noopener noreferrer">
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+			<a href={APP_URL} target="_blank" rel="noopener noreferrer">
 				<Button size="sm" scale="sm" class="rounded-full">Open App</Button>
 			</a>
 		</div>
@@ -86,45 +53,40 @@
 		<p class="text-secondary-foreground/70 text-sm sm:text-[15px]">© {currentYear} Tactile</p>
 
 		<nav class="items-center gap-4 ml-4 text-sm sm:text-[15px] hidden sm:flex -ml-20">
-			<a href="/download" class="text-secondary-foreground/70 hover:text-foreground transition-all"
-				>Download</a
+			<a
+				href={resolve('/download')}
+				class="text-secondary-foreground/70 hover:text-foreground transition-all">Download</a
 			>
 			<a
-				href="/sponsor"
+				href={resolve('/plans')}
+				class="text-secondary-foreground/70 hover:text-foreground transition-all">Plans</a
+			>
+			<!-- eslint-disable svelte/no-navigation-without-resolve -->
+			<a
+				href={SPONSOR_URL}
 				class="text-secondary-foreground/70 hover:text-foreground transition-all"
 				rel="noopener noreferrer"
 				target="_blank"
 			>
 				Sponsor
 			</a>
+			<!-- eslint-enable svelte/no-navigation-without-resolve -->
+			<!-- eslint-disable svelte/no-navigation-without-resolve -->
 			<a
-				href="/tweet"
+				href={REPO_URL}
 				class="text-secondary-foreground/70 hover:text-foreground transition-all"
 				rel="noopener noreferrer"
 				target="_blank"
 			>
 				Spread the word
 			</a>
+			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 		</nav>
 
 		<!-- Socials -->
 		<div class="flex items-center gap-4">
-			<a href="/twitter" rel="noopener noreferrer" target="_blank" aria-label="X (Twitter)">
-				<svg
-					stroke="currentColor"
-					fill="currentColor"
-					stroke-width="0"
-					viewBox="0 0 512 512"
-					class="h-5 w-5 fill-muted-foreground hover:fill-foreground transition-all cursor-pointer"
-					height="22"
-					width="22"
-					xmlns="http://www.w3.org/2000/svg"
-					><path
-						d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"
-					></path></svg
-				>
-			</a>
-			<a href="/github" rel="noopener noreferrer" target="_blank" aria-label="GitHub">
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+			<a href={REPO_URL} rel="noopener noreferrer" target="_blank" aria-label="GitHub">
 				<svg
 					viewBox="0 0 256 250"
 					width="256"

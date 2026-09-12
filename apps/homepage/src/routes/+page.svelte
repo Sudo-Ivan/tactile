@@ -1,10 +1,43 @@
 <script lang="ts">
 	import Tooltip from '$lib/components/tooltip.svelte';
+	import Seo from '$lib/components/seo.svelte';
 	import { Button } from '@tactile/ui/components/button';
 	import banner from '$lib/assets/hero-dark.png';
 
-	import { ArrowUpRight } from 'lucide-svelte';
+	import { APP_URL, REPO_URL } from '$lib/site';
+	import { resolve } from '$app/paths';
+
+	import { ArrowUpRight, FileText, Lock, RefreshCw, Code } from 'lucide-svelte';
+
+	const features = [
+		{
+			icon: FileText,
+			title: 'Plain markdown',
+			text: 'Notes are real .md files on disk or in the browser. No database lock-in, export anytime.'
+		},
+		{
+			icon: Lock,
+			title: 'Private by default',
+			text: 'Local-first with no account, no email, no tracking. Your notes never leave your devices unless you turn on sync.'
+		},
+		{
+			icon: RefreshCw,
+			title: 'Sync without accounts',
+			text: 'Optional end-to-end encrypted sync through blind relays. The server stores only signed ciphertext.'
+		},
+		{
+			icon: Code,
+			title: 'Open and hackable',
+			text: 'AGPL source, self-hostable relay, open protocol. Run your own sync node if you want full control.'
+		}
+	];
 </script>
+
+<Seo
+	title="Tactile - Local-first markdown notes"
+	description="Local-first, privacy-focused markdown notes. Optional end-to-end encrypted sync with no accounts and no email."
+	path="/"
+/>
 
 <svelte:head>
 	<link rel="preload" href={banner} as="image" />
@@ -13,11 +46,11 @@
 <h1
 	class="text-5xl sm:text-6xl font-medium text-foreground font-['Gambarino-Regular'] text-center z-10"
 >
-	Write Notes at the speed of touch
+	Write notes at the speed of touch
 </h1>
 
 <p class="text-secondary-foreground/70 text-center leading-relaxed text-sm sm:text-base z-10">
-	Tactile is a new
+	Tactile is a
 	<Tooltip type="privacy">
 		<span class="underline decoration-dotted cursor-not-allowed">local-first & privacy-focused</span
 		>,
@@ -26,23 +59,22 @@
 		<span class="underline decoration-dotted cursor-help">open-source</span>
 	</Tooltip>
 	home for your markdown notes.<br class="hidden md:block" />
-	It's a minimalistic,
+	Minimal,
 	<Tooltip type="lightweight">
 		<span class="underline decoration-dotted cursor-copy">lightweight</span></Tooltip
 	> and
 
 	<Tooltip type="rust">
 		<span class="underline decoration-dotted cursor-wait">fast</span>
-	</Tooltip> note-taking app that's designed to be <Tooltip type="shortcuts"
-		><span class="underline decoration-dotted cursor-alias">distraction-free</span>.</Tooltip
-	>
+	</Tooltip>, with encrypted sync when you want it.
 </p>
 
 <div class="flex items-center justify-center gap-4 z-10 mt-2">
-	<a href="/download">
+	<a href={resolve('/download')}>
 		<Button scale="sm" class="rounded-full select-none">Download</Button>
 	</a>
-	<a href="/github" target="_blank" rel="noopener noreferrer">
+	<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+	<a href={REPO_URL} target="_blank" rel="noopener noreferrer">
 		<Button scale="sm" variant="secondary" class="rounded-full select-none">Learn More</Button>
 	</a>
 </div>
@@ -53,15 +85,20 @@
 	></span>
 	<div class="relative xl:-mx-36">
 		<div
-			class="relative flex min-h-full h-full w-full items-center justify-center overflow-hidden rounded-lg md:rounded-xl bg-neutral-950 md:rounded-xl border"
+			class="relative flex min-h-full h-full w-full items-center justify-center overflow-hidden rounded-lg md:rounded-xl bg-neutral-950 border"
 		>
-			<img src={banner} alt="Screenshot" class="rounded-[inherit] opacity-45 grayscale z-10" />
+			<img
+				src={banner}
+				alt="Tactile screenshot"
+				class="rounded-[inherit] opacity-45 grayscale z-10"
+			/>
 		</div>
 		<div
 			class="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-transparent to-neutral-950 rounded-lg md:rounded-xl z-10"
 		>
+			<!-- eslint-disable svelte/no-navigation-without-resolve -->
 			<a
-				href="/app"
+				href={APP_URL}
 				target="_blank"
 				rel="noopener noreferrer"
 				class="group overflow-hidden rounded-full border border-primary-foreground/10 dark:border-border bg-background/5 dark:bg-background dark:brightness-110 backdrop-blur-sm transition hover:scale-[1.05]"
@@ -74,6 +111,35 @@
 					/>
 				</div>
 			</a>
+			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 		</div>
+	</div>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-3xl mt-16 z-10">
+	{#each features as f (f.title)}
+		<div class="rounded-xl border border-border/60 bg-background/40 p-5 text-left">
+			<f.icon class="h-5 w-5 text-foreground/70 mb-3" />
+			<h3 class="text-foreground font-medium mb-1">{f.title}</h3>
+			<p class="text-secondary-foreground/70 text-sm leading-relaxed">{f.text}</p>
+		</div>
+	{/each}
+</div>
+
+<div
+	class="mt-14 w-full max-w-3xl rounded-xl border border-border/60 bg-background/40 p-6 sm:p-8 text-left z-10"
+>
+	<h2 class="text-2xl font-medium text-foreground font-['Gambarino-Regular']">
+		Sync, on your terms
+	</h2>
+	<p class="text-secondary-foreground/70 text-sm sm:text-base leading-relaxed mt-2">
+		Tactile syncs through blind relays that store only signed ciphertext. Use the free hosted relay,
+		pay for more capacity with a simple code, or run your own relay on anything with a disk or an S3
+		bucket. No email, no account, no lock-in.
+	</p>
+	<div class="mt-4">
+		<a href={resolve('/plans')}>
+			<Button scale="sm" variant="secondary" class="rounded-full select-none">See plans</Button>
+		</a>
 	</div>
 </div>
