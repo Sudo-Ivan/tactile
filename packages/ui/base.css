@@ -4,9 +4,11 @@
 /* Component classes live in this package, outside the importing app's
    module graph. Without an explicit source Tailwind never sees them, so
    utilities used only here (bg-primary, text-primary-foreground, dialog
-   positioning, tooltip chrome, ...) silently disappear from the build. */
+   positioning, tooltip chrome, ...) silently disappear from the build.
+   The same applies to the shared app components in @tactile/core. */
 @source './components';
 @source './lib';
+@source '../core/src';
 
 @layer base {
 	:root {
