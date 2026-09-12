@@ -66,7 +66,15 @@
 		}
 	}}
 >
-	<Tooltip.Trigger onpointerdown={handleInteraction}>{@render children?.()}</Tooltip.Trigger>
+	<Tooltip.Trigger onpointerdown={handleInteraction}>
+		{#snippet child({ props })}
+			<!-- Delegate trigger props to a span so we never emit a button
+			     wrapper around the caller's content. -->
+			<span {...props} class="inline">
+				{@render children?.()}
+			</span>
+		{/snippet}
+	</Tooltip.Trigger>
 	<Tooltip.Content sideOffset={0} class="text-sm h-7">
 		{#if type === 'github'}
 			<GithubLogo class="h-[15px] w-[15px]" />

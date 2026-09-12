@@ -2,7 +2,7 @@
 	import '@tactile/ui/app.web.css';
 	import { Button } from '@tactile/ui/components/button';
 	import type { Snippet } from 'svelte';
-	import { resolve } from '$app/paths';
+	import { asset, resolve } from '$app/paths';
 	import { APP_URL, REPO_URL, SPONSOR_URL } from '$lib/site';
 
 	let { children }: { children?: Snippet } = $props();
@@ -16,7 +16,11 @@
 	<header class="flex items-center justify-between w-full h-16 z-10 max-w-screen-2xl">
 		<!-- Logo & Name -->
 		<a class="flex items-center justify-center gap-2" href={resolve('/')}>
-			<img src="/icon.svg" alt="Tactile" class="w-9 h-9 border border-border/80 rounded-lg" />
+			<img
+				src={asset('/icon.svg')}
+				alt="Tactile"
+				class="w-9 h-9 border border-border/80 rounded-lg"
+			/>
 			<span class="text-xl sm:text-2xl font-medium text-foreground font-['Gambarino-Regular']"
 				>Tactile</span
 			>
@@ -29,11 +33,6 @@
 				class="hidden sm:inline text-sm text-secondary-foreground/70 hover:text-foreground transition-all mr-2"
 				>Plans</a
 			>
-			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-			<a href={REPO_URL} target="_blank" rel="noopener noreferrer">
-				<Button variant="secondary" size="sm" scale="sm" class="rounded-full">Star on Github</Button
-				>
-			</a>
 			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 			<a href={APP_URL} target="_blank" rel="noopener noreferrer">
 				<Button size="sm" scale="sm" class="rounded-full">Open App</Button>
