@@ -2,13 +2,15 @@ import { APP_SETTINGS_FILENAME, COLLECTION_SETTINGS_PATH } from '@/constants';
 import { appState } from '@/store.svelte';
 import type { AppSettingsParams, CollectionSettingsParams } from '@/types';
 import { BaseDirectory } from '@tauri-apps/api/path';
-import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
+import { storage } from '@/storage';
 
 export const loadSettings = async (loadApp: boolean, loadCollection: boolean) => {
 	if (loadApp) {
-		const appSettingsText = await readTextFile(APP_SETTINGS_FILENAME, {
-			baseDir: BaseDirectory.AppData
-		}).catch(() => null);
+		const appSettingsText = await storage
+			.readTextFile(APP_SETTINGS_FILENAME, {
+				baseDir: BaseDirectory.AppData
+			})
+			.catch(() => null);
 
 		if (!appSettingsText) {
 			setSettings('app');
@@ -19,7 +21,9 @@ export const loadSettings = async (loadApp: boolean, loadCollection: boolean) =>
 
 	if (loadCollection) {
 		const collectionSettingsPath = `${appState.collection}/${COLLECTION_SETTINGS_PATH}`;
-		const collectionSettingsText = await readTextFile(collectionSettingsPath).catch(() => null);
+		const collectionSettingsText = await storage
+			.readTextFile(collectionSettingsPath)
+			.catch(() => null);
 		if (!collectionSettingsText) {
 			setSettings('collection');
 		} else {
@@ -35,7 +39,7 @@ export const setSettings = async (
 	if (settingsType === 'app') {
 		const appSettingsText = JSON.stringify(value ?? appState.appSettings);
 		appState.appSettings = (value ?? appState.appSettings) as AppSettingsParams;
-		await writeTextFile(APP_SETTINGS_FILENAME, appSettingsText, {
+		await storage.writeTextFile(APP_SETTINGS_FILENAME, appSettingsText, {
 			baseDir: BaseDirectory.AppData
 		});
 	}
@@ -45,6 +49,6 @@ export const setSettings = async (
 		const collectionSettingsText = JSON.stringify(value ?? appState.collectionSettings);
 		appState.collectionSettings = (value ??
 			appState.collectionSettings) as CollectionSettingsParams;
-		await writeTextFile(collectionSettingsPath, collectionSettingsText);
+		await storage.writeTextFile(collectionSettingsPath, collectionSettingsText);
 	}
 };

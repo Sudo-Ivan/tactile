@@ -35,6 +35,7 @@
 	"type": "module",
 	"dependencies": {
 		"@internationalized/date": "catalog:",
+		"@tactile/storage": "workspace:*",
 		"@tactile/ui": "workspace:^",
 		"@tauri-apps/api": "catalog:",
 		"@tauri-apps/plugin-dialog": "catalog:",

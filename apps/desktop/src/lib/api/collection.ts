@@ -1,15 +1,15 @@
 import { COLLECTIONS_FILENAME } from '@/constants';
+import { storage } from '@/storage';
 import { appState } from '@/store.svelte';
 import type { CollectionParams, FileEntry } from '@/types';
 import { hideDotFiles, sortFileEntry, validateTactileFolder } from '@/utils/fs';
 import { BaseDirectory } from '@tauri-apps/api/path';
 import { open } from '@tauri-apps/plugin-dialog';
-import { readDir, readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 
 // In Tauri v2 plugin-fs, readDir is not recursive and DirEntry has no path
 // field, so the FileEntry tree is built manually to match the v1 shape.
 const readDirRecursive = async (dirPath: string): Promise<FileEntry[]> => {
-	const dirEntries = await readDir(dirPath);
+	const dirEntries = await storage.readDir(dirPath);
 	const entries: FileEntry[] = [];
 
 	for (const dirEntry of dirEntries) {
@@ -81,12 +81,14 @@ export const loadCollection = async (path?: string | undefined) => {
 		lastOpened: new Date().toISOString()
 	};
 
-	const collections = await readTextFile(COLLECTIONS_FILENAME, {
-		baseDir: BaseDirectory.AppData
-	}).catch(() => null);
+	const collections = await storage
+		.readTextFile(COLLECTIONS_FILENAME, {
+			baseDir: BaseDirectory.AppData
+		})
+		.catch(() => null);
 
 	if (!collections) {
-		await writeTextFile(COLLECTIONS_FILENAME, JSON.stringify([collectionObj]), {
+		await storage.writeTextFile(COLLECTIONS_FILENAME, JSON.stringify([collectionObj]), {
 			baseDir: BaseDirectory.AppData
 		});
 	} else {
@@ -98,7 +100,7 @@ export const loadCollection = async (path?: string | undefined) => {
 		}
 
 		collectionsArray.push(collectionObj);
-		await writeTextFile(COLLECTIONS_FILENAME, JSON.stringify(collectionsArray), {
+		await storage.writeTextFile(COLLECTIONS_FILENAME, JSON.stringify(collectionsArray), {
 			baseDir: BaseDirectory.AppData
 		});
 	}
@@ -106,9 +108,11 @@ export const loadCollection = async (path?: string | undefined) => {
 
 // Get all collections
 export const getCollections = async (): Promise<CollectionParams[]> => {
-	const collections = await readTextFile(COLLECTIONS_FILENAME, {
-		baseDir: BaseDirectory.AppData
-	}).catch(() => null);
+	const collections = await storage
+		.readTextFile(COLLECTIONS_FILENAME, {
+			baseDir: BaseDirectory.AppData
+		})
+		.catch(() => null);
 
 	if (!collections) return [];
 

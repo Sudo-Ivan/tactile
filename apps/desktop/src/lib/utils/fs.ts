@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { mkdir, readDir } from '@tauri-apps/plugin-fs';
+import { storage } from '../storage';
 import { DAILY_DIR, TACTILE_DIR, TRASH_DIR } from '../constants';
 import { appState } from '../store.svelte';
 import type { FileEntry } from '../types';
@@ -34,17 +34,17 @@ export function fileManagerLabel() {
 export async function validateTactileFolder(path: string) {
 	if (path === null) return;
 
-	const tactileFolder = await readDir(`${path}/${TACTILE_DIR}`).catch(() => null);
+	const tactileFolder = await storage.readDir(`${path}/${TACTILE_DIR}`).catch(() => null);
 
 	if (!tactileFolder) {
 		// Create .tactile folder
-		await mkdir(`${path}/${TACTILE_DIR}`);
+		await storage.mkdir(`${path}/${TACTILE_DIR}`);
 
 		// Create trash folder
-		await mkdir(`${path}/${TRASH_DIR}`);
+		await storage.mkdir(`${path}/${TRASH_DIR}`);
 
 		// Create daily folder
-		await mkdir(`${path}/${DAILY_DIR}`);
+		await storage.mkdir(`${path}/${DAILY_DIR}`);
 	}
 }
 
