@@ -32,6 +32,9 @@ Run from the repo root unless noted.
 - `pnpm test` - turbo test (vitest in `apps/web` and `packages/ui`)
 - `pnpm format` - prettier write across the repo
 - `pnpm knip` - dead code and dependency report
+- `pnpm screenshots` - regenerate README/homepage marketing screenshots with
+  Playwright (`scripts/screenshots.mjs`); requires `pnpm build` first and
+  `pnpm exec playwright install chromium` once
 
 Filter to one package by name or directory:
 
