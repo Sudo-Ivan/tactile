@@ -32,7 +32,8 @@ func testConfig(t *testing.T) config.Config {
 	cfg.ConnRatePerSec = 10000
 	cfg.MinTTL = time.Second
 	cfg.MaxTTL = 24 * time.Hour
-	cfg.MaxMsgSize = 4 << 20 // keep oversize tests under the read limit
+	cfg.MaxBlobSize = 1 << 20 // keep oversize test payloads small
+	cfg.MaxMsgSize = 4 << 20  // keep oversize tests under the read limit
 	return cfg
 }
 

@@ -78,14 +78,14 @@ func Default() Config {
 		Addr:             ":8472",
 		DataDir:          "./publish-data",
 		ReservedSlugs:    "www,api,app,s,mail,ftp,cdn,static",
-		MaxBundleSize:    64 << 20,  // 64 MiB compressed
-		MaxSiteBytes:     256 << 20, // 256 MiB extracted per deploy
-		MaxFileBytes:     16 << 20,
-		MaxFiles:         2000,
-		MaxSites:         2,
+		MaxBundleSize:    128 << 20, // 128 MiB compressed
+		MaxSiteBytes:     1 << 30,   // 1 GiB extracted per deploy
+		MaxFileBytes:     32 << 20,
+		MaxFiles:         5000,
+		MaxSites:         3,
 		MaxDomains:       1,
-		SiteQuota:        256 << 20,
-		MaxStorage:       32 << 30, // 32 GiB total
+		SiteQuota:        5 << 30,
+		MaxStorage:       256 << 30, // 256 GiB total
 		KeepDeploys:      10,
 		PoWBits:          16,
 		PoWWindow:        10 * time.Minute,

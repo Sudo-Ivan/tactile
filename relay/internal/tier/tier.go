@@ -41,13 +41,13 @@ type payload struct {
 }
 
 // Defaults is the built-in tier table. Operators override it with a tiers
-// file. Field values chosen to be a sane first paid scheme: free is the
-// historical default, supporter roughly quadruples capacity, pro is for
-// heavy vaults.
+// file. Field values chosen to be a sane first paid scheme: free covers a
+// normal vault with attachments, supporter is for long-offline devices,
+// pro is for heavy vaults.
 var Defaults = map[string]Tier{
-	"free":      {QuotaBytes: 64 << 20, MaxTTLSeconds: 30 * 86400, MaxBlobBytes: 1 << 20},
-	"supporter": {QuotaBytes: 256 << 20, MaxTTLSeconds: 90 * 86400, MaxBlobBytes: 4 << 20},
-	"pro":       {QuotaBytes: 1 << 30, MaxTTLSeconds: 365 * 86400, MaxBlobBytes: 8 << 20},
+	"free":      {QuotaBytes: 5 << 30, MaxTTLSeconds: 90 * 86400, MaxBlobBytes: 16 << 20},
+	"supporter": {QuotaBytes: 100 << 30, MaxTTLSeconds: 365 * 86400, MaxBlobBytes: 64 << 20},
+	"pro":       {QuotaBytes: 500 << 30, MaxTTLSeconds: 5 * 365 * 86400, MaxBlobBytes: 256 << 20},
 }
 
 // LoadTiers reads a tiers JSON file: {"name": {"quota_bytes":N,...}}.

@@ -57,12 +57,12 @@ func Default() Config {
 	return Config{
 		Addr:           ":8471",
 		DataDir:        "./relay-data",
-		MaxBlobSize:    1 << 20, // 1 MiB
-		MaxMsgSize:     1<<20 + 1<<18,
+		MaxBlobSize:    16 << 20, // 16 MiB
+		MaxMsgSize:     24 << 20, // fits a base64'd max-size blob
 		MinTTL:         time.Hour,
-		MaxTTL:         30 * 24 * time.Hour,
-		IdentityQuota:  64 << 20, // 64 MiB per identity
-		MaxStorage:     4 << 30,  // 4 GiB total
+		MaxTTL:         90 * 24 * time.Hour,
+		IdentityQuota:  5 << 30,  // 5 GiB per identity
+		MaxStorage:     1 << 40,  // 1 TiB total
 		PoWBits:        18,
 		ChallengeTTL:   60 * time.Second,
 		SendQueue:      64,

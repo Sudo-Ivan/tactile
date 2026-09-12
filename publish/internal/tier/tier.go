@@ -45,24 +45,24 @@ type payload struct {
 }
 
 // Defaults is the built-in tier table. Operators override it with a tiers
-// file. Field values chosen to be a sane first paid scheme: free covers a
-// personal garden, supporter roughly quadruples capacity, pro is for heavy
-// multi-site publishers.
+// file. Publishing is a paid feature on hosted nodes, so free gets a
+// minimal trial allowance; supporter and pro share the plan storage
+// limits advertised for sync.
 var Defaults = map[string]Tier{
 	"free": {
-		QuotaBytes: 256 << 20, MaxSites: 2, MaxDomains: 1,
-		MaxSiteBytes: 256 << 20, MaxFileBytes: 16 << 20, MaxFiles: 2000,
+		QuotaBytes: 256 << 20, MaxSites: 1, MaxDomains: 0,
+		MaxSiteBytes: 256 << 20, MaxFileBytes: 16 << 20, MaxFiles: 500,
 		MaxBundleBytes: 64 << 20,
 	},
 	"supporter": {
-		QuotaBytes: 2 << 30, MaxSites: 8, MaxDomains: 8,
-		MaxSiteBytes: 1 << 30, MaxFileBytes: 32 << 20, MaxFiles: 10000,
-		MaxBundleBytes: 256 << 20,
+		QuotaBytes: 100 << 30, MaxSites: 10, MaxDomains: 10,
+		MaxSiteBytes: 5 << 30, MaxFileBytes: 64 << 20, MaxFiles: 25000,
+		MaxBundleBytes: 512 << 20,
 	},
 	"pro": {
-		QuotaBytes: 20 << 30, MaxSites: 50, MaxDomains: 50,
-		MaxSiteBytes: 5 << 30, MaxFileBytes: 128 << 20, MaxFiles: 50000,
-		MaxBundleBytes: 1 << 30,
+		QuotaBytes: 500 << 30, MaxSites: 100, MaxDomains: 100,
+		MaxSiteBytes: 25 << 30, MaxFileBytes: 256 << 20, MaxFiles: 100000,
+		MaxBundleBytes: 2 << 30,
 	},
 }
 
