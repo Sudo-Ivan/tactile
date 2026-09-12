@@ -14,7 +14,7 @@
 
 	let open = $state(false);
 	let search = $state('');
-	let value = $state<string | undefined>(undefined);
+	let value = $state('');
 	let page = $state<string | undefined>(undefined);
 	let openedWithShortcut = $state('');
 

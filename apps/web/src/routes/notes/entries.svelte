@@ -14,7 +14,7 @@
 	// This is necessary as the folderOpenStates array would be empty until collapsible is used to set the initial state
 	$effect(() => {
 		if (folderOpenStates.length !== entries.length) {
-			folderOpenStates = new Array(entries.length).fill(false);
+			folderOpenStates = entries.map((_, i) => folderOpenStates[i] ?? false);
 		}
 	});
 
@@ -22,10 +22,12 @@
 	let directories = $derived(entries.filter((entry) => entry.children));
 </script>
 
-{#each entries as entry, i (entry.path)}
-	<EntryItem {entry} {directories} bind:open={folderOpenStates[i]}>
-		{#if entry.children}
-			<Entries entries={entry.children} />
-		{/if}
-	</EntryItem>
-{/each}
+{#if folderOpenStates.length === entries.length}
+	{#each entries as entry, i (entry.path)}
+		<EntryItem {entry} {directories} bind:open={folderOpenStates[i]}>
+			{#if entry.children}
+				<Entries entries={entry.children} />
+			{/if}
+		</EntryItem>
+	{/each}
+{/if}
