@@ -20,5 +20,6 @@
 		"os:default",
 		"updater:default",
 		"window-state:default"
-	]
+	],
+	"platforms": ["linux", "macOS", "windows"]
 }

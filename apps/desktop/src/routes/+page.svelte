@@ -4,7 +4,9 @@
 	import { getCollections } from '$lib/api/collection';
 	import Shortcut from '@/components/shared/shortcut.svelte';
 	import { GITHUB_REPO_URL, GITHUB_SPONSOR_URL, ROUTES, SHORTCUTS } from '@/constants';
+	import { isMobile } from '@/platform.svelte';
 	import { dispatchShortcut, shortcutToString } from '@/utils/keyboard';
+	import { cn } from '@tactile/ui/lib/utils';
 	import { open as browserOpen } from '@tauri-apps/plugin-shell';
 	import { onMount } from 'svelte';
 
@@ -20,7 +22,10 @@
 </script>
 
 <div
-	class="flex flex-col items-center justify-center w-full h-full min-h-screen bg-secondary-background"
+	class={cn(
+		'flex flex-col items-center justify-center w-full h-full bg-secondary-background',
+		isMobile ? 'min-h-full' : 'min-h-screen'
+	)}
 >
 	<div class="flex flex-col items-center gap-2">
 		<p class="text-secondary-foreground/85">Open a collection to get started</p>

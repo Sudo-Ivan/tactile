@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { isMobile } from '../platform.svelte';
 import { storage } from '../storage';
 import { DAILY_DIR, TACTILE_DIR, TRASH_DIR } from '../constants';
 import { appState } from '../store.svelte';
@@ -19,6 +20,7 @@ export function hideDotFiles(entries: FileEntry[]) {
 
 // Show in folder
 export async function showInFolder(path: string) {
+	if (isMobile) return;
 	await invoke('show_in_folder', { path });
 }
 

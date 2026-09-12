@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { openNote } from '@/api/notes';
 	import { SEARCH_FILES_COMMAND, SEARCH_RESULT_FOCUS_DELAY_MS } from '@/constants';
+	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
 	import { goToSearchResult } from '@/utils/editor';
 	import * as Collapsible from '@tactile/ui/components/collapsible';
@@ -80,12 +81,14 @@
 
 		await searchCollection();
 
-		// Handle opening file on mount
-		const activeFileInResults = tasks.find((task) => task.path === appState.activeFile);
-		if (activeFileInResults) {
-			openNote(activeFileInResults.path, true);
-		} else if (appState.activeFile !== tasks[0]?.path) {
-			openNote(tasks[0].path, true);
+		// Handle opening file on mount. On mobile stay on the task list instead
+		if (!isMobile) {
+			const activeFileInResults = tasks.find((task) => task.path === appState.activeFile);
+			if (activeFileInResults) {
+				openNote(activeFileInResults.path, true);
+			} else if (appState.activeFile !== tasks[0]?.path) {
+				openNote(tasks[0].path, true);
+			}
 		}
 	});
 </script>
@@ -98,7 +101,10 @@
 	{#each Object.keys(groupedTasks) as path (path)}
 		<Collapsible.Root open={openState[path]} class="w-full transition-all">
 			<Collapsible.Trigger
-				class="text-[13px] w-full text-secondary-foreground flex items-center h-7 justify-start gap-1.5 group hover:text-foreground transition-all"
+				class={cn(
+					'text-[13px] w-full text-secondary-foreground flex items-center justify-start gap-1.5 group hover:text-foreground transition-all',
+					isMobile ? 'h-10' : 'h-7'
+				)}
 				onclick={() => toggleOpen(path)}
 			>
 				<ChevronDown
@@ -112,7 +118,10 @@
 			<Collapsible.Content class="mt-0.5 w-full gap-1.5 flex flex-col">
 				{#each groupedTasks[path] as result, index (result.context_preview)}
 					<button
-						class="flex items-start min-w-full overflow-hidden text-start p-2 bg-secondary-background border rounded-md text-xs hover:bg-accent hover:text-accent-foreground"
+						class={cn(
+							'flex items-start min-w-full overflow-hidden text-start p-2 bg-secondary-background border rounded-md text-xs hover:bg-accent hover:text-accent-foreground',
+							isMobile && 'min-h-11'
+						)}
 						onclick={async () => {
 							appState.editorSearchValue = '';
 							if (appState.activeFile !== path) {

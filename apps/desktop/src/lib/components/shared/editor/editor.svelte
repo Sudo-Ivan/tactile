@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { saveNote } from '@/api/notes';
 	import { SHORTCUTS } from '@/constants';
+	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
 	import { Editor } from '@tiptap/core';
 	import CharacterCount from '@tiptap/extension-character-count';
@@ -101,7 +102,9 @@
 <div
 	bind:this={element}
 	spellcheck={appState.collectionSettings.editor.spell_check}
-	class="w-full h-[calc(100%-97px)] px-8"
+	class="w-full h-[calc(100%-97px)]"
+	class:px-5={isMobile}
+	class:px-8={!isMobile}
 >
 	<Shortcut options={SHORTCUTS['note:save']} callback={() => saveNote(appState.activeFile ?? '')} />
 	<Shortcut

@@ -20,4 +20,11 @@ declare module '@tiptap/core' {
 	}
 }
 
+declare module 'svelte/elements' {
+	interface HTMLAttributes<T extends EventTarget> {
+		// Fired by the longpress action on touch devices
+		onlongpress?: (event: CustomEvent<{ x: number; y: number }> & { currentTarget: T }) => void;
+	}
+}
+
 export {};

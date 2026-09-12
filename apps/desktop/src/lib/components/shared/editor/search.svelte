@@ -3,6 +3,7 @@
 	import Shortcut from '@/components/shared/shortcut.svelte';
 	import Tooltip from '@/components/shared/tooltip.svelte';
 	import { EDITOR_SEARCH_INPUT_ID, SHORTCUTS } from '@/constants';
+	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
 	import { getEditorSelectionText, goToSearchResult } from '@/utils/editor';
 	import { Button } from '@tactile/ui/components/button';
@@ -71,17 +72,22 @@
 
 <div
 	class={cn(
-		'fixed w-96 min-h-10 bg-secondary-background border z-30 rounded-md flex items-center px-1 py-1.5 transition-all duration-200',
+		'fixed min-h-10 bg-secondary-background border z-30 rounded-md flex items-center px-1 py-1.5 transition-all duration-200',
+		isMobile ? 'w-[calc(100vw-2rem)]' : 'w-96',
 		appState.editorSearchActive ? 'translate-y-0' : '-translate-y-96',
-		appState.platform === 'darwin'
+		isMobile
 			? appState.collectionSettings.editor.show_toolbar
-				? 'top-[80px]'
-				: 'top-[48px]'
-			: appState.collectionSettings.editor.show_toolbar
-				? 'top-[44px]'
-				: 'top-[12px]'
+				? 'top-[96px]'
+				: 'top-[56px]'
+			: appState.platform === 'darwin'
+				? appState.collectionSettings.editor.show_toolbar
+					? 'top-[80px]'
+					: 'top-[48px]'
+				: appState.collectionSettings.editor.show_toolbar
+					? 'top-[44px]'
+					: 'top-[12px]'
 	)}
-	style={`right: ${appState.isNoteDetailSidebarOpen ? appState.noteDetailSidebarWidth + 16 : 16}px`}
+	style={`right: ${appState.isNoteDetailSidebarOpen && !isMobile ? appState.noteDetailSidebarWidth + 16 : 16}px`}
 >
 	<Shortcut
 		options={SHORTCUTS['editor:search']}

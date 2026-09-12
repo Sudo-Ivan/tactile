@@ -1,8 +1,10 @@
 #[cfg(target_os = "linux")]
 use std::path::Path;
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 use std::process::Command;
 
 #[tauri::command]
+#[allow(unused_variables)]
 pub async fn show_in_folder(path: String) {
     #[cfg(target_os = "windows")]
     {

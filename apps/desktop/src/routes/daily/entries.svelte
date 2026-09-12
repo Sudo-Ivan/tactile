@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { longpress } from '@/actions/longpress';
 	import { deleteNote, openNote } from '@/api/notes';
 	import Icon from '@/components/shared/icon.svelte';
 	import Shortcut from '@/components/shared/shortcut.svelte';
 	import { SHORTCUTS } from '@/constants';
+	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
 	import type { FileEntry } from '@/types';
 	import { fileManagerLabel, showInFolder } from '@/utils/fs';
@@ -76,6 +78,19 @@
 	}
 
 	const groupedEntries = $derived(groupEntries(entries));
+
+	// Open the wrapping ContextMenu on long-press by dispatching a synthetic
+	// contextmenu event that bubbles up to the ContextMenu.Trigger element
+	function openContextMenu(event: CustomEvent<{ x: number; y: number }>) {
+		(event.currentTarget as HTMLElement).dispatchEvent(
+			new MouseEvent('contextmenu', {
+				bubbles: true,
+				cancelable: true,
+				clientX: event.detail.x,
+				clientY: event.detail.y
+			})
+		);
+	}
 </script>
 
 {#each Object.entries(groupedEntries) as [groupName, groupEntries] (groupName)}
@@ -94,13 +109,20 @@
 			{#each groupEntries as entry (entry.path)}
 				<ContextMenu.Root>
 					<ContextMenu.Trigger class="w-full" data-path={entry.path}>
-						<div class="w-full h-full" role="button" tabindex="0">
+						<div
+							class="w-full h-full"
+							role="button"
+							tabindex="0"
+							use:longpress
+							onlongpress={openContextMenu}
+						>
 							<Button
 								size="sm"
 								variant="ghost"
 								scale="sm"
 								class={cn(
-									'h-7 w-full transition-all text-secondary-foreground/80 hover:text-foreground flex items-center gap-2 justify-start',
+									'w-full transition-all text-secondary-foreground/80 hover:text-foreground flex items-center gap-2 justify-start',
+									isMobile ? 'h-11' : 'h-7',
 									appState.activeFile === entry.path && 'bg-accent text-foreground'
 								)}
 								onclick={() => openNote(entry.path, true)}
@@ -113,7 +135,7 @@
 									options={SHORTCUTS['note:show-in-folder']}
 									callback={() => showInFolder(entry.path)}
 								/>
-								<span class="text-xs truncate">{entry.name}</span>
+								<span class={cn('truncate', isMobile ? 'text-sm' : 'text-xs')}>{entry.name}</span>
 							</Button>
 						</div>
 					</ContextMenu.Trigger>
@@ -128,17 +150,22 @@
 								>{shortcutToString(SHORTCUTS['note:rename'])}</ContextMenu.Shortcut
 							>
 						</ContextMenu.Item>
-						<ContextMenu.Separator />
-						<ContextMenu.Item
-							class="flex items-center gap-2 font-base group"
-							onclick={() => showInFolder(entry.path)}
-						>
-							<Icon name="eye" class="w-3.5 h-3.5 fill-foreground/70 group-hover:fill-foreground" />
-							Show in {fileManagerLabel()}
-							<ContextMenu.Shortcut
-								>{shortcutToString(SHORTCUTS['note:show-in-folder'])}</ContextMenu.Shortcut
+						{#if !isMobile}
+							<ContextMenu.Separator />
+							<ContextMenu.Item
+								class="flex items-center gap-2 font-base group"
+								onclick={() => showInFolder(entry.path)}
 							>
-						</ContextMenu.Item>
+								<Icon
+									name="eye"
+									class="w-3.5 h-3.5 fill-foreground/70 group-hover:fill-foreground"
+								/>
+								Show in {fileManagerLabel()}
+								<ContextMenu.Shortcut
+									>{shortcutToString(SHORTCUTS['note:show-in-folder'])}</ContextMenu.Shortcut
+								>
+							</ContextMenu.Item>
+						{/if}
 						<ContextMenu.Separator />
 						<ContextMenu.Item
 							class="flex text-destructive data-[highlighted]:bg-destructive/20 data-[highlighted]:text-destructive items-center gap-2 font-base group"

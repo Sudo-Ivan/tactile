@@ -5,13 +5,17 @@
 	import { createNote } from '@/api/notes';
 	import Editor from '@/components/shared/editor/editor.svelte';
 	import { SHORTCUTS } from '@/constants';
+	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
 	import { dispatchShortcut, shortcutToString } from '@/utils/keyboard';
 	import { cn } from '@tactile/ui/lib/utils';
 </script>
 
 <div
-	class="relative flex flex-col w-full h-full min-h-[calc(100vh-4.5rem)] items-start bg-secondary-background overflow-y-auto scroll-p-20"
+	class={cn(
+		'relative flex flex-col w-full h-full items-start bg-secondary-background overflow-y-auto scroll-p-20',
+		isMobile ? 'min-h-full' : 'min-h-[calc(100vh-4.5rem)]'
+	)}
 >
 	{#if appState.collectionSettings.editor.show_toolbar}
 		<EditorToolbar />

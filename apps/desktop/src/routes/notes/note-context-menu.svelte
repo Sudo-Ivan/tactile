@@ -2,6 +2,7 @@
 	import { duplicateNote } from '@/api/notes';
 	import Icon from '@/components/shared/icon.svelte';
 	import { SHORTCUTS } from '@/constants';
+	import { isMobile } from '@/platform.svelte';
 	import type { FileEntry } from '@/types';
 	import { fileManagerLabel, showInFolder } from '@/utils/fs';
 	import { shortcutToString } from '@/utils/keyboard';
@@ -36,15 +37,18 @@
 		<ContextMenu.Shortcut>{shortcutToString(SHORTCUTS['note:duplicate'])}</ContextMenu.Shortcut>
 	</ContextMenu.Item>
 	<ContextMenu.Separator />
-	<ContextMenu.Item
-		class="flex items-center gap-2 font-base group"
-		onclick={() => showInFolder(entry.path)}
-	>
-		<Icon name="eye" class="w-3.5 h-3.5 fill-foreground/70 group-hover:fill-foreground" />
-		Show in {fileManagerLabel()}
-		<ContextMenu.Shortcut>{shortcutToString(SHORTCUTS['note:show-in-folder'])}</ContextMenu.Shortcut
+	{#if !isMobile}
+		<ContextMenu.Item
+			class="flex items-center gap-2 font-base group"
+			onclick={() => showInFolder(entry.path)}
 		>
-	</ContextMenu.Item>
+			<Icon name="eye" class="w-3.5 h-3.5 fill-foreground/70 group-hover:fill-foreground" />
+			Show in {fileManagerLabel()}
+			<ContextMenu.Shortcut
+				>{shortcutToString(SHORTCUTS['note:show-in-folder'])}</ContextMenu.Shortcut
+			>
+		</ContextMenu.Item>
+	{/if}
 	<MoveToMenu {entry} {entries} type="note" />
 	<ContextMenu.Separator />
 	<ContextMenu.Item

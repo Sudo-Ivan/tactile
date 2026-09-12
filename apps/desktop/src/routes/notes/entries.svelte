@@ -1,9 +1,11 @@
 <script lang="ts">
+	import { longpress } from '@/actions/longpress';
 	import { createFolder, deleteFolder } from '@/api/folders';
 	import { createNote, deleteNote, duplicateNote, openNote } from '@/api/notes';
 	import Icon from '@/components/shared/icon.svelte';
 	import Shortcut from '@/components/shared/shortcut.svelte';
 	import { SHORTCUTS } from '@/constants';
+	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
 	import { showInFolder } from '@/utils/fs';
 	import type { FileEntry } from '@/types';
@@ -52,6 +54,19 @@
 		return `${(path.split('/').length - (appState.collection ?? '').split('/').length) * 0.75}rem`;
 	}
 
+	// Open the wrapping ContextMenu on long-press by dispatching a synthetic
+	// contextmenu event that bubbles up to the ContextMenu.Trigger element
+	function openContextMenu(event: CustomEvent<{ x: number; y: number }>) {
+		(event.currentTarget as HTMLElement).dispatchEvent(
+			new MouseEvent('contextmenu', {
+				bubbles: true,
+				cancelable: true,
+				clientX: event.detail.x,
+				clientY: event.detail.y
+			})
+		);
+	}
+
 	// Expose the folder toggle handler to the parent through the bindable prop
 	// eslint-disable-next-line no-useless-assignment
 	toggleFolderStates = () => {
@@ -67,6 +82,8 @@
 					<div
 						class="w-full h-full"
 						role="button"
+						use:longpress
+						onlongpress={openContextMenu}
 						ondragstart={(e) => drag.handleDragStart(e, entry.name || '')}
 						tabindex="0"
 						ondragend={(e) => {
@@ -81,7 +98,10 @@
 									size="sm"
 									variant="ghost"
 									scale="sm"
-									class="h-7 w-full fill-muted-foreground hover:fill-foreground text-secondary-foreground/80 hover:text-foreground transition-all flex items-center justify-between"
+									class={cn(
+										'w-full fill-muted-foreground hover:fill-foreground text-secondary-foreground/80 hover:text-foreground transition-all flex items-center justify-between',
+										isMobile ? 'h-11' : 'h-7'
+									)}
 									style={`padding-left: ${calculateDepth(entry.path)}`}
 									draggable
 								>
@@ -116,12 +136,15 @@
 											name="folderOpen"
 											class={cn('w-[18px] h-[18px] shrink-0', !folderOpenStates[i] && 'hidden')}
 										/>
-										<span class="text-xs truncate outline-none" spellcheck="false"
-											>{entry.name}</span
+										<span
+											class={cn('truncate outline-none', isMobile ? 'text-sm' : 'text-xs')}
+											spellcheck="false">{entry.name}</span
 										>
 									</div>
 									<!-- TODO: Make this an optional feature -->
-									<span class="text-xs text-foreground/40">{entry.children?.length}</span>
+									<span class={cn('text-foreground/40', isMobile ? 'text-sm' : 'text-xs')}
+										>{entry.children?.length}</span
+									>
 								</Button>
 							{/snippet}
 						</Collapsible.Trigger>
@@ -154,6 +177,8 @@
 				<div
 					class="w-full h-full"
 					role="button"
+					use:longpress
+					onlongpress={openContextMenu}
 					ondragstart={(e) => drag.handleDragStart(e, entry.name || '')}
 					tabindex="0"
 					ondragend={(e) => {
@@ -165,7 +190,8 @@
 						variant="ghost"
 						scale="sm"
 						class={cn(
-							'h-7 w-full transition-all text-secondary-foreground/80 hover:text-foreground flex items-center gap-2 justify-start',
+							'w-full transition-all text-secondary-foreground/80 hover:text-foreground flex items-center gap-2 justify-start',
+							isMobile ? 'h-11' : 'h-7',
 							appState.activeFile === entry.path && 'bg-accent text-foreground'
 						)}
 						style={`padding-left: ${calculateDepth(entry.path)}`}
@@ -188,7 +214,9 @@
 							options={SHORTCUTS['note:show-in-folder']}
 							callback={() => !renamer.isRenaming && showInFolder(entry.path)}
 						/>
-						<span class="text-xs truncate" spellcheck="false">{entry.name}</span>
+						<span class={cn('truncate', isMobile ? 'text-sm' : 'text-xs')} spellcheck="false"
+							>{entry.name}</span
+						>
 					</Button>
 				</div>
 			</ContextMenu.Trigger>

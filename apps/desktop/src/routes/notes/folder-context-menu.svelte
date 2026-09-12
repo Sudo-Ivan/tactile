@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Icon from '@/components/shared/icon.svelte';
 	import { SHORTCUTS } from '@/constants';
+	import { isMobile } from '@/platform.svelte';
 	import type { FileEntry } from '@/types';
 	import { fileManagerLabel, showInFolder } from '@/utils/fs';
 	import { shortcutToString } from '@/utils/keyboard';
@@ -42,17 +43,19 @@
 		<ContextMenu.Shortcut>{shortcutToString(SHORTCUTS['note:rename'])}</ContextMenu.Shortcut>
 	</ContextMenu.Item>
 	<MoveToMenu {entry} {entries} type="folder" />
-	<ContextMenu.Separator />
-	<ContextMenu.Item
-		class="flex items-center gap-2 font-base group"
-		onclick={() => showInFolder(entry.path)}
-	>
-		<Icon name="eye" class="w-3.5 h-3.5 fill-foreground/70 group-hover:fill-foreground" />
-		Show in {fileManagerLabel()}
-		<ContextMenu.Shortcut
-			>{shortcutToString(SHORTCUTS['folder:show-in-folder'])}</ContextMenu.Shortcut
+	{#if !isMobile}
+		<ContextMenu.Separator />
+		<ContextMenu.Item
+			class="flex items-center gap-2 font-base group"
+			onclick={() => showInFolder(entry.path)}
 		>
-	</ContextMenu.Item>
+			<Icon name="eye" class="w-3.5 h-3.5 fill-foreground/70 group-hover:fill-foreground" />
+			Show in {fileManagerLabel()}
+			<ContextMenu.Shortcut
+				>{shortcutToString(SHORTCUTS['folder:show-in-folder'])}</ContextMenu.Shortcut
+			>
+		</ContextMenu.Item>
+	{/if}
 	<ContextMenu.Separator />
 	<ContextMenu.Item
 		class="flex text-destructive data-[highlighted]:bg-destructive/20 data-[highlighted]:text-destructive items-center gap-2 font-base group"

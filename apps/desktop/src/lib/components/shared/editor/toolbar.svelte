@@ -4,6 +4,7 @@
 	import Shortcut from '@/components/shared/shortcut.svelte';
 	import Tooltip from '@/components/shared/tooltip.svelte';
 	import { SHORTCUTS } from '@/constants';
+	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
 	import Button from '@tactile/ui/components/button/button.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
@@ -57,33 +58,38 @@
 </script>
 
 <div
-	class="sticky gap-2 min-h-10 top-0 px-3 z-50 flex items-center justify-between w-full bg-secondary-background"
+	class={cn(
+		'sticky gap-2 min-h-10 top-0 px-3 z-50 flex items-center justify-between w-full bg-secondary-background',
+		isMobile && 'overflow-x-auto'
+	)}
 >
 	<div class="flex gap-1.5 select-none w-fit">
-		<Tooltip
-			text={appState.isPageSidebarOpen ? 'Collapse' : 'Expand'}
-			side="bottom"
-			shortcut={SHORTCUTS['notes:toggle-sidebar']}
-		>
-			<Button
-				size="icon"
-				variant="ghost"
-				scale="md"
-				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
-				onclick={() => {
-					appState.isPageSidebarOpen = !appState.isPageSidebarOpen;
-				}}
+		{#if !isMobile}
+			<Tooltip
+				text={appState.isPageSidebarOpen ? 'Collapse' : 'Expand'}
+				side="bottom"
+				shortcut={SHORTCUTS['notes:toggle-sidebar']}
 			>
-				<Shortcut options={SHORTCUTS['notes:toggle-sidebar']} />
-				<Icon
-					name="sidebarArrow"
-					class={cn(
-						'w-4 h-4 transform transition-transform',
-						appState.isPageSidebarOpen ? 'rotate-180' : ''
-					)}
-				/>
-			</Button>
-		</Tooltip>
+				<Button
+					size="icon"
+					variant="ghost"
+					scale="md"
+					class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
+					onclick={() => {
+						appState.isPageSidebarOpen = !appState.isPageSidebarOpen;
+					}}
+				>
+					<Shortcut options={SHORTCUTS['notes:toggle-sidebar']} />
+					<Icon
+						name="sidebarArrow"
+						class={cn(
+							'w-4 h-4 transform transition-transform',
+							appState.isPageSidebarOpen ? 'rotate-180' : ''
+						)}
+					/>
+				</Button>
+			</Tooltip>
+		{/if}
 		{#if !hideHistory}
 			<Tooltip text="Previous note" side="bottom" shortcut={SHORTCUTS['notes:history-back']}>
 				<Button
@@ -194,25 +200,27 @@
 				<Icon name="searchDocument" class={cn('w-4 h-4')} />
 			</Button>
 		</Tooltip>
-		<Tooltip text="Expand" side="bottom" shortcut={SHORTCUTS['notes:toggle-details']}>
-			<Button
-				size="icon"
-				variant="ghost"
-				scale="md"
-				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
-				onclick={() => {
-					appState.isNoteDetailSidebarOpen = !appState.isNoteDetailSidebarOpen;
-				}}
-			>
-				<Shortcut options={SHORTCUTS['notes:toggle-details']} />
-				<Icon
-					name="sidebarArrow"
-					class={cn(
-						'w-4 h-4 transform transition-transform',
-						appState.isNoteDetailSidebarOpen ? '' : 'rotate-180'
-					)}
-				/>
-			</Button>
-		</Tooltip>
+		{#if !isMobile}
+			<Tooltip text="Expand" side="bottom" shortcut={SHORTCUTS['notes:toggle-details']}>
+				<Button
+					size="icon"
+					variant="ghost"
+					scale="md"
+					class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
+					onclick={() => {
+						appState.isNoteDetailSidebarOpen = !appState.isNoteDetailSidebarOpen;
+					}}
+				>
+					<Shortcut options={SHORTCUTS['notes:toggle-details']} />
+					<Icon
+						name="sidebarArrow"
+						class={cn(
+							'w-4 h-4 transform transition-transform',
+							appState.isNoteDetailSidebarOpen ? '' : 'rotate-180'
+						)}
+					/>
+				</Button>
+			</Tooltip>
+		{/if}
 	</div>
 </div>

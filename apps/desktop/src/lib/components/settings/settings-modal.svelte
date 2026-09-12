@@ -1,12 +1,14 @@
 <script lang="ts">
 	import Icon, { type IconKey } from '$lib/components/shared/icon.svelte';
 	import { SHORTCUTS } from '@/constants';
+	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
 	import { Button } from '@tactile/ui/components/button';
 	import * as Dialog from '@tactile/ui/components/dialog';
 	import { Label } from '@tactile/ui/components/label';
 	import { Separator } from '@tactile/ui/components/separator';
 	import * as Tabs from '@tactile/ui/components/tabs';
+	import { cn } from '@tactile/ui/lib/utils';
 	import type { Component } from 'svelte';
 	import Shortcut from '../shared/shortcut.svelte';
 	import Appearance from './appearance.svelte';
@@ -60,14 +62,19 @@
 		</Button>
 	</Dialog.Trigger>
 	<Dialog.Content
-		class="flex items-center justify-center !w-[90%] !h-[90%] !top-[5%] !right-[5%] !bottom-[5%] !left-[5%] pt-16"
+		class={cn(
+			'flex items-center justify-center pt-16',
+			isMobile
+				? '!w-full !h-full !top-0 !right-0 !bottom-0 !left-0 !rounded-none'
+				: '!w-[90%] !h-[90%] !top-[5%] !right-[5%] !bottom-[5%] !left-[5%]'
+		)}
 	>
 		<Tabs.Root
 			value={appState.settingsStore.activePage}
 			onValueChange={(value) => {
 				appState.settingsStore.activePage = value ?? 'general';
 			}}
-			class="flex items-center justify-center h-full w-full gap-10"
+			class={cn('flex items-center justify-center h-full w-full', isMobile ? 'gap-4' : 'gap-10')}
 		>
 			<!-- Categories as label, rest as tabtrigger & corresponding content -->
 			<div class="flex flex-col items-center gap-4 h-full justify-start min-w-[160px]">
@@ -95,7 +102,12 @@
 					{/if}
 				{/each}
 			</div>
-			<div class="flex flex-col items-center justify-center gap-2 h-full w-2/4">
+			<div
+				class={cn(
+					'flex flex-col items-center justify-center gap-2 h-full',
+					isMobile ? 'flex-1 min-w-0' : 'w-2/4'
+				)}
+			>
 				{#each Object.keys(settings) as setting (setting)}
 					{#each settings[setting] as tab (tab.name)}
 						<Tabs.Content

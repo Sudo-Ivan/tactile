@@ -7,6 +7,7 @@
 	import Shortcut from '@/components/shared/shortcut.svelte';
 	import Tooltip from '@/components/shared/tooltip.svelte';
 	import { SHORTCUTS } from '@/constants';
+	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
 	import type { FileEntry } from '@/types';
 	import { Button } from '@tactile/ui/components/button';
@@ -46,8 +47,10 @@
 		// Find first item that is a note (entry.children === undefined)
 		const firstNote = entries.find((entry) => !entry.children);
 
-		// Open the first note
-		if (firstNote) {
+		// Open the first note. On mobile stay on the file list instead
+		if (isMobile) {
+			appState.activeFile = null;
+		} else if (firstNote) {
 			openNote(firstNote.path);
 		} else {
 			appState.activeFile = null;
@@ -72,21 +75,33 @@
 
 <div
 	class={cn(
-		'fixed left-12 flex flex-col justify-start items-center bg-background overflow-y-auto transform transition-transform duration-300',
-		!appState.isPageSidebarOpen && '-translate-x-52',
-		appState.platform === 'darwin' ? 'h-[calc(100vh-4.5rem)]' : 'h-[calc(100vh-2.25rem)]'
+		'fixed flex flex-col justify-start items-center bg-background overflow-y-auto transform transition-transform duration-300',
+		isMobile
+			? 'left-0 top-0 w-full z-30 bottom-[calc(3.5rem_+_env(safe-area-inset-bottom))]'
+			: cn(
+					'left-12',
+					!appState.isPageSidebarOpen && '-translate-x-52',
+					appState.platform === 'darwin' ? 'h-[calc(100vh-4.5rem)]' : 'h-[calc(100vh-2.25rem)]'
+				)
 	)}
-	style={`width: ${appState.pageSidebarWidth}px`}
+	style={isMobile ? undefined : `width: ${appState.pageSidebarWidth}px`}
 >
 	<!-- Drag border -->
-	<div
-		class="h-full w-1 border-r cursor-col-resize absolute top-0 right-0 z-10 hover:bg-foreground/10 hover:delay-75 transition-all duration-200 active:bg-foreground/20 active:!cursor-col-resize"
-		use:sidebarResize={'page'}
-		role="presentation"
-	></div>
+	{#if !isMobile}
+		<div
+			class="h-full w-1 border-r cursor-col-resize absolute top-0 right-0 z-10 hover:bg-foreground/10 hover:delay-75 transition-all duration-200 active:bg-foreground/20 active:!cursor-col-resize"
+			use:sidebarResize={'page'}
+			role="presentation"
+		></div>
+	{/if}
 
 	<!-- Controls -->
-	<div class="relative top-0 flex flex-col min-h-10 w-full border-b bg-background overflow-hidden">
+	<div
+		class={cn(
+			'relative top-0 flex flex-col w-full border-b bg-background overflow-hidden',
+			isMobile ? 'min-h-12' : 'min-h-10'
+		)}
+	>
 		<!-- Main Actions -->
 		<div
 			class={cn(
@@ -99,7 +114,10 @@
 					size="icon"
 					variant="ghost"
 					scale="md"
-					class="h-7 w-7 fill-muted-foreground hover:fill-foreground transition-all"
+					class={cn(
+						'fill-muted-foreground hover:fill-foreground transition-all',
+						isMobile ? 'h-10 w-10' : 'h-7 w-7'
+					)}
 					onclick={async () => createNote(appState.collection!)}
 				>
 					<Shortcut options={SHORTCUTS['notes:create']} />
@@ -111,7 +129,10 @@
 					size="icon"
 					variant="ghost"
 					scale="md"
-					class="h-7 w-7 fill-muted-foreground hover:fill-foreground transition-all"
+					class={cn(
+						'fill-muted-foreground hover:fill-foreground transition-all',
+						isMobile ? 'h-10 w-10' : 'h-7 w-7'
+					)}
 					onclick={async () => createFolder(appState.collection!)}
 				>
 					<Shortcut options={SHORTCUTS['notes:create-folder']} />
@@ -126,7 +147,10 @@
 					size="icon"
 					variant="ghost"
 					scale="md"
-					class="h-7 w-7 fill-muted-foreground hover:fill-foreground"
+					class={cn(
+						'fill-muted-foreground hover:fill-foreground',
+						isMobile ? 'h-10 w-10' : 'h-7 w-7'
+					)}
 					onclick={async () => {
 						toggleFolderStates();
 					}}
@@ -152,7 +176,10 @@
 					size="icon"
 					variant="ghost"
 					scale="md"
-					class="h-7 w-7 fill-muted-foreground hover:fill-foreground transition-all"
+					class={cn(
+						'fill-muted-foreground hover:fill-foreground transition-all',
+						isMobile ? 'h-10 w-10' : 'h-7 w-7'
+					)}
 					onclick={() => {
 						appState.collectionSearchActive = !appState.collectionSearchActive;
 					}}

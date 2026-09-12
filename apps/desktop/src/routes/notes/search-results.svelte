@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { openNote } from '@/api/notes';
 	import { SEARCH_RESULT_FOCUS_DELAY_MS } from '@/constants';
+	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
 	import { goToSearchResult } from '@/utils/editor';
 	import * as Collapsible from '@tactile/ui/components/collapsible';
@@ -69,7 +70,10 @@
 	{#each Object.keys(groupedResults) as path (path)}
 		<Collapsible.Root open={openState[path]} class="w-full">
 			<Collapsible.Trigger
-				class="text-[13px] w-full text-secondary-foreground flex items-center h-7 justify-start gap-1.5 group hover:text-foreground transition-all"
+				class={cn(
+					'text-[13px] w-full text-secondary-foreground flex items-center justify-start gap-1.5 group hover:text-foreground transition-all',
+					isMobile ? 'h-10' : 'h-7'
+				)}
 				onclick={() => toggleOpen(path)}
 			>
 				<ChevronDown
@@ -83,7 +87,10 @@
 			<Collapsible.Content class="mt-0.5 w-full gap-1.5 flex flex-col">
 				{#each groupedResults[path] as result, index (result.context_preview)}
 					<button
-						class="flex items-start min-w-full overflow-hidden text-start p-2 bg-secondary-background border rounded-md text-xs hover:bg-accent hover:text-accent-foreground"
+						class={cn(
+							'flex items-start min-w-full overflow-hidden text-start p-2 bg-secondary-background border rounded-md text-xs hover:bg-accent hover:text-accent-foreground',
+							isMobile && 'min-h-11'
+						)}
 						onclick={async () => {
 							// set search term
 							appState.editorSearchValue = '';

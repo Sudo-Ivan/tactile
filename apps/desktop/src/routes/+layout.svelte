@@ -2,9 +2,11 @@
 	import { loadSettings } from '@/api/settings';
 	import Footer from '@/components/layout/footer.svelte';
 	import Header from '@/components/layout/header.svelte';
+	import MobileNav from '@/components/layout/mobile-nav.svelte';
 	import Sidebar from '@/components/layout/sidebar.svelte';
 	import Command from '@/components/shared/command-menu/command.svelte';
 	import { COLLECTIONS_FILENAME } from '@/constants';
+	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
 	import { validateTactileFolder } from '@/utils/fs';
 	import { updateWindowTheme } from '@/utils/theme';
@@ -60,7 +62,10 @@
 		const theme = appState.appTheme;
 
 		// Update app theme, auto maps to null which follows the system theme
-		void setTheme(theme === 'auto' ? null : theme);
+		// setTheme is desktop-only, mobile follows the system theme
+		if (!isMobile) {
+			void setTheme(theme === 'auto' ? null : theme);
+		}
 
 		// Update window theme
 		updateWindowTheme();
@@ -69,14 +74,23 @@
 
 <Command />
 
-{#if appState.platform === 'darwin'}
-	<Header />
+{#if isMobile}
+	<main
+		class="h-dvh w-full overflow-hidden bg-secondary-background pb-[calc(3.5rem_+_env(safe-area-inset-bottom))]"
+	>
+		{@render children?.()}
+	</main>
+	<MobileNav />
+{:else}
+	{#if appState.platform === 'darwin'}
+		<Header />
+	{/if}
+	<Sidebar />
+	<main class="flex min-h-screen w-full items-center justify-center">
+		{@render children?.()}
+	</main>
+	<Footer />
 {/if}
-<Sidebar />
-<main class="flex min-h-screen w-full items-center justify-center">
-	{@render children?.()}
-</main>
-<Footer />
 
 <style>
 	/* Custom scrollbar */

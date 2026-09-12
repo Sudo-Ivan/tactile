@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { renameNote } from '@/api/notes';
 	import { INLINE_TITLE_INPUT_ID } from '@/constants';
+	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
 	import { cn } from '@/utils';
 
@@ -60,7 +61,8 @@
 
 <div
 	class={cn(
-		'flex items-center w-full h-fit px-8 pb-2.5',
+		'flex items-center w-full h-fit pb-2.5',
+		isMobile ? 'px-5' : 'px-8',
 		!appState.collectionSettings.editor.show_toolbar && 'mt-5'
 	)}
 >
@@ -71,7 +73,10 @@
 			autocomplete="off"
 			autocorrect="off"
 			disabled={appState.editorMode !== 'edit'}
-			class="w-[635px] prose font-bold text-4xl text-foreground mx-auto bg-transparent focus:outline-none"
+			class={cn(
+				'prose font-bold text-4xl text-foreground mx-auto bg-transparent focus:outline-none',
+				isMobile ? 'w-full' : 'w-[635px]'
+			)}
 			onkeydown={handleKeydown}
 			onblur={handleBlur}
 			bind:value

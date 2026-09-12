@@ -9,6 +9,10 @@ default-run = "app"
 edition = "2021"
 rust-version = "1.77"
 
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
@@ -22,10 +26,13 @@ regex = "1.5"
 hex_color = "3.0.0"
 # In v2 plugin-fs covers both the old fs-extra and fs-watch plugins
 tauri-plugin-fs = { version = "2", features = ["watch"] }
-tauri-plugin-window-state = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-shell = "2"
 tauri-plugin-os = "2"
+
+# Desktop-only plugins
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-window-state = "2"
 tauri-plugin-updater = "2"
 # tauri-plugin-theme is dropped: all of its 2.x releases are yanked on crates.io.
 # Theme switching now uses the core app set_theme API via @tauri-apps/api/app setTheme.
