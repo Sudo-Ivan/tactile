@@ -13,7 +13,7 @@ const UI_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(join(UI_DIR, 'package.json'));
 
 // Classes that are deliberately not Tailwind utilities (plain CSS rules).
-const CUSTOM_CLASSES = new Set<string>(['prose-theme']);
+const CUSTOM_CLASSES = new Set<string>(['prose-theme', 'tactile-note', 'tactile-note-title']);
 
 // Single-word utilities with no '-', '[' or '/' to identify them by.
 const SINGLETONS = new Set([
@@ -183,8 +183,12 @@ async function buildCss() {
 }
 
 const candidates = new Set<string>();
-for (const dir of ['components', 'lib']) {
-	for (const file of filesRecursive(join(UI_DIR, dir), ['.svelte', '.ts'])) {
+// Scan every source dir that base.css declares via @source: this package's
+// components/lib plus @tactile/core, whose shared components hold most of
+// the app markup. See tailwind-sources.test.ts for the directive check.
+const scanDirs = [join(UI_DIR, 'components'), join(UI_DIR, 'lib'), resolve(UI_DIR, '../core/src')];
+for (const dir of scanDirs) {
+	for (const file of filesRecursive(dir, ['.svelte', '.ts'])) {
 		for (const token of extractCandidates(file)) {
 			if (isUtilityToken(token)) candidates.add(token);
 		}
