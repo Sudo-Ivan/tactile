@@ -1,0 +1,30 @@
+# tactile-publish edge: default file, plain ACME or internal CA.
+#
+# Ports are unprivileged by default (rootless). For real ACME HTTP-01 /
+# TLS-ALPN-01 issuance the host must publish 80/443 onto these, or set
+# HTTP_PORT=80 HTTPS_PORT=443 and publish them directly.
+#
+# For DNS-01 issuance (no inbound ports needed, supports wildcards) use
+# Caddyfile.dns instead:  CADDYFILE=./Caddyfile.dns docker compose up
+
+{
+	http_port {$HTTP_PORT:8080}
+	https_port {$HTTPS_PORT:8443}
+}
+
+# {$SITE_DOMAIN} is the public suffix, e.g. tactile.example or
+# localhost for testing. TLS_CONFIG selects issuance:
+#   internal           local CA, zero inbound ports (default)
+#   you@example.com    ACME account email, needs inbound 80/443
+#   off                plain HTTP behind your own TLS terminator
+{$SITE_DOMAIN:tactile.localhost}, *.{$SITE_DOMAIN:tactile.localhost} {
+	tls {$TLS_CONFIG:internal}
+
+	reverse_proxy publish:8472
+
+	# The publish API is signature-gated, but if you want it unreachable
+	# at the edge, uncomment: the node already serves it on :8473 which is
+	# not proxied here.
+	# @api path /v1/*
+	# respond @api 404
+}

@@ -1,0 +1,27 @@
+# tactile-publish edge: DNS-01 ACME issuance. Works with no inbound
+# 80/443 at all and supports wildcard certs, so every {slug}.BASE_DOMAIN
+# plus verified custom domains are covered by one certificate.
+#
+# Requires the caddy image built with your provider's plugin:
+#   docker build --build-arg DNS_PLUGINS="github.com/caddy-dns/cloudflare" ...
+#
+# Required env:
+#   SITE_DOMAIN      public suffix, e.g. tactile.example
+#   ACME_EMAIL       ACME account email
+#   DNS_PROVIDER     plugin name, e.g. cloudflare
+#   DNS_CREDENTIALS  provider credential args, e.g. your API token.
+#                    Multi-field creds work too: "key1 key2".
+
+{
+	http_port {$HTTP_PORT:8080}
+	https_port {$HTTPS_PORT:8443}
+	email {$ACME_EMAIL}
+}
+
+{$SITE_DOMAIN}, *.{$SITE_DOMAIN} {
+	tls {
+		dns {$DNS_PROVIDER} {$DNS_CREDENTIALS}
+	}
+
+	reverse_proxy publish:8472
+}

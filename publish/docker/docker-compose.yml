@@ -1,0 +1,97 @@
+# tactile-publish default stack: publish node + Caddy TLS edge.
+# Everything is parameterized; copy .env.example to .env to tune.
+#
+#   docker compose -f docker/docker-compose.yml up -d --build
+#
+# Local ports default to 8080/8443 since unprivileged/rootless installs
+# cannot bind 80/443. In production either publish 80->8080/443->8443
+# (compose `ports` below) or front with your own TLS terminator and set
+# TLS_CONFIG=off.
+
+name: tactile-publish
+
+services:
+  publish:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: publish
+      args:
+        IMAGE_VERSION: ${IMAGE_VERSION:-dev}
+        IMAGE_REVISION: ${IMAGE_REVISION:-none}
+        IMAGE_CREATED: ${IMAGE_CREATED:-}
+    image: tactile-publish:${IMAGE_VERSION:-dev}
+    restart: unless-stopped
+    read_only: true
+    environment:
+      TACTILE_PUBLISH_ADDR: :8472
+      TACTILE_PUBLISH_ADMIN_ADDR: :8473
+      TACTILE_PUBLISH_DATA: /data
+      TACTILE_PUBLISH_BASE_DOMAIN: ${SITE_DOMAIN:-}
+      TACTILE_PUBLISH_POW_BITS: ${POW_BITS:-16}
+      TACTILE_PUBLISH_MAX_STORAGE: ${MAX_STORAGE:-34359738368}
+      # Paid tiers: set to enable; mint tokens with `publish -mint <tier>`.
+      TACTILE_PUBLISH_TOKEN_SECRETS: ${TOKEN_SECRETS:-}
+      # HA mode: switch to the s3 backend and run N replicas behind a LB.
+      TACTILE_PUBLISH_BACKEND: ${BACKEND:-fs}
+      TACTILE_PUBLISH_S3_ENDPOINT: ${S3_ENDPOINT:-}
+      TACTILE_PUBLISH_S3_REGION: ${S3_REGION:-}
+      TACTILE_PUBLISH_S3_BUCKET: ${S3_BUCKET:-}
+      TACTILE_PUBLISH_S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      TACTILE_PUBLISH_S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      TACTILE_PUBLISH_S3_PATH_STYLE: ${S3_PATH_STYLE:-true}
+      TACTILE_PUBLISH_S3_PREFIX: ${S3_PREFIX:-}
+      TACTILE_PUBLISH_CACHE_DIR: ${CACHE_DIR:-}
+      TACTILE_PUBLISH_DNS_RESOLVER: ${DNS_RESOLVER:-}
+      TACTILE_PUBLISH_TRUSTED_PROXIES: ${TRUSTED_PROXIES:-172.16.0.0/12}
+    volumes:
+      - publish-data:/data
+    expose:
+      - "8472" # public site content, consumed by caddy
+    ports:
+      # Admin API bound to localhost only for publishctl access.
+      - "127.0.0.1:${ADMIN_PORT:-8473}:8473"
+    networks: [edge]
+
+  caddy:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: caddy
+      args:
+        IMAGE_VERSION: ${IMAGE_VERSION:-dev}
+        IMAGE_REVISION: ${IMAGE_REVISION:-none}
+        IMAGE_CREATED: ${IMAGE_CREATED:-}
+        DNS_PLUGINS: ${DNS_PLUGINS:-github.com/caddy-dns/cloudflare}
+    image: tactile-publish-caddy:${IMAGE_VERSION:-dev}
+    restart: unless-stopped
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:-tactile.localhost}
+      HTTP_PORT: "8080"
+      HTTPS_PORT: "8443"
+      TLS_CONFIG: ${TLS_CONFIG:-internal}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+      DNS_PROVIDER: ${DNS_PROVIDER:-cloudflare}
+      DNS_CREDENTIALS: ${DNS_CREDENTIALS:-}
+    volumes:
+      - ${CADDYFILE:-./Caddyfile}:/etc/caddy/Caddyfile:ro
+      - caddy-config:/config
+      - caddy-data:/data
+    ports:
+      - "${HTTP_PORT:-8080}:8080"   # -> host 80 in real deployments
+      - "${HTTPS_PORT:-8443}:8443"  # -> host 443 in real deployments
+    depends_on: [publish]
+    networks: [edge]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://publish:8472/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  publish-data:
+  caddy-config:
+  caddy-data:
+
+networks:
+  edge:
