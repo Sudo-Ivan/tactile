@@ -19,3 +19,9 @@ export const RELEASES_URL = `${REPO_URL}/releases`;
 // /app next to the homepage; falls back to the repo until it is hosted.
 export const APP_URL = env.PUBLIC_APP_URL || (env.PUBLIC_SITE_URL ? `${SITE_URL}/app` : REPO_URL);
 export const SPONSOR_URL = 'https://github.com/sponsors/Sudo-Ivan';
+
+// Shared colors. The theme-color meta in src/app.html uses #0F0F0F but
+// cannot import constants (static HTML), keep it in sync by hand.
+export const ICON_COLOR = '#F8F8F8';
+// Full Tailwind class kept as a literal so the class scanner still sees it.
+export const SURFACE_LIGHT_BG = 'bg-[#FAFAF9]';

@@ -3,14 +3,14 @@
 	import { Button } from '@tactile/ui/components/button';
 	import type { Snippet } from 'svelte';
 	import { asset, resolve } from '$app/paths';
-	import { APP_URL, REPO_URL, SPONSOR_URL } from '$lib/site';
+	import { APP_URL, REPO_URL, SPONSOR_URL, SURFACE_LIGHT_BG } from '$lib/site';
 
 	let { children }: { children?: Snippet } = $props();
 	const currentYear = new Date().getFullYear();
 </script>
 
 <div
-	class="flex min-h-[100dvh] w-full flex-col items-center bg-gradient-to-b from-transparent to-neutral-950 justify-between select-text px-4 selection:text-primary-foreground selection:bg-primary bg-[#FAFAF9] dark:bg-background"
+	class="flex min-h-[100dvh] w-full flex-col items-center bg-gradient-to-b from-transparent to-neutral-950 justify-between select-text px-4 selection:text-primary-foreground selection:bg-primary {SURFACE_LIGHT_BG} dark:bg-background"
 >
 	<!-- Header -->
 	<header class="flex items-center justify-between w-full h-16 z-10 max-w-screen-2xl">
