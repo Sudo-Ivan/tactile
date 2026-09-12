@@ -170,12 +170,7 @@
 		data-path={appState.collection}
 	>
 		{#if appState.collectionSearchActive}
-			<SearchResults
-				results={search.results}
-				query={search.value}
-				searchSettings={{ caseSensitive: search.caseSensitive, wholeWord: search.wholeWord }}
-				loading={search.loading}
-			/>
+			<SearchResults results={search.results} query={search.value} loading={search.loading} />
 		{:else}
 			{#if appState.collectionEntries.length === 0}
 				<div class="w-full h-full flex flex-col gap-1 items-center justify-center">

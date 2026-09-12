@@ -1,4 +1,4 @@
-import { COLLECTION_SETTINGS_PATH, STORAGE_KEYS } from '@/constants';
+import { BASE_APP_SETTINGS, COLLECTION_SETTINGS_PATH, STORAGE_KEYS } from '@/constants';
 import { getStorage } from '@/storage';
 import { appState } from '@/store.svelte';
 import type { AppSettingsParams, CollectionSettingsParams } from '@/types';
@@ -12,7 +12,8 @@ export const loadSettings = async (loadApp: boolean, loadCollection: boolean) =>
 		if (!appSettingsData) {
 			setSettings('app');
 		} else {
-			appState.appSettings = JSON.parse(appSettingsData);
+			// Merge over defaults so keys added in later versions exist.
+			appState.appSettings = { ...BASE_APP_SETTINGS, ...JSON.parse(appSettingsData) };
 		}
 	}
 

@@ -1,9 +1,10 @@
-import { TRASH_DIR, UNTITLED_NAME } from '@/constants';
+import { UNTITLED_NAME } from '@/constants';
 import { getStorage } from '@/storage';
 import { appState } from '@/store.svelte';
 import { getNextUntitledName } from '@/utils';
 import { StorageError } from '@tactile/storage';
 import type { DirEntry } from '@tactile/storage';
+import { moveToTrash } from './trash';
 
 // Create a new folder
 export const createFolder = async (dirPath: string) => {
@@ -36,7 +37,6 @@ export const createFolder = async (dirPath: string) => {
 // .tactile/trash: the browser cannot reach the OS trash.
 export const deleteFolder = async (path: string, recursive = false) => {
 	const storage = await getStorage();
-	const folderName = path.split('/').pop()!;
 
 	if (!recursive) {
 		let children: DirEntry[];
@@ -66,14 +66,9 @@ export const deleteFolder = async (path: string, recursive = false) => {
 			break;
 		case 'tactile':
 		case 'system':
-		default: {
-			let target = `${appState.collection}/${TRASH_DIR}/${folderName}`;
-			if (await storage.exists(target)) {
-				target = `${appState.collection}/${TRASH_DIR}/${Date.now()}-${folderName}`;
-			}
-			await storage.rename(path, target);
+		default:
+			await moveToTrash(path, true);
 			break;
-		}
 	}
 };
 

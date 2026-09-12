@@ -1,8 +1,11 @@
 <script lang="ts">
-	import { Button } from '@tactile/ui/components/button';
+	import { resolve } from '$app/paths';
 </script>
 
-<h1 class="bg-primary">Welcome to SvelteKit</h1>
-<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
-
-<Button>CLick me</Button>
+<!-- The load function redirects to /notes; this only renders if the
+     redirect is unavailable (e.g. during prerender). -->
+<div class="flex h-full w-full items-center justify-center">
+	<p class="text-muted-foreground text-sm">
+		Redirecting to <a href={resolve('/notes')} class="underline">notes</a>...
+	</p>
+</div>

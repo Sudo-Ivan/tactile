@@ -154,7 +154,7 @@
 						<div class="flex w-full items-center justify-between">
 							<div class="flex items-center gap-1.5">
 								<Icon name="folder" />
-								<span class="text-foreground/80 group:hover:text-foreground/100"></span>
+								<span class="text-foreground/80 group-hover:text-foreground"></span>
 								{collection.name}
 							</div>
 							<span class="ml-auto text-xs text-muted-foreground h-full"

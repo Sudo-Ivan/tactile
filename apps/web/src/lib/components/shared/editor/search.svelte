@@ -187,7 +187,7 @@
 					>
 						<ALargeSmall
 							class={cn(
-								'w-18px] h-[18px] stroke-muted-foreground group-hover:stroke-foreground transition-all stroke-[1.5px]',
+								'w-[18px] h-[18px] stroke-muted-foreground group-hover:stroke-foreground transition-all stroke-[1.5px]',
 								caseSensitive ? 'stroke-foreground' : ''
 							)}
 						/>

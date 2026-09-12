@@ -1,9 +1,11 @@
 import type { IconKey } from '$lib/components/shared/icon.svelte';
+import { exportCollection, exportNote, exportSelection, printNote } from '@/api/export';
 import { createFolder } from '@/api/folders';
 import { createNote, deleteNote, duplicateNote, saveNote } from '@/api/notes';
 import { SHORTCUTS, TIMING } from '@/constants';
 import { appState } from '@/store.svelte';
 import type { ShortcutParams } from '@/types';
+import { setEditorMode } from '@/utils';
 
 type Command = {
 	title: string;
@@ -58,9 +60,15 @@ export const mainCommands: CommandGroup[] = [
 				icon: 'cursorI',
 				shortcut: SHORTCUTS['editor:toggle-mode'],
 				onSelect: () => {
-					const editor = appState.editor.instance;
-					editor?.setEditable(!editor.isEditable);
-					appState.editorMode = appState.editorMode === 'edit' ? 'view' : 'edit';
+					setEditorMode(appState.editorMode === 'edit' ? 'view' : 'edit');
+				}
+			},
+			{
+				title: 'Toggle source mode',
+				icon: 'cursorI',
+				shortcut: SHORTCUTS['editor:source-mode'],
+				onSelect: () => {
+					setEditorMode(appState.editorMode === 'source' ? 'edit' : 'source');
 				}
 			},
 			{
@@ -102,6 +110,20 @@ export const mainCommands: CommandGroup[] = [
 				shortcut: SHORTCUTS['app:open-collection'],
 				onSelect: () => {
 					return 'open_collection';
+				}
+			},
+			{
+				title: 'Open trash',
+				icon: 'bin',
+				onSelect: () => {
+					return 'trash';
+				}
+			},
+			{
+				title: 'Export collection (.zip)',
+				icon: 'folderOpen',
+				onSelect: () => {
+					exportCollection();
 				}
 			},
 			{
@@ -241,6 +263,35 @@ export const createNoteCommands = (notePath: string): CommandGroup => {
 				shortcut: SHORTCUTS['note:copy-path'],
 				onSelect: () => {
 					navigator.clipboard.writeText(notePath);
+				}
+			},
+			{
+				title: 'Note history',
+				icon: 'reload',
+				onSelect: () => {
+					appState.isNoteDetailSidebarOpen = true;
+					appState.noteDetailTab = 'history';
+				}
+			},
+			{
+				title: 'Export note (.md)',
+				icon: 'note',
+				onSelect: () => {
+					exportNote(notePath);
+				}
+			},
+			{
+				title: 'Export note as PDF',
+				icon: 'share',
+				onSelect: () => {
+					printNote(notePath);
+				}
+			},
+			{
+				title: 'Export selection (.md)',
+				icon: 'copy',
+				onSelect: () => {
+					exportSelection();
 				}
 			}
 		]

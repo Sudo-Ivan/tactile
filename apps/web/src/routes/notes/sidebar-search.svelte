@@ -37,12 +37,10 @@
 		search.loading = true;
 
 		try {
-			search.results = await searchEntries(
-				appState.collection!,
-				search.value,
-				search.caseSensitive,
-				search.wholeWord
-			);
+			search.results = await searchEntries(appState.collection!, search.value, {
+				caseSensitive: search.caseSensitive,
+				mode: search.wholeWord ? 'word' : 'fuzzy'
+			});
 			search.loading = false;
 		} catch (error) {
 			console.error('Error searching files:', error);
@@ -123,7 +121,7 @@
 			>
 				<ALargeSmall
 					class={cn(
-						'w-18px] h-[18px] stroke-muted-foreground group-hover:stroke-foreground transition-all stroke-[1.5px]',
+						'w-[18px] h-[18px] stroke-muted-foreground group-hover:stroke-foreground transition-all stroke-[1.5px]',
 						search.caseSensitive ? 'stroke-foreground' : ''
 					)}
 				/>

@@ -5,8 +5,10 @@
 	import Tooltip from '@/components/shared/tooltip.svelte';
 	import { SHORTCUTS } from '@/constants';
 	import { appState } from '@/store.svelte';
+	import { setEditorMode } from '@/utils';
 	import Button from '@tactile/ui/components/button/button.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
+	import { FileCode2 } from 'lucide-svelte';
 
 	interface Props {
 		hideHistory?: boolean;
@@ -182,20 +184,34 @@
 				scale="md"
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
 				onclick={() => {
-					// TODO: Implement source mode in future
-					// Set the mode
 					if (appState.editorMode === 'edit') {
-						appState.editor.instance?.setEditable(false);
-						appState.editorMode = 'view';
-					} else if (appState.editorMode === 'view') {
-						appState.editor.instance?.setEditable(true);
-						appState.editorMode = 'edit';
+						setEditorMode('view');
+					} else {
+						// view and source both return to edit
+						setEditorMode('edit');
 					}
 				}}
 			>
 				<Shortcut options={SHORTCUTS['editor:toggle-mode']} />
 				<Icon name="editPencil" class={cn('w-4 h-4', appState.editorMode === 'edit' && 'hidden')} />
-				<Icon name="glasses" class={cn('w-4 h-4', appState.editorMode === 'view' && 'hidden')} />
+				<Icon name="glasses" class={cn('w-4 h-4', appState.editorMode !== 'edit' && 'hidden')} />
+			</Button>
+		</Tooltip>
+		<Tooltip text="Source mode" side="bottom" shortcut={SHORTCUTS['editor:source-mode']}>
+			<Button
+				size="icon"
+				variant="ghost"
+				scale="md"
+				class={cn(
+					'h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all',
+					appState.editorMode === 'source' && 'fill-foreground bg-accent'
+				)}
+				onclick={() => {
+					setEditorMode(appState.editorMode === 'source' ? 'edit' : 'source');
+				}}
+			>
+				<Shortcut options={SHORTCUTS['editor:source-mode']} />
+				<FileCode2 class="w-4 h-4" />
 			</Button>
 		</Tooltip>
 		<Tooltip text="Search" side="bottom" shortcut={SHORTCUTS['editor:search']}>
@@ -203,7 +219,8 @@
 				size="icon"
 				variant="ghost"
 				scale="md"
-				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
+				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all disabled:opacity-40"
+				disabled={appState.editorMode === 'source'}
 				onclick={() => {
 					appState.editorSearchActive = !appState.editorSearchActive;
 				}}

@@ -11,8 +11,13 @@
 	import { cn } from '@tactile/ui/lib/utils';
 	import type { NodePos } from '@tiptap/core';
 	import { onDestroy, onMount, untrack } from 'svelte';
+	import NoteHistory from './history.svelte';
 
-	let tab = $state<'metadata' | 'toc'>('metadata');
+	let tab = $derived(appState.noteDetailTab);
+
+	const setTab = (value: 'metadata' | 'toc' | 'history') => {
+		appState.noteDetailTab = value;
+	};
 	let nodeHeadings = $state<NodePos[] | null>(null);
 	let activeNoteMetadataParams = $state<NoteMetadataParams | null>(null);
 
@@ -131,7 +136,7 @@
 					tab === 'metadata' && 'fill-foreground bg-accent'
 				)}
 				onclick={() => {
-					tab = 'metadata';
+					setTab('metadata');
 				}}
 			>
 				<Icon name="identityGhost" class="w-[18px] h-[18px]" />
@@ -147,10 +152,26 @@
 					tab === 'toc' && 'fill-foreground bg-accent'
 				)}
 				onclick={() => {
-					tab = 'toc';
+					setTab('toc');
 				}}
 			>
 				<Icon name="layer" class="w-[16px] h-[16px]" />
+			</Button>
+		</Tooltip>
+		<Tooltip text="Version history" side="bottom">
+			<Button
+				size="icon"
+				variant="ghost"
+				scale="md"
+				class={cn(
+					'h-7 w-7 fill-muted-foreground hover:fill-foreground transition-all',
+					tab === 'history' && 'fill-foreground bg-accent'
+				)}
+				onclick={() => {
+					setTab('history');
+				}}
+			>
+				<Icon name="reload" class="w-[16px] h-[16px]" />
 			</Button>
 		</Tooltip>
 	</div>
@@ -225,6 +246,8 @@
 				{/each}
 			</div>
 		</div>
+	{:else if tab === 'history'}
+		<NoteHistory />
 	{:else}
 		<div class="flex flex-col items-center justify-center w-full h-full">
 			<p class="text-[13px] text-muted-foreground">

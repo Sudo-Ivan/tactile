@@ -29,7 +29,21 @@
 		}
 	}}
 >
-	<Tooltip.Trigger>{@render children?.()}</Tooltip.Trigger>
+	<Tooltip.Trigger>
+		{#snippet child({ props })}
+			<!-- children already contain the interactive element; delegate the
+			     trigger props to a span so we never emit button-in-button markup.
+			     focus events do not bubble, so forward focusin to keep keyboard
+			     focus opening the tooltip. -->
+			<span
+				{...props}
+				onfocusin={props.onfocus as ((e: FocusEvent) => void) | undefined}
+				class="inline-flex h-fit w-fit"
+			>
+				{@render children?.()}
+			</span>
+		{/snippet}
+	</Tooltip.Trigger>
 	<Tooltip.Content {...restProps}>
 		{text}
 		{#if shortcut}

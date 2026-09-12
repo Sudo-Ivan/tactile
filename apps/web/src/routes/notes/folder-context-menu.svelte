@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { exportFolder, printDirectory } from '@/api/export';
 	import { createFolder, deleteFolder, moveFolder } from '@/api/folders';
 	import { createNote } from '@/api/notes';
 	import Icon from '@/components/shared/icon.svelte';
@@ -19,7 +20,7 @@
 
 <ContextMenu.Content class="w-44">
 	<ContextMenu.Item
-		class="flex items-center gap-2 font-base group"
+		class="flex items-center gap-2 group"
 		onclick={() => {
 			createNote(entry.path);
 			onExpand();
@@ -30,7 +31,7 @@
 		<ContextMenu.Shortcut>{shortcutToString(SHORTCUTS['folder:create-note'])}</ContextMenu.Shortcut>
 	</ContextMenu.Item>
 	<ContextMenu.Item
-		class="flex items-center gap-2 font-base group"
+		class="flex items-center gap-2 group"
 		onclick={() => {
 			createFolder(entry.path);
 			onExpand();
@@ -42,7 +43,7 @@
 	</ContextMenu.Item>
 	<ContextMenu.Separator />
 	<ContextMenu.Item
-		class="flex items-center gap-2 font-base group"
+		class="flex items-center gap-2 group"
 		onclick={async () => {
 			onRename();
 		}}
@@ -52,7 +53,7 @@
 		<ContextMenu.Shortcut>{shortcutToString(SHORTCUTS['note:rename'])}</ContextMenu.Shortcut>
 	</ContextMenu.Item>
 	<ContextMenu.Sub>
-		<ContextMenu.SubTrigger class="flex items-center gap-2 font-base group">
+		<ContextMenu.SubTrigger class="flex items-center gap-2 group">
 			<Icon name="motionCirclesLines" class="w-3.5 h-3.5 fill-foreground/70" />
 			Move folder to...
 		</ContextMenu.SubTrigger>
@@ -60,7 +61,7 @@
 			{#each directories as directory (directory.path)}
 				{#if directory.name !== entry.name}
 					<ContextMenu.Item
-						class="flex items-center gap-2 font-base group"
+						class="flex items-center gap-2 group"
 						onclick={() => moveFolder(entry.path, directory.path)}
 					>
 						<Icon
@@ -74,7 +75,7 @@
 
 			{#if directories.filter((directory) => directory.name !== entry.name).length === 0}
 				<ContextMenu.Item
-					class="flex items-center gap-2 font-base group"
+					class="flex items-center gap-2 group"
 					onclick={async () => {
 						// Create a new folder in parent directory
 						const dirPath = await createFolder(entry.path.split('/').slice(0, -1).join('/'));
@@ -94,9 +95,31 @@
 			{/if}
 		</ContextMenu.SubContent>
 	</ContextMenu.Sub>
+	<ContextMenu.Sub>
+		<ContextMenu.SubTrigger class="flex items-center gap-2 group">
+			<Icon name="share" class="w-3.5 h-3.5 fill-foreground/70" />
+			Export
+		</ContextMenu.SubTrigger>
+		<ContextMenu.SubContent class="w-44">
+			<ContextMenu.Item
+				class="flex items-center gap-2 group"
+				onclick={() => exportFolder(entry.path)}
+			>
+				<Icon name="folder" class="w-3.5 h-3.5 fill-foreground/70 group-hover:fill-foreground" />
+				Folder (.zip)
+			</ContextMenu.Item>
+			<ContextMenu.Item
+				class="flex items-center gap-2 group"
+				onclick={() => printDirectory(entry.path)}
+			>
+				<Icon name="note" class="w-3.5 h-3.5 fill-foreground/70 group-hover:fill-foreground" />
+				PDF / Print
+			</ContextMenu.Item>
+		</ContextMenu.SubContent>
+	</ContextMenu.Sub>
 	<ContextMenu.Separator />
 	<ContextMenu.Item
-		class="flex text-destructive data-[highlighted]:bg-destructive/20 data-[highlighted]:text-destructive items-center gap-2 font-base group"
+		class="flex text-destructive data-[highlighted]:bg-destructive/20 data-[highlighted]:text-destructive items-center gap-2 group"
 		onclick={() => deleteFolder(entry.path)}
 	>
 		<Icon name="bin" class="w-3.5 h-3.5 fill-destructive/70 group-hover:fill-destructive" />

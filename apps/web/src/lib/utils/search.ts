@@ -2,6 +2,7 @@ import { MARKDOWN_EXTENSION } from '../constants';
 import { getStorage } from '../storage';
 import type { SearchResultParams } from '../types';
 import { isInternalPath, isUnder } from '@tactile/storage';
+import { matchTerm, toHighlightRanges, type MatchMode } from './fuzzy';
 
 // In-memory content cache for full-text search. Notes are small and a
 // collection is at most a few thousand files, so a per-collection cache
@@ -9,6 +10,10 @@ import { isInternalPath, isUnder } from '@tactile/storage';
 const contentCache = new Map<string, string>();
 let cacheCollection: string | undefined;
 let cacheSubscribed = false;
+
+// Bounds so a broad query cannot flood the UI with thousands of rows.
+const MAX_MATCHES_PER_FILE = 12;
+const MAX_RESULTS = 400;
 
 async function ensureCache(collectionPath: string): Promise<Map<string, string>> {
 	const storage = await getStorage();
@@ -74,56 +79,132 @@ async function ensureCache(collectionPath: string): Promise<Map<string, string>>
 	return contentCache;
 }
 
-export async function searchEntries(
-	collectionPath: string,
-	query: string,
-	caseSensitive: boolean = false,
-	matchWord: boolean = false
-): Promise<SearchResultParams[]> {
-	const wordBoundary = matchWord ? ' ' : '';
-	const searchPattern = `${wordBoundary}${query}${wordBoundary}`;
+interface FileSearchResult {
+	results: SearchResultParams[];
+	// Aggregate used to order files: name matches dominate, then the best
+	// content line, then breadth of coverage.
+	score: number;
+}
 
-	const contents = await ensureCache(collectionPath);
-	const searchResults: SearchResultParams[] = [];
+// Search a single file: file name first, then content lines. Every
+// whitespace-separated term must match somewhere (name or content) for the
+// file to be included.
+function searchFile(
+	path: string,
+	content: string,
+	terms: string[],
+	mode: MatchMode,
+	caseSensitive: boolean
+): FileSearchResult | null {
+	const results: SearchResultParams[] = [];
+	const name = path.split('/').pop() ?? path;
 
-	for (const [path, content] of contents) {
-		if (!isUnder(path, collectionPath) || isInternalPath(path)) continue;
-		const haystack = caseSensitive ? content : content.toLowerCase();
-		const needle = caseSensitive ? searchPattern : searchPattern.toLowerCase();
-		if (!haystack.includes(needle)) continue;
-
-		const contexts = extractAllContexts(content, query, caseSensitive, matchWord);
-		contexts.forEach((context) => {
-			searchResults.push({ path, context_preview: context });
+	let nameScore = 0;
+	let nameMatchedAll = true;
+	const nameIndices: number[] = [];
+	for (const term of terms) {
+		const match = matchTerm(term, name, mode, caseSensitive);
+		if (!match) {
+			nameMatchedAll = false;
+			break;
+		}
+		nameScore += match.score;
+		nameIndices.push(...match.indices);
+	}
+	if (nameMatchedAll) {
+		results.push({
+			path,
+			context_preview: name,
+			kind: 'name',
+			score: nameScore,
+			highlights: toHighlightRanges(nameIndices)
 		});
 	}
 
-	return searchResults;
+	let matchedTermsInContent = true;
+	const lineResults: SearchResultParams[] = [];
+	let bestLineScore = 0;
+
+	const lines = content.split('\n');
+	for (let i = 0; i < lines.length && lineResults.length < MAX_MATCHES_PER_FILE; i++) {
+		const line = lines[i];
+		if (!line.trim()) continue;
+
+		let lineScore = 0;
+		const lineIndices: number[] = [];
+		let allTerms = true;
+		for (const term of terms) {
+			const match = matchTerm(term, line, mode, caseSensitive);
+			if (!match) {
+				allTerms = false;
+				break;
+			}
+			lineScore += match.score;
+			lineIndices.push(...match.indices);
+		}
+		if (!allTerms) continue;
+
+		bestLineScore = Math.max(bestLineScore, lineScore);
+		const startLine = Math.max(0, i - 1);
+		const endLine = Math.min(lines.length - 1, i + 1);
+		const context = lines.slice(startLine, endLine + 1).join('\n');
+		// Match indices are relative to the matched line; shift them into the
+		// context window so highlights land on the right characters.
+		const lineOffset = lines.slice(startLine, i).reduce((sum, l) => sum + l.length + 1, 0);
+		lineResults.push({
+			path,
+			context_preview: context,
+			kind: 'content',
+			line: i + 1,
+			score: lineScore,
+			highlights: toHighlightRanges(lineIndices.map((idx) => idx + lineOffset))
+		});
+	}
+
+	if (!nameMatchedAll) {
+		// With no name match, every term still has to appear in the content.
+		for (const term of terms) {
+			if (!matchTerm(term, content, mode, caseSensitive)) {
+				matchedTermsInContent = false;
+				break;
+			}
+		}
+	}
+	if (!nameMatchedAll && (!matchedTermsInContent || lineResults.length === 0)) return null;
+
+	lineResults.sort((a, b) => b.score - a.score);
+	results.push(...lineResults);
+
+	const score = (nameMatchedAll ? nameScore + 100 : 0) + bestLineScore + lineResults.length * 3;
+	return { results, score };
 }
 
-function extractAllContexts(
-	content: string,
+export interface SearchOptions {
+	caseSensitive?: boolean;
+	// 'fuzzy' (default): fzf-style subsequence matching. 'word': whole-word
+	// matches only. 'exact': literal substring, no fuzzy fallback.
+	mode?: MatchMode;
+}
+
+export async function searchEntries(
+	collectionPath: string,
 	query: string,
-	caseSensitive: boolean,
-	matchWord: boolean
-): string[] {
-	const lines = content.split('\n');
-	const contexts: string[] = [];
-	lines.forEach((line, index) => {
-		const compareLine = caseSensitive ? line : line.toLowerCase();
-		const compareQuery = caseSensitive ? query : query.toLowerCase();
-		if (matchWord) {
-			const regex = new RegExp(`(^|\\s)${compareQuery}($|\\s)`, caseSensitive ? '' : 'i');
-			if (regex.test(compareLine)) {
-				const startLine = Math.max(0, index - 1);
-				const endLine = Math.min(lines.length - 1, index + 1);
-				contexts.push(lines.slice(startLine, endLine + 1).join('\n'));
-			}
-		} else if (compareLine.includes(compareQuery)) {
-			const startLine = Math.max(0, index - 1);
-			const endLine = Math.min(lines.length - 1, index + 1);
-			contexts.push(lines.slice(startLine, endLine + 1).join('\n'));
-		}
-	});
-	return contexts;
+	options: SearchOptions = {}
+): Promise<SearchResultParams[]> {
+	const terms = query.trim().split(/\s+/).filter(Boolean);
+	if (terms.length === 0) return [];
+
+	const mode = options.mode ?? 'fuzzy';
+	const caseSensitive = options.caseSensitive ?? false;
+	const contents = await ensureCache(collectionPath);
+	const perFile: FileSearchResult[] = [];
+
+	for (const [path, content] of contents) {
+		if (!isUnder(path, collectionPath) || isInternalPath(path)) continue;
+		const result = searchFile(path, content, terms, mode, caseSensitive);
+		if (result) perFile.push(result);
+	}
+
+	perFile.sort((a, b) => b.score - a.score);
+	return perFile.flatMap((file) => file.results).slice(0, MAX_RESULTS);
 }

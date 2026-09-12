@@ -11,6 +11,8 @@ export interface AppSettingsParams {
 	theme: string;
 	theme_mode: string;
 	interface_font: string;
+	// Custom Tactile Sync relay URL. Empty uses the default hosted relay.
+	sync_server: string;
 }
 
 export interface CollectionSettingsParams {
@@ -69,6 +71,14 @@ export interface FileEntry {
 export interface SearchResultParams {
 	path: string;
 	context_preview: string;
+	// 'name' results matched the file name; 'content' results matched a line.
+	kind: 'name' | 'content';
+	// 1-based line number of the match for content results.
+	line?: number;
+	// Ranking score, higher is better.
+	score: number;
+	// [start, end) character ranges to highlight inside context_preview.
+	highlights: [number, number][];
 }
 
 export type { FileVersion } from '@tactile/storage';

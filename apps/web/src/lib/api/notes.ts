@@ -1,10 +1,11 @@
-import { MARKDOWN_EXTENSION, TRASH_DIR, UNTITLED_NAME } from '@/constants';
+import { MARKDOWN_EXTENSION, UNTITLED_NAME } from '@/constants';
 import { getStorage } from '@/storage';
 import { appState } from '@/store.svelte';
 import type { FileVersion, NoteMetadataParams } from '@/types';
 import { calculateReadingTime, getNextUntitledName, setEditorContent } from '@/utils';
 import { isVersioned, normalizePath, StorageError } from '@tactile/storage';
 import type { DirEntry } from '@tactile/storage';
+import { moveToTrash } from './trash';
 
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -53,6 +54,9 @@ export async function openNote(path: string, skipHistory = false) {
 	const storage = await getStorage();
 	const fileContent = await storage.readTextFile(path);
 	setEditorContent(fileContent);
+	// Keep the source buffer in sync so switching notes while in source mode
+	// never shows stale content.
+	appState.sourceContent = fileContent;
 	appState.activeFile = path;
 	if (!skipHistory) {
 		if (appState.noteHistory[appState.noteHistory.length - 1] !== path) {
@@ -61,20 +65,9 @@ export async function openNote(path: string, skipHistory = false) {
 	}
 }
 
-// The browser has no OS trash. 'system' falls back to the collection's
-// own .tactile/trash so 'delete' remains the only destructive mode.
-const moveToTrash = async (path: string) => {
-	const storage = await getStorage();
-	const name = path.split('/').pop()!;
-	let target = `${appState.collection}/${TRASH_DIR}/${name}`;
-	if (await storage.exists(target)) {
-		// Never silently overwrite older trashed notes.
-		target = `${appState.collection}/${TRASH_DIR}/${Date.now()}-${name}`;
-	}
-	await storage.rename(path, target);
-};
-
-// Delete a note
+// Delete a note. The browser has no OS trash, so 'system' falls back to the
+// collection's own .tactile/trash; the trash manifest keeps the original
+// path so entries can be restored.
 export const deleteNote = async (path: string) => {
 	const storage = await getStorage();
 	switch (appState.collectionSettings.notes.trash_dir) {
@@ -84,7 +77,7 @@ export const deleteNote = async (path: string) => {
 		case 'tactile':
 		case 'system':
 		default:
-			await moveToTrash(path);
+			await moveToTrash(path, false);
 			break;
 	}
 	appState.activeFile = null;
@@ -123,13 +116,18 @@ export const renameNote = async (path: string, name: string) => {
 };
 
 // Save active note. The storage layer snapshots the previous contents into
-// .tactile/versions first, so saves are never destructive.
+// .tactile/versions first, so saves are never destructive. In source mode the
+// raw buffer is what gets written; in edit/view mode the document is
+// serialized to markdown first.
 export const saveNote = async (path: string) => {
 	if (!path || !appState.activeFile) return;
 	const storage = await getStorage();
 
 	// Get note content
-	let content = appState.editor.instance?.storage.markdown.getMarkdown() ?? '';
+	let content =
+		appState.editorMode === 'source'
+			? appState.sourceContent
+			: (appState.editor.instance?.storage.markdown.getMarkdown() ?? '');
 
 	// Remove the first heading title
 	content = content.replace(/^# .*\n/, '');
@@ -242,6 +240,20 @@ export const listNoteVersions = async (path: string): Promise<FileVersion[]> => 
 	const storage = await getStorage();
 	if (!isVersioned(storage)) return [];
 	return storage.listVersions(normalizePath(path));
+};
+
+// Reads the stored contents of one version snapshot.
+export const readNoteVersion = async (path: string, versionId: string): Promise<string> => {
+	const storage = await getStorage();
+	if (!isVersioned(storage)) throw new Error('Versioning is not available');
+	return storage.readVersion(normalizePath(path), versionId);
+};
+
+// Reads the current on-disk contents of a note (used to diff a version
+// against the latest state).
+export const readNoteContent = async (path: string): Promise<string> => {
+	const storage = await getStorage();
+	return storage.readTextFile(normalizePath(path));
 };
 
 // Restores a note to an older version. The current contents are snapshotted

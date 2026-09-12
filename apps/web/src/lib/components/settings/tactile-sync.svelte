@@ -1,8 +1,14 @@
 <script lang="ts">
+	import { setSettings } from '@/api/settings';
+	import { appState } from '@/store.svelte';
 	import { Button } from '@tactile/ui/components/button';
+	import * as Collapsible from '@tactile/ui/components/collapsible';
+	import { Input } from '@tactile/ui/components/input';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import * as Select from '@tactile/ui/components/select';
 	import Switch from '@tactile/ui/components/switch/switch.svelte';
+	import { cn } from '@tactile/ui/lib/utils';
+	import { ChevronRight } from 'lucide-svelte';
 	import Tooltip from '../shared/tooltip.svelte';
 
 	const syncIntervals = [
@@ -27,6 +33,14 @@
 	let autoBackup = $state(false);
 	let selectedSyncInterval = $state('5m');
 	let selectedBackupInterval = $state('1w');
+	let advancedOpen = $state(false);
+
+	let syncServer = $derived(appState.appSettings.sync_server ?? '');
+	let syncServerValid = $derived(syncServer === '' || /^https?:\/\/\S+$/.test(syncServer.trim()));
+
+	function setSyncServer(value: string) {
+		setSettings('app', { ...appState.appSettings, sync_server: value.trim() });
+	}
 </script>
 
 <div class="space-y-5">
@@ -105,4 +119,47 @@
 			</Button>
 		</div>
 	</div>
+
+	<Collapsible.Root bind:open={advancedOpen} class="pt-3 border-t border-border/60">
+		<Collapsible.Trigger
+			class="flex items-center gap-1.5 text-sm text-foreground/85 hover:text-foreground transition-colors"
+		>
+			<ChevronRight class={cn('h-3.5 w-3.5 transition-transform', advancedOpen && 'rotate-90')} />
+			Advanced
+		</Collapsible.Trigger>
+		<Collapsible.Content class="pt-3">
+			<div class="space-y-1">
+				<Label class="text-sm">Sync server</Label>
+				<p class="text-muted-foreground text-xs">
+					Custom Tactile Sync relay endpoint. Leave empty to use the default hosted relay.
+				</p>
+				<div class="flex items-center gap-2 pt-2">
+					<Input
+						value={syncServer}
+						oninput={(e) => setSyncServer(e.currentTarget.value)}
+						placeholder="https://sync.tactile.app"
+						spellcheck="false"
+						autocomplete="off"
+						class={cn(
+							'h-8 text-sm font-mono flex-1',
+							!syncServerValid && 'border-destructive focus-visible:ring-destructive'
+						)}
+					/>
+					<Button
+						variant="secondary"
+						size="sm"
+						class="h-8 text-sm font-normal"
+						scale="sm"
+						disabled={syncServer === ''}
+						onclick={() => setSyncServer('')}
+					>
+						Reset
+					</Button>
+				</div>
+				{#if !syncServerValid}
+					<p class="text-destructive text-xs pt-1">Must be a valid http(s) URL.</p>
+				{/if}
+			</div>
+		</Collapsible.Content>
+	</Collapsible.Root>
 </div>

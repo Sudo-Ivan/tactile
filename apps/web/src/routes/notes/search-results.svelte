@@ -3,41 +3,31 @@
 	import { TIMING } from '@/constants';
 	import { appState } from '@/store.svelte';
 	import type { SearchResultParams } from '@/types';
+	import { applyHighlights } from '@/utils';
 	import * as Collapsible from '@tactile/ui/components/collapsible';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
 	import { ChevronDown, Loader } from 'lucide-svelte';
-	import markdownit from 'markdown-it';
 
 	interface Props {
 		query: string;
-		searchSettings: { caseSensitive: boolean; wholeWord: boolean };
 		results?: SearchResultParams[];
 		loading?: boolean;
 	}
 
-	let { query, searchSettings, results = [], loading = false }: Props = $props();
+	let { query, results = [], loading = false }: Props = $props();
 
 	let openState = $state<Record<string, boolean>>({});
 	let groupedResults = $derived(groupResults(results));
 
-	// group results function which groups all the results from the same path together in an array
-	function groupResults(
-		results: { path: string; context_preview: string }[]
-	): Record<string, { context_preview: string }[]> {
-		const grouped: Record<string, { context_preview: string }[]> = {};
+	const MARK_CLASS = 'bg-[#f8a01e80] text-foreground rounded-[2px] px-px -mx-px';
 
-		results.forEach((result) => {
-			const path = result.path;
-			const context_preview = result.context_preview;
-
-			if (!grouped[path]) {
-				grouped[path] = [];
-			}
-
-			grouped[path].push({ context_preview });
-		});
-
+	// Group results by path, preserving the score ordering produced by search.
+	function groupResults(results: SearchResultParams[]): Record<string, SearchResultParams[]> {
+		const grouped: Record<string, SearchResultParams[]> = {};
+		for (const result of results) {
+			(grouped[result.path] ??= []).push(result);
+		}
 		return grouped;
 	}
 
@@ -54,33 +44,51 @@
 		openState[path] = !openState[path];
 	}
 
-	const goToResult = (index: number) => {
-		const editor = appState.editor.instance;
-		if (!editor) return;
-
-		const { results } = editor.storage.searchAndReplace;
-		const position: {
-			from: number;
-			to: number;
-		} = results[index];
-
-		if (!position) return;
-
-		editor.commands.setTextSelection(position);
-
-		const { node } = editor.view.domAtPos(editor.state.selection.anchor);
-		if (node instanceof HTMLElement) {
-			const rect = node.getBoundingClientRect();
-			const isAboveView = rect.top < 0;
-			const isBelowView = rect.bottom > window.innerHeight;
-
-			if (isAboveView || isBelowView) {
-				// Smooth scroll doesn't seem to work well from bottom to top
-				const behavior = isAboveView ? 'auto' : 'smooth';
-				node.scrollIntoView({ behavior, block: 'center' });
-			}
+	function openResult(path: string, result: SearchResultParams, index: number) {
+		if (result.kind === 'name') {
+			openNote(path, true);
+			return;
 		}
-	};
+
+		// set search term
+		appState.editorSearchValue = '';
+
+		// Open the file
+		if (appState.activeFile !== path) {
+			openNote(path, true);
+		}
+
+		setTimeout(() => {
+			// set search active
+			if (!appState.editorSearchActive) appState.editorSearchActive = true;
+
+			// blur editor - this helps the search in focusing the result later
+			appState.editor.instance?.commands.blur();
+
+			// Feed the literal query to the editor's find; fuzzy-only matches
+			// produce no editor results and just leave the note open.
+			if (appState.editorSearchValue !== query) appState.editorSearchValue = query;
+
+			const editor = appState.editor.instance;
+			if (editor) {
+				const found = editor.storage.searchAndReplace?.results?.[index];
+				if (found) {
+					editor.commands.setTextSelection(found);
+					editor.commands.setSearchResult(index);
+					const { node } = editor.view.domAtPos(editor.state.selection.anchor);
+					if (node instanceof HTMLElement) {
+						const rect = node.getBoundingClientRect();
+						if (rect.top < 0 || rect.bottom > window.innerHeight) {
+							node.scrollIntoView({
+								behavior: rect.top < 0 ? 'auto' : 'smooth',
+								block: 'center'
+							});
+						}
+					}
+				}
+			}
+		}, TIMING.searchResultDelay);
+	}
 </script>
 
 <div class="w-full text-xs space-y-1 pl-1">
@@ -102,52 +110,43 @@
 						!openState[path] ? '-rotate-90' : 'rotate-0'
 					)}
 				/>
-				<p class="truncate">{path.split('/').pop()}</p>
+				{@const nameMatch = groupedResults[path].find((r) => r.kind === 'name')}
+				{#if nameMatch}
+					{@const nameHtml = applyHighlights(
+						nameMatch.context_preview,
+						nameMatch.highlights,
+						MARK_CLASS
+					)}
+					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+					<p class="truncate">{@html nameHtml}</p>
+				{:else}
+					<p class="truncate">{path.split('/').pop()}</p>
+				{/if}
 			</Collapsible.Trigger>
 			<Collapsible.Content class="mt-0.5 w-full gap-1.5 flex flex-col">
-				{#each groupedResults[path] as result, index (result.context_preview)}
+				{#each groupedResults[path] as result, index (result.context_preview + index)}
+					{@const previewHtml = applyHighlights(
+						result.context_preview,
+						result.highlights,
+						MARK_CLASS
+					)}
 					<button
 						class="flex items-start min-w-full overflow-hidden text-start p-2 bg-secondary-background border rounded-md text-xs hover:bg-accent hover:text-accent-foreground"
-						onclick={async () => {
-							// set search term
-							appState.editorSearchValue = '';
-
-							// Open the file
-							if (appState.activeFile !== path) {
-								openNote(path, true);
-							}
-
-							setTimeout(() => {
-								// set search active
-								if (!appState.editorSearchActive) appState.editorSearchActive = true;
-
-								// blur editor - this helps the search in focusing the result later
-								appState.editor.instance?.commands.blur();
-
-								// set search term
-								if (appState.editorSearchValue !== query) appState.editorSearchValue = query;
-
-								// go to result
-								goToResult(index);
-
-								// highlight result
-								appState.editor.instance?.commands.setSearchResult(index);
-							}, TIMING.searchResultDelay);
-						}}
+						onclick={() => openResult(path, result, index)}
 					>
-						<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-						{@html markdownit({
-							html: true,
-							linkify: false,
-							typographer: true
-						})
-							.render(result.context_preview)
-							.replace(
-								new RegExp(`(${query})`, searchSettings.caseSensitive ? 'g' : 'gi'),
-								(match) => `<span class="bg-[#f8a01e80] text-foreground/60">${match}</span>`
-							)
-							.replace(/<a/g, '<span')
-							.replace(/<\/a>/g, '</span>')}
+						{#if result.kind === 'name'}
+							<span class="text-muted-foreground whitespace-nowrap">Name match&nbsp;·&nbsp;</span>
+							<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+							<span class="truncate">{@html previewHtml}</span>
+						{:else}
+							{#if result.line}
+								<span class="text-muted-foreground shrink-0 w-8 text-right pr-2 select-none"
+									>{result.line}</span
+								>
+							{/if}
+							<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+							<span class="whitespace-pre-wrap break-words min-w-0">{@html previewHtml}</span>
+						{/if}
 					</button>
 				{/each}
 			</Collapsible.Content>

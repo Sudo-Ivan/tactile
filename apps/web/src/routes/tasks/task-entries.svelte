@@ -80,7 +80,9 @@
 		loading = true;
 
 		try {
-			tasks = await searchEntries(appState.collection!, TASK_MARKER, false, false);
+			const results = await searchEntries(appState.collection!, TASK_MARKER, { mode: 'exact' });
+			// Name matches (a file literally named "- [ ]...") are not tasks.
+			tasks = results.filter((result) => result.kind === 'content');
 
 			loading = false;
 		} catch (error) {
@@ -103,7 +105,7 @@
 		const activeFileInResults = tasks.find((task) => task.path === appState.activeFile);
 		if (activeFileInResults) {
 			openNote(activeFileInResults.path, true);
-		} else if (appState.activeFile !== tasks[0]?.path) {
+		} else if (tasks[0] && appState.activeFile !== tasks[0].path) {
 			openNote(tasks[0].path, true);
 		}
 	});
