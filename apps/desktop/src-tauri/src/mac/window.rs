@@ -2,7 +2,7 @@
 // https://github.com/hoppscotch/hoppscotch/blob/286fcd2bb08a84f027b10308d1e18da368f95ebf/packages/hoppscotch-selfhost-desktop/src-tauri/src/mac/window.rs
 
 use hex_color::HexColor;
-use tauri::{App, Manager, Runtime, WebviewWindow, WindowEvent};
+use tauri::{App, Listener, Manager, Runtime, WebviewWindow, WindowEvent};
 
 use objc2::runtime::AnyObject;
 use objc2_app_kit::{
