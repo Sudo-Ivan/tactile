@@ -21,7 +21,7 @@
 		)}
 		{...rest}
 	>
-		<TooltipPrimitive.Arrow class="bg-primary rounded-[1.5px] border" />
+		<TooltipPrimitive.Arrow class="bg-secondary rounded-[1.5px] border" />
 		<div
 			class={cn(
 				'flex items-center gap-1.5 justify-center w-full h-full px-2.5 z-50 bg-secondary text-xs text-secondary-foreground rounded-md',

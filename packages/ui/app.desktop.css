@@ -1,6 +1,13 @@
 @import '@tactile/tailwind-config/theme.css';
 @import './theme.css';
 
+/* Component classes live in this package, outside the importing app's
+   module graph. Without an explicit source Tailwind never sees them, so
+   utilities used only here (bg-primary, text-primary-foreground, dialog
+   positioning, tooltip chrome, ...) silently disappear from the build. */
+@source './components';
+@source './lib';
+
 @layer base {
 	:root {
 		--background: var(--background-light);
