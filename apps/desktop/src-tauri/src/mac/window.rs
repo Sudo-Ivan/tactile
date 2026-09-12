@@ -141,7 +141,7 @@ pub fn setup_mac_window(app: &mut App) {
 
     // Control window theme based on app update_window
     app.listen("tactile-bg-changed", move |ev| {
-        let payload = serde_json::from_str::<&str>(ev.payload().unwrap())
+        let payload = serde_json::from_str::<&str>(ev.payload())
             .unwrap()
             .trim();
 
