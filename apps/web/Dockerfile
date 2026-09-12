@@ -1,12 +1,12 @@
 # syntax=docker/dockerfile:1
 
-FROM node:24-alpine AS builder
+FROM node:26-alpine AS builder
 WORKDIR /app
 RUN corepack enable
 COPY . .
 RUN pnpm dlx turbo prune web --docker
 
-FROM node:24-alpine AS installer
+FROM node:26-alpine AS installer
 WORKDIR /app
 RUN corepack enable
 COPY --from=builder /app/out/json/ .
