@@ -89,11 +89,11 @@ you rotate without killing issued tokens.
 
 Default tier table (override with `-tiers-file` JSON):
 
-| tier | quota | max ttl | max blob |
-|---|---|---|---|
-| free | 64 MiB | 30 days | 1 MiB |
-| supporter | 256 MiB | 90 days | 4 MiB |
-| pro | 1 GiB | 1 year | 8 MiB |
+| tier      | quota   | max ttl | max blob |
+| --------- | ------- | ------- | -------- |
+| free      | 64 MiB  | 30 days | 1 MiB    |
+| supporter | 256 MiB | 90 days | 4 MiB    |
+| pro       | 1 GiB   | 1 year  | 8 MiB    |
 
 Suggested starting prices (yours to change, it is just limits): supporter
 $12/yr, pro $30/yr — under Obsidian and Joplin, and the relay stays blind
