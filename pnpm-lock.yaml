@@ -97,7 +97,7 @@ catalogs:
       specifier: ^1.0.1
       version: 1.0.1
     markdown-it:
-      specifier: ^15.0.0
+      specifier: ^15.0.1
       version: 15.0.1
     mode-watcher:
       specifier: ^1.1.0

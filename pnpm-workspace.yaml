@@ -55,7 +55,7 @@ catalog:
   '@internationalized/date': ^3.12.4
   mode-watcher: ^1.1.0
   '@electric-sql/pglite': ^0.5.8
-  markdown-it: ^15.0.0
+  markdown-it: ^15.0.1
   '@tauri-apps/api': ^2.11.1
   '@tauri-apps/cli': ^2.11.4
   '@tauri-apps/plugin-fs': ^2.5.2
