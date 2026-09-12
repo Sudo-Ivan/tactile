@@ -4,7 +4,7 @@
 
 - [ ] Tactile Sync - sync notes across devices (relay v1 in `relay/`: blind E2EE blob relay, WS live events, WebRTC signaling)
 - [ ] CRDT-based merge + live collaboration for sync (Automerge/yrs; revisit after relay v1 ships)
-- [ ] Note sharing - share single notes or collections via link
+- [ ] Note sharing - share single notes or collections via link (publish node in `publish/`: signed tar deploys, {slug}.base-domain + custom domains, s3 HA backend, paid tiers; client-side render + upload still needed app-side)
 - [ ] Mobile support for the web app - storage now uses OPFS which works on mobile browsers
 - [ ] Native mobile apps for iOS and Android
 - [ ] Windows and Linux builds for the desktop app
