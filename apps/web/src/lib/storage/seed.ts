@@ -25,7 +25,7 @@ If you'd like to learn more about Tactile, why it's being built, what its goals 
 
 ## Deploy Your Own
 
-If you're interested in self-hosting your own web instance of Tactile, please check [GitHub](https://github.com/Sudo-Ivan/tactile/github) for instructions.
+If you're interested in self-hosting your own web instance of Tactile, please check [GitHub](https://github.com/Sudo-Ivan/tactile) for instructions.
 
 ## Roadmap
 
