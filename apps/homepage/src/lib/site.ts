@@ -15,7 +15,7 @@ export const SITE_DESCRIPTION =
 export const REPO_URL = 'https://github.com/Sudo-Ivan/tactile';
 export const RELEASES_URL = `${REPO_URL}/releases`;
 
-// Where "Open App" points. Set PUBLIC_APP_URL when the web app is hosted;
-// falls back to the repo until then.
-export const APP_URL = env.PUBLIC_APP_URL || REPO_URL;
+// Where "Open App" points. On the Pages deploy the web app sits under
+// /app next to the homepage; falls back to the repo until it is hosted.
+export const APP_URL = env.PUBLIC_APP_URL || (env.PUBLIC_SITE_URL ? `${SITE_URL}/app` : REPO_URL);
 export const SPONSOR_URL = 'https://github.com/sponsors/Sudo-Ivan';

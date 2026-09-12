@@ -1,6 +1,8 @@
 import { SITE_URL } from '$lib/site';
 import type { RequestHandler } from './$types';
 
+export const prerender = true;
+
 const PATHS = ['/', '/download', '/plans'];
 
 export const GET: RequestHandler = () => {

@@ -5,8 +5,9 @@
 	import { onMount } from 'svelte';
 	import { cubicInOut } from 'svelte/easing';
 	import { browser } from '$app/environment';
+	import { asset } from '$app/paths';
 	import Seo from '$lib/components/seo.svelte';
-	import { APP_URL } from '$lib/site';
+	import { APP_URL, RELEASES_URL } from '$lib/site';
 
 	type PlatformId = 'mac' | 'windows' | 'web' | 'mobile';
 
@@ -70,10 +71,18 @@
 		}, 100);
 	}
 
-	function downloadForMac(arch: 'aarch64' | 'x86_64') {
-		if (browser) {
-			const downloadUrl = `/api/download?target=darwin&arch=${arch}`;
-			window.location.href = downloadUrl;
+	// Resolve the latest release asset in the browser; the site is static
+	// so there is no download API to proxy through.
+	async function downloadForMac(arch: 'aarch64' | 'x86_64') {
+		if (!browser) return;
+		const want = arch === 'aarch64' ? '_aarch64.dmg' : '_x64.dmg';
+		try {
+			const res = await fetch('https://api.github.com/repos/Sudo-Ivan/tactile/releases/latest');
+			const release = await res.json();
+			const asset = release.assets?.find((a: { name: string }) => a.name.endsWith(want));
+			window.location.href = asset?.browser_download_url ?? `${RELEASES_URL}/latest`;
+		} catch {
+			window.location.href = `${RELEASES_URL}/latest`;
 		}
 	}
 
@@ -103,7 +112,7 @@
 			decoding="async"
 			data-nimg="1"
 			class="flex-none"
-			src="/icon.svg"
+			src={asset('/icon.svg')}
 			style="color: transparent;"
 		/>
 	</div>
