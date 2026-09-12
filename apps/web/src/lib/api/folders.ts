@@ -1,49 +1,54 @@
-import { UNTITLED_NAME } from '@/constants';
-import { db } from '@/database/client';
-import { entry as entryTable } from '@/database/schema';
+import { TRASH_DIR, UNTITLED_NAME } from '@/constants';
+import { getStorage } from '@/storage';
 import { appState } from '@/store.svelte';
 import { getNextUntitledName } from '@/utils';
-import { and, eq } from 'drizzle-orm';
-import { moveNote } from './notes';
+import { StorageError } from '@tactile/storage';
+import type { DirEntry } from '@tactile/storage';
 
 // Create a new folder
 export const createFolder = async (dirPath: string) => {
-	const collectionPath = appState.collection!;
+	const storage = await getStorage();
 
-	// Get the entry matching the path
-	const entry = await db.select().from(entryTable).where(eq(entryTable.path, dirPath));
-
-	let files;
-	if (entry.length === 0) {
-		files = await db.select().from(entryTable).where(eq(entryTable.collectionPath, collectionPath));
-	} else {
-		files = await db
-			.select()
-			.from(entryTable)
-			.where(
-				and(eq(entryTable.parentPath, dirPath), eq(entryTable.collectionPath, collectionPath))
-			);
+	// Read the directory; a missing directory behaves like an empty one.
+	let files: DirEntry[];
+	try {
+		files = await storage.readDir(dirPath);
+	} catch (error) {
+		if (error instanceof StorageError && error.code === 'not_found') {
+			files = [];
+		} else {
+			throw error;
+		}
 	}
 
 	// Generate a new name (Untitled, if there are any exiting Untitled folders, increment the number by 1)
 	const name = getNextUntitledName(files, UNTITLED_NAME);
 
-	// Save the new folder
-	await db.insert(entryTable).values({
-		name,
-		path: `${dirPath}/${name}`.replace('//', '/'),
-		parentPath: dirPath,
-		collectionPath,
-		isFolder: true
-	});
+	const folderPath = `${dirPath}/${name}`.replace('//', '/');
 
-	return `${dirPath}/${name}`.replace('//', '/');
+	// Save the new folder
+	await storage.mkdir(folderPath, { recursive: true });
+
+	return folderPath;
 };
 
-// Delete a folder
+// Delete a folder. 'system' trash falls back to the collection's own
+// .tactile/trash: the browser cannot reach the OS trash.
 export const deleteFolder = async (path: string, recursive = false) => {
+	const storage = await getStorage();
+	const folderName = path.split('/').pop()!;
+
 	if (!recursive) {
-		let children = await db.select().from(entryTable).where(eq(entryTable.parentPath, path));
+		let children: DirEntry[];
+		try {
+			children = await storage.readDir(path);
+		} catch (error) {
+			if (error instanceof StorageError && error.code === 'not_found') {
+				children = [];
+			} else {
+				throw error;
+			}
+		}
 
 		// Remove .DS_Store files from the children
 		children = children.filter((child) => child.name !== '.DS_Store');
@@ -55,43 +60,42 @@ export const deleteFolder = async (path: string, recursive = false) => {
 		}
 	}
 
-	await db.delete(entryTable).where(eq(entryTable.path, path));
+	switch (appState.collectionSettings.notes.trash_dir) {
+		case 'delete':
+			await storage.remove(path, { recursive: true });
+			break;
+		case 'tactile':
+		case 'system':
+		default: {
+			let target = `${appState.collection}/${TRASH_DIR}/${folderName}`;
+			if (await storage.exists(target)) {
+				target = `${appState.collection}/${TRASH_DIR}/${Date.now()}-${folderName}`;
+			}
+			await storage.rename(path, target);
+			break;
+		}
+	}
 };
 
 // Rename a folder
 export const renameFolder = async (path: string, name: string) => {
-	await db
-		.update(entryTable)
-		.set({ name, path: `${path.split('/').slice(0, -1).join('/')}/${name}` })
-		.where(eq(entryTable.path, path));
+	const storage = await getStorage();
+	await storage.rename(path, `${path.split('/').slice(0, -1).join('/')}/${name}`);
 };
 
 // Move a folder
 export const moveFolder = async (source: string, target: string) => {
+	const storage = await getStorage();
+
 	// Get target directory
-	const targetFiles = await db.select().from(entryTable).where(eq(entryTable.parentPath, target));
+	const files = await storage.readDir(target);
 
 	// Make sure there are no name conflicts
 	const folderName = source.split('/').pop()!;
 
-	if (targetFiles.some((file) => file.name === folderName && file.isFolder)) {
+	if (files.some((file) => file.name === folderName && file.isDirectory)) {
 		throw new Error('Name conflict');
 	}
 
-	// Get all source children
-	const sourceFiles = await db.select().from(entryTable).where(eq(entryTable.parentPath, source));
-
-	// Move all children
-	for (const file of sourceFiles) {
-		if (file.isFolder) {
-			await moveFolder(file.path, `${target}/${folderName}`);
-		} else {
-			await moveNote(file.path, `${target}/${folderName}`);
-		}
-	}
-
-	await db
-		.update(entryTable)
-		.set({ path: `${target}/${folderName}`, parentPath: target })
-		.where(eq(entryTable.path, source));
+	await storage.rename(source, `${target}/${folderName}`);
 };

@@ -14,11 +14,13 @@
 		{appState.collection?.split('/').pop() || ''}
 	</p>
 	<div class="flex gap-1">
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 		<a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
 			<Button variant="secondary" size="sm" scale="sm" class="rounded-full h-[27px] px-2.5"
 				>Star on Github</Button
 			>
 		</a>
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 		<a href="{GITHUB_URL}/releases" target="_blank" rel="noopener noreferrer">
 			<Button size="sm" scale="sm" class="rounded-full h-[27px] px-2.5">Download</Button>
 		</a>

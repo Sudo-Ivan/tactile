@@ -1,52 +1,58 @@
-import { db } from '@/database/client';
-import { entry as entryTable } from '@/database/schema';
-import { MARKDOWN_EXTENSION, UNTITLED_NAME } from '@/constants';
+import { MARKDOWN_EXTENSION, TRASH_DIR, UNTITLED_NAME } from '@/constants';
+import { getStorage } from '@/storage';
 import { appState } from '@/store.svelte';
-import type { NoteMetadataParams } from '@/types';
+import type { FileVersion, NoteMetadataParams } from '@/types';
 import { calculateReadingTime, getNextUntitledName, setEditorContent } from '@/utils';
-import { eq, and } from 'drizzle-orm';
+import { isVersioned, normalizePath, StorageError } from '@tactile/storage';
+import type { DirEntry } from '@tactile/storage';
+
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // Create a new note
 export const createNote = async (dirPath: string, name?: string) => {
-	const collectionPath = appState.collection!;
+	const storage = await getStorage();
 
-	// Read the directory
-	const dirEntry = await db.select().from(entryTable).where(eq(entryTable.path, dirPath));
-
-	let files;
-	if (dirEntry.length === 0) {
-		files = await db.select().from(entryTable).where(eq(entryTable.collectionPath, collectionPath));
-	} else {
-		files = await db
-			.select()
-			.from(entryTable)
-			.where(
-				and(eq(entryTable.parentPath, dirPath), eq(entryTable.collectionPath, collectionPath))
-			);
+	// Read the directory; a missing directory behaves like an empty one so
+	// notes can be created in dirs that do not exist yet on disk.
+	let files: DirEntry[];
+	try {
+		files = await storage.readDir(dirPath);
+	} catch (error) {
+		if (error instanceof StorageError && error.code === 'not_found') {
+			files = [];
+		} else {
+			throw error;
+		}
 	}
 
 	// Generate a new name (Untitled.md, if there are any exiting Untitled notes, increment the number by 1)
 	if (!name) {
 		name = getNextUntitledName(files, UNTITLED_NAME, MARKDOWN_EXTENSION);
+	} else {
+		// Caller-provided names get the same cleanup as renames.
+		if (!name.endsWith(MARKDOWN_EXTENSION)) {
+			name += MARKDOWN_EXTENSION;
+		}
+		if (files.some((file) => file.name?.toLowerCase() === name!.toLowerCase())) {
+			throw new Error('Name conflict');
+		}
 	}
 
+	const notePath = `${dirPath}/${name}`.replace('//', '/');
+
 	// Save the new note
-	await db.insert(entryTable).values({
-		name,
-		path: `${dirPath}/${name}`.replace('//', '/'),
-		content: '',
-		parentPath: dirPath,
-		collectionPath
-	});
+	await storage.mkdir(dirPath, { recursive: true });
+	await storage.writeTextFile(notePath, '');
 
 	// Open the note
-	openNote(`${dirPath}/${name}`.replace('//', '/'));
+	openNote(notePath);
 };
 
 // Open a note
 export async function openNote(path: string, skipHistory = false) {
-	const file = await db.select().from(entryTable).where(eq(entryTable.path, path));
-	setEditorContent(file[0].content ?? '');
+	const storage = await getStorage();
+	const fileContent = await storage.readTextFile(path);
+	setEditorContent(fileContent);
 	appState.activeFile = path;
 	if (!skipHistory) {
 		if (appState.noteHistory[appState.noteHistory.length - 1] !== path) {
@@ -55,14 +61,39 @@ export async function openNote(path: string, skipHistory = false) {
 	}
 }
 
+// The browser has no OS trash. 'system' falls back to the collection's
+// own .tactile/trash so 'delete' remains the only destructive mode.
+const moveToTrash = async (path: string) => {
+	const storage = await getStorage();
+	const name = path.split('/').pop()!;
+	let target = `${appState.collection}/${TRASH_DIR}/${name}`;
+	if (await storage.exists(target)) {
+		// Never silently overwrite older trashed notes.
+		target = `${appState.collection}/${TRASH_DIR}/${Date.now()}-${name}`;
+	}
+	await storage.rename(path, target);
+};
+
 // Delete a note
 export const deleteNote = async (path: string) => {
-	await db.delete(entryTable).where(eq(entryTable.path, path));
+	const storage = await getStorage();
+	switch (appState.collectionSettings.notes.trash_dir) {
+		case 'delete':
+			await storage.remove(path);
+			break;
+		case 'tactile':
+		case 'system':
+		default:
+			await moveToTrash(path);
+			break;
+	}
 	appState.activeFile = null;
 };
 
 // Rename a note
 export const renameNote = async (path: string, name: string) => {
+	const storage = await getStorage();
+
 	// Make sure file extension is included
 	if (!name.endsWith(MARKDOWN_EXTENSION)) {
 		name += MARKDOWN_EXTENSION;
@@ -71,75 +102,65 @@ export const renameNote = async (path: string, name: string) => {
 	// Remove breaking characters
 	name = name.replace(/[/\\?%*:|"<>]/g, '');
 
-	// Get the note
-	const entry = await db.select().from(entryTable).where(eq(entryTable.path, path));
+	// An empty stem produces '.md', which would create a hidden file.
+	if (name === MARKDOWN_EXTENSION) {
+		throw new Error('Name cannot be empty');
+	}
 
-	// Get all files in the directory
-	const files = await db
-		.select()
-		.from(entryTable)
-		.where(eq(entryTable.parentPath, entry[0].parentPath!));
+	const parentPath = path.split('/').slice(0, -1).join('/');
+
+	// Read the directory
+	const files = await storage.readDir(parentPath || '/');
 
 	// Make sure there are no name conflicts
-	if (files.some((file) => file.name?.toLowerCase() === name.toLowerCase() && !file.isFolder)) {
+	if (files.some((file) => file.name?.toLowerCase() === name.toLowerCase() && !file.isDirectory)) {
 		throw new Error('Name conflict');
 	}
 
 	// Rename the file
-	await db
-		.update(entryTable)
-		.set({ name, path: `${path.split('/').slice(0, -1).join('/')}/${name}` })
-		.where(eq(entryTable.path, path));
-	appState.activeFile = `${path.split('/').slice(0, -1).join('/')}/${name}`;
+	await storage.rename(path, `${parentPath}/${name}`);
+	appState.activeFile = `${parentPath}/${name}`;
 };
 
-// Save active note
+// Save active note. The storage layer snapshots the previous contents into
+// .tactile/versions first, so saves are never destructive.
 export const saveNote = async (path: string) => {
+	if (!path || !appState.activeFile) return;
+	const storage = await getStorage();
+
 	// Get note content
 	let content = appState.editor.instance?.storage.markdown.getMarkdown() ?? '';
 
 	// Remove the first heading title
 	content = content.replace(/^# .*\n/, '');
 
-	// Calculate file size in bytes
-	const size = new TextEncoder().encode(content).length;
-
-	await db
-		.update(entryTable)
-		.set({ content, updatedAt: new Date(), size })
-		.where(eq(entryTable.path, path));
+	await storage.writeTextFile(path, content);
 };
 
 export const moveNote = async (source: string, target: string) => {
-	// Get target directory
-	const targetDir = await db.select().from(entryTable).where(eq(entryTable.path, target));
+	const storage = await getStorage();
 
-	let targetFiles;
-	if (targetDir.length === 0) {
-		targetFiles = await db.select().from(entryTable);
-	} else {
-		targetFiles = await db
-			.select()
-			.from(entryTable)
-			.where(eq(entryTable.parentPath, targetDir[0].path));
+	// Get target directory
+	let targetFiles: DirEntry[];
+	try {
+		targetFiles = await storage.readDir(target);
+	} catch (error) {
+		if (error instanceof StorageError && error.code === 'not_found') {
+			targetFiles = [];
+		} else {
+			throw error;
+		}
 	}
 
-	// Make sure there are no name conflicts
+	// Make sure there are no name conflicts. A directory with the same name
+	// would also collide on backends that fall back to copy + delete.
 	const noteName = source.split('/').pop()!;
 
-	if (
-		targetFiles.some(
-			(file) => file.name === noteName && !file.isFolder && file.parentPath === target
-		)
-	) {
+	if (targetFiles.some((file) => file.name === noteName)) {
 		throw new Error('Name conflict');
 	}
 
-	// Update the note
-	await db
-		.update(entryTable)
-		.set({ path: `${target}/${noteName}`.replace('//', '/'), parentPath: target })
-		.where(eq(entryTable.path, source));
+	await storage.rename(source, `${target}/${noteName}`.replace('//', '/'));
 
 	// Open the note
 	openNote(target + '/' + noteName);
@@ -147,36 +168,56 @@ export const moveNote = async (source: string, target: string) => {
 
 // Duplicate a note (format: "<name> (<number>).<ext>") - <number> is incremented if there are any existing notes with the same name
 export const duplicateNote = async (path: string) => {
+	const storage = await getStorage();
+
 	// Fetch the content of the note
-	const entry = await db.select().from(entryTable).where(eq(entryTable.path, path));
+	const content = await storage.readTextFile(path);
 
 	// Extract the name and extension of the note
+	const name = path
+		.split('/')
+		.pop()!
+		.split('.')
+		.shift()!
+		.replace(/\s\(\d+\)$/, '');
 	const ext = path.split('.').pop()!;
 
-	// Get current index of the note
-	const files = await db
-		.select()
-		.from(entryTable)
-		.where(eq(entryTable.parentPath, entry[0].parentPath!));
-	const notes = files.filter((file) => file.name?.startsWith(entry[0].name!) && !file.isFolder);
+	// Find the lowest free copy index. Counting existing copies breaks when
+	// earlier copies were deleted, e.g. a.md, a (2).md -> new copy must not
+	// overwrite a (2).md.
+	const dir = path.split('/').slice(0, -1).join('/') || '/';
+	const files = await storage.readDir(dir);
+	const usedIndexes = new Set(
+		files
+			.map((file) =>
+				file.name?.match(
+					new RegExp(`^${escapeRegExp(name)} \\((\\d+)\\)\\.${escapeRegExp(ext)}$`, 'i')
+				)
+			)
+			.filter((m): m is RegExpMatchArray => m !== null)
+			.map((m) => parseInt(m[1]))
+	);
+	let index = 1;
+	while (usedIndexes.has(index)) index++;
 
 	// Write the new note
-	const newName = `${entry[0].name?.replace(`.${ext}`, '')} (${notes.length}).${ext}`;
-	await db.insert(entryTable).values({
-		name: newName,
-		path: `${path.split('/').slice(0, -1).join('/')}/${newName}`,
-		parentPath: entry[0].parentPath,
-		collectionPath: entry[0].collectionPath,
-		content: entry[0].content
-	});
+	const newName = `${name} (${index}).${ext}`;
+	await storage.writeTextFile(`${dir}/${newName}`, content);
 
 	// Open the new note
-	openNote(`${path.split('/').slice(0, -1).join('/')}/${newName}`);
+	openNote(`${dir}/${newName}`);
 };
 
 export const getNoteMetadataParams = async (path: string): Promise<NoteMetadataParams> => {
+	const storage = await getStorage();
+
 	// General file metadata
-	const fileMetadata = await db.select().from(entryTable).where(eq(entryTable.path, path));
+	const stat = await storage.stat(path);
+	const fileMetadata = {
+		createdAt: stat.birthtime ?? stat.mtime ?? new Date(0),
+		modifiedAt: stat.mtime ?? new Date(0),
+		size: stat.size
+	};
 
 	// Get editor metadata
 	const editorWordCount = appState.editor.instance?.storage.characterCount.words() ?? 0;
@@ -186,15 +227,31 @@ export const getNoteMetadataParams = async (path: string): Promise<NoteMetadataP
 	const avgReadingTime = calculateReadingTime(editorWordCount);
 
 	return {
-		fileMetadata: {
-			createdAt: fileMetadata[0].createdAt,
-			modifiedAt: fileMetadata[0].updatedAt,
-			size: fileMetadata[0].size ?? 0
-		},
+		fileMetadata,
 		editorMetadata: {
 			words: editorWordCount,
 			characters: editorCharacterCount,
 			avgReadingTime: avgReadingTime
 		}
 	};
+};
+
+// Version history for a note, newest first. Empty when the backend has no
+// versioning support (should not happen: createBrowserBackend wraps it).
+export const listNoteVersions = async (path: string): Promise<FileVersion[]> => {
+	const storage = await getStorage();
+	if (!isVersioned(storage)) return [];
+	return storage.listVersions(normalizePath(path));
+};
+
+// Restores a note to an older version. The current contents are snapshotted
+// first, so restore is itself undoable.
+export const restoreNoteVersion = async (path: string, versionId: string): Promise<void> => {
+	const storage = await getStorage();
+	if (!isVersioned(storage)) throw new Error('Versioning is not available');
+	await storage.restoreVersion(normalizePath(path), versionId);
+	// Reload the editor if the restored note is open.
+	if (appState.activeFile === path) {
+		await openNote(path, true);
+	}
 };

@@ -1,10 +1,16 @@
 <script lang="ts">
 	import { createFolder } from '@/api/folders';
-	import { deleteNote, duplicateNote, moveNote } from '@/api/notes';
+	import {
+		deleteNote,
+		duplicateNote,
+		listNoteVersions,
+		moveNote,
+		restoreNoteVersion
+	} from '@/api/notes';
 	import Icon from '@/components/shared/icon.svelte';
 	import { SHORTCUTS, UNTITLED_NAME } from '@/constants';
 	import type { FileEntry } from '@/types';
-	import { shortcutToString } from '@/utils';
+	import { formatTimeAgo, shortcutToString } from '@/utils';
 	import * as ContextMenu from '@tactile/ui/components/context-menu';
 
 	interface Props {
@@ -81,6 +87,34 @@
 					>
 				</ContextMenu.Item>
 			{/if}
+		</ContextMenu.SubContent>
+	</ContextMenu.Sub>
+	<ContextMenu.Sub>
+		<ContextMenu.SubTrigger class="flex items-center gap-2 font-base group">
+			<Icon name="reload" class="w-3.5 h-3.5 fill-foreground/70" />
+			Version history
+		</ContextMenu.SubTrigger>
+		<ContextMenu.SubContent class="w-48">
+			{#await listNoteVersions(entry.path)}
+				<ContextMenu.Item class="text-muted-foreground" disabled>Loading...</ContextMenu.Item>
+			{:then versions}
+				{#each versions as version (version.id)}
+					<ContextMenu.Item
+						class="flex items-center gap-2 font-base group"
+						onclick={() => restoreNoteVersion(entry.path, version.id)}
+					>
+						{formatTimeAgo(new Date(version.timestamp))}
+					</ContextMenu.Item>
+				{:else}
+					<ContextMenu.Item class="text-muted-foreground" disabled
+						>No previous versions</ContextMenu.Item
+					>
+				{/each}
+			{:catch}
+				<ContextMenu.Item class="text-muted-foreground" disabled
+					>Failed to load versions</ContextMenu.Item
+				>
+			{/await}
 		</ContextMenu.SubContent>
 	</ContextMenu.Sub>
 	<ContextMenu.Separator />

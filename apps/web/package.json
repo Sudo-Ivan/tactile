@@ -33,6 +33,7 @@
 	"dependencies": {
 		"@electric-sql/pglite": "catalog:",
 		"@internationalized/date": "catalog:",
+		"@tactile/storage": "workspace:*",
 		"@tactile/ui": "workspace:^",
 		"@tiptap/core": "catalog:",
 		"@tiptap/extension-character-count": "catalog:",
@@ -44,7 +45,6 @@
 		"@tiptap/pm": "catalog:",
 		"@tiptap/starter-kit": "catalog:",
 		"clsx": "catalog:",
-		"drizzle-orm": "catalog:",
 		"lucide-svelte": "catalog:",
 		"markdown-it": "catalog:",
 		"mode-watcher": "catalog:",

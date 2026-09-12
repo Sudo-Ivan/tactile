@@ -12,6 +12,7 @@
 </script>
 
 <Command.Group heading="Help & Support">
+	<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 	<a href={GITHUB_SPONSOR_URL} target="_blank" rel="noopener noreferrer">
 		<Command.Item
 			class={commandItemClass}
@@ -24,6 +25,7 @@
 			Sponsor Tactile
 		</Command.Item>
 	</a>
+	<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 	<a href={GITHUB_ISSUES_URL} target="_blank" rel="noopener noreferrer">
 		<Command.Item
 			class={commandItemClass}
@@ -36,6 +38,7 @@
 			Get help
 		</Command.Item>
 	</a>
+	<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 	<a href={GITHUB_ISSUES_URL} target="_blank" rel="noopener noreferrer">
 		<Command.Item
 			class={commandItemClass}

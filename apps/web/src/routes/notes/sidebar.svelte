@@ -7,7 +7,7 @@
 	import Shortcut from '@/components/shared/shortcut.svelte';
 	import Tooltip from '@/components/shared/tooltip.svelte';
 	import { SHORTCUTS } from '@/constants';
-	import { pgClient } from '@/database/client';
+	import { subscribeCollectionChanges } from '@/storage';
 	import { appState } from '@/store.svelte';
 	import { Button } from '@tactile/ui/components/button';
 	import Label from '@tactile/ui/components/label/label.svelte';
@@ -37,11 +37,9 @@
 
 	// Watch for changes in the collection
 	async function watchCollection() {
-		const dbWatcher = await pgClient.live.query(`SELECT * FROM entry`, [], async () => {
-			await fetchCollectionEntries(appState.collection);
+		return subscribeCollectionChanges(appState.collection!, () => {
+			fetchCollectionEntries(appState.collection);
 		});
-
-		return dbWatcher.unsubscribe;
 	}
 
 	$effect(() => {

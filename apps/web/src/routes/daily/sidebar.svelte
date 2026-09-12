@@ -3,7 +3,7 @@
 	import { fetchCollectionEntries } from '@/api/collection';
 	import { createNote, openNote } from '@/api/notes';
 	import { DAILY_NOTES_DIR, MARKDOWN_EXTENSION } from '@/constants';
-	import { pgClient } from '@/database/client';
+	import { subscribeCollectionChanges } from '@/storage';
 	import { appState } from '@/store.svelte';
 	import { Calendar } from '@tactile/ui/components/calendar';
 	import Label from '@tactile/ui/components/label/label.svelte';
@@ -17,11 +17,9 @@
 
 	// Watch for changes in the collection
 	async function watchCollection() {
-		const dbWatcher = await pgClient.live.query('SELECT * FROM entry', [], async () => {
-			await fetchCollectionEntries(appState.collection + DAILY_NOTES_DIR);
+		return subscribeCollectionChanges(appState.collection! + DAILY_NOTES_DIR, () => {
+			fetchCollectionEntries(appState.collection! + DAILY_NOTES_DIR);
 		});
-
-		return dbWatcher.unsubscribe;
 	}
 
 	$effect(() => {

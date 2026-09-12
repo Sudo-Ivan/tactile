@@ -1,11 +1,11 @@
-import { STORAGE_KEYS } from '@/constants';
-import { db } from '@/database/client';
-import { collectionSettings as collectionSettingsTable } from '@/database/schema';
+import { COLLECTION_SETTINGS_PATH, STORAGE_KEYS } from '@/constants';
+import { getStorage } from '@/storage';
 import { appState } from '@/store.svelte';
 import type { AppSettingsParams, CollectionSettingsParams } from '@/types';
-import { eq } from 'drizzle-orm';
 
 export const loadSettings = async (loadApp: boolean, loadCollection: boolean) => {
+	const storage = await getStorage();
+
 	if (loadApp) {
 		// Load app settings from local storage
 		const appSettingsData = window.localStorage.getItem(STORAGE_KEYS.appSettings);
@@ -16,18 +16,15 @@ export const loadSettings = async (loadApp: boolean, loadCollection: boolean) =>
 		}
 	}
 
-	if (loadCollection) {
-		const collectionSettingsData = await db
-			.select()
-			.from(collectionSettingsTable)
-			.where(eq(collectionSettingsTable.collectionPath, appState.collection!));
-		if (!collectionSettingsData || collectionSettingsData.length === 0) {
+	if (loadCollection && appState.collection) {
+		const collectionSettingsPath = `${appState.collection}/${COLLECTION_SETTINGS_PATH}`;
+		const collectionSettingsText = await storage
+			.readTextFile(collectionSettingsPath)
+			.catch(() => null);
+		if (!collectionSettingsText) {
 			setSettings('collection');
 		} else {
-			appState.collectionSettings = {
-				editor: collectionSettingsData[0].editor as CollectionSettingsParams['editor'],
-				notes: collectionSettingsData[0].notes as CollectionSettingsParams['notes']
-			};
+			appState.collectionSettings = JSON.parse(collectionSettingsText);
 		}
 	}
 };
@@ -44,21 +41,14 @@ export const setSettings = async (
 		);
 	}
 	if (settingsType === 'collection') {
+		if (!appState.collection) return;
+		const storage = await getStorage();
 		appState.collectionSettings = (value ??
 			appState.collectionSettings) as CollectionSettingsParams;
-		await db
-			.insert(collectionSettingsTable)
-			.values({
-				collectionPath: appState.collection!,
-				editor: ((value ?? appState.collectionSettings) as CollectionSettingsParams).editor,
-				notes: ((value ?? appState.collectionSettings) as CollectionSettingsParams).notes
-			})
-			.onConflictDoUpdate({
-				target: collectionSettingsTable.collectionPath,
-				set: {
-					editor: ((value ?? appState.collectionSettings) as CollectionSettingsParams).editor,
-					notes: ((value ?? appState.collectionSettings) as CollectionSettingsParams).notes
-				}
-			});
+		await storage.writeTextFile(
+			`${appState.collection}/${COLLECTION_SETTINGS_PATH}`,
+			JSON.stringify(appState.collectionSettings),
+			{ keepVersion: false }
+		);
 	}
 };

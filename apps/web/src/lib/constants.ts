@@ -69,7 +69,11 @@ export const STORAGE_KEYS = {
 // Default names and paths for new entries
 export const UNTITLED_NAME = 'Untitled';
 export const MARKDOWN_EXTENSION = '.md';
-export const DAILY_NOTES_DIR = '/.tactile/daily';
+export const TACTILE_DIR = '.tactile';
+export const DAILY_NOTES_DIR = `/${TACTILE_DIR}/daily`;
+export const TRASH_DIR = `${TACTILE_DIR}/trash`;
+export const COLLECTION_SETTINGS_PATH = `${TACTILE_DIR}/settings.json`;
+export const COLLECTIONS_PATH = `/${TACTILE_DIR}/collections.json`;
 export const DAILY_NOTE_NAME_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 export const TASK_MARKER = '- [ ]';
 

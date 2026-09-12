@@ -49,6 +49,12 @@ export interface SettingsStateParams {
 	activePage: string;
 }
 
+export interface CollectionParams {
+	path: string;
+	name: string;
+	lastOpened: string;
+}
+
 export interface FileEntry {
 	path: string;
 	/**
@@ -64,3 +70,5 @@ export interface SearchResultParams {
 	path: string;
 	context_preview: string;
 }
+
+export type { FileVersion } from '@tactile/storage';

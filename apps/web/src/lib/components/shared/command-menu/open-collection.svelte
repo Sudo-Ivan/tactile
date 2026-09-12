@@ -2,15 +2,13 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import Icon from '$lib/components/shared/icon.svelte';
-	import { db } from '$lib/database/client';
-	import { entry as entryTable } from '$lib/database/schema';
 	import { getCollections, loadCollection } from '@/api/collection';
 	import { MARKDOWN_EXTENSION, ROUTES } from '@/constants';
+	import { getStorage } from '@/storage';
 	import { appState } from '@/store.svelte';
 	import { formatTimeAgo } from '@/utils';
 	import * as Command from '@tactile/ui/components/command';
 	import { Loader } from 'lucide-svelte';
-	import { SvelteSet } from 'svelte/reactivity';
 	import { commandItemClass } from './helpers';
 
 	interface Props {
@@ -22,90 +20,75 @@
 
 	let files = $state<FileList | undefined>(undefined);
 	let fileInput = $state<HTMLInputElement | null>(null);
+	let importError = $state<string | undefined>(undefined);
 
 	async function openCollection() {
 		if (!files || files.length === 0) {
 			return console.error('No files selected');
 		}
 
-		// Set loading state
-		loading = { loading: true, progress: 0 };
-
-		// Load collection
 		const collectionName = files[0]?.webkitRelativePath.split('/')[0];
-		await loadCollection(`/${collectionName}`);
-
-		const processedPaths = new SvelteSet<string>();
-
-		for (let i = 0; i < files.length; i++) {
-			const file = files[i];
-			if (!file) continue;
-
-			const filePath = `/${file.webkitRelativePath}`;
-			const pathParts = file.webkitRelativePath.split('/');
-			const fileName = pathParts[pathParts.length - 1];
-
-			// Log progress
-			let progress = Math.round(((i + 1) / files.length) * 100);
-			loading = { loading: true, progress };
-
-			// Create folder entries
-			let currentPath = '';
-			for (let j = 0; j < pathParts.length - 1; j++) {
-				currentPath += '/' + pathParts[j];
-				if (!processedPaths.has(currentPath)) {
-					await createFolderEntry(currentPath, collectionName);
-					processedPaths.add(currentPath);
-				}
-			}
-
-			// Process file
-			if (file.name.toLowerCase().endsWith(MARKDOWN_EXTENSION)) {
-				try {
-					const fileText = await file.text();
-					await db.insert(entryTable).values({
-						name: fileName,
-						path: filePath,
-						content: fileText,
-						parentPath: currentPath,
-						collectionPath: `/${collectionName}`,
-						size: file.size,
-						isFolder: false
-					});
-					console.log('Inserted file:', fileName);
-				} catch (error) {
-					console.error('Error processing file:', fileName, error);
-				}
-			} else {
-				console.warn('Skipping non-Markdown file:', fileName);
-			}
+		if (!collectionName) {
+			importError = 'Could not determine collection name from the selected files.';
+			return;
 		}
 
-		// Reset loading state
-		loading = undefined;
-
-		// Close dialog
-		await goto(resolve(ROUTES.notes));
-		onPageChange(undefined);
-	}
-
-	async function createFolderEntry(path: string, collectionName: string) {
-		const pathParts = path.split('/').filter(Boolean);
-		const folderName = pathParts[pathParts.length - 1];
-		const parentPath = '/' + pathParts.slice(0, -1).join('/');
+		// Set loading state
+		importError = undefined;
+		loading = { loading: true, progress: 0 };
 
 		try {
-			await db.insert(entryTable).values({
-				name: folderName,
-				path: path,
-				content: undefined,
-				parentPath: parentPath,
-				collectionPath: `/${collectionName}`,
-				isFolder: true
-			});
-			console.log('Created folder entry:', path);
+			const storage = await getStorage();
+			const collectionPath = `/${collectionName}`;
+
+			// Create the collection root up front so files always land in an
+			// existing directory.
+			await storage.mkdir(collectionPath, { recursive: true });
+
+			for (let i = 0; i < files.length; i++) {
+				const file = files[i];
+				if (!file) continue;
+
+				const filePath = `/${file.webkitRelativePath}`;
+
+				// Log progress
+				let progress = Math.round(((i + 1) / files.length) * 100);
+				loading = { loading: true, progress };
+
+				// Create parent directories for every file, not only markdown
+				// ones, so empty folders and folders that only hold skipped
+				// files keep their structure.
+				try {
+					const parentDir = filePath.split('/').slice(0, -1).join('/');
+					await storage.mkdir(parentDir, { recursive: true });
+
+					if (file.name.toLowerCase().endsWith(MARKDOWN_EXTENSION)) {
+						const fileText = await file.text();
+						await storage.writeTextFile(filePath, fileText, { keepVersion: false });
+						console.log('Imported file:', file.name);
+					} else {
+						console.warn('Skipping non-Markdown file:', file.name);
+					}
+				} catch (error) {
+					console.error('Error processing file:', file.name, error);
+				}
+			}
+
+			// Register and activate the collection once files are on disk.
+			await loadCollection(collectionPath);
+
+			// Reset loading state
+			loading = undefined;
+
+			// Close dialog
+			await goto(resolve(ROUTES.notes));
+			onPageChange(undefined);
 		} catch (error) {
-			console.error('Error creating folder entry:', path, error);
+			// Fatal failures (quota, storage gone) leave a partial collection
+			// on disk, which is recoverable by re-importing or deleting it.
+			console.error('Import failed:', error);
+			loading = undefined;
+			importError = error instanceof Error ? error.message : 'Import failed.';
 		}
 	}
 
@@ -125,6 +108,15 @@
 				<span class="text-xs text-muted-foreground"
 					>Hint: You can close this window and continue working.</span
 				>
+			</div>
+		</div>
+	</Command.Empty>
+{:else if importError}
+	<Command.Empty class="text-destructive/80 font-light">
+		<div class="flex flex-col items-center gap-1.5">
+			<div class="flex flex-col gap-0.5 text-center">
+				Import failed<br />
+				<span class="text-xs">{importError}</span>
 			</div>
 		</div>
 	</Command.Empty>

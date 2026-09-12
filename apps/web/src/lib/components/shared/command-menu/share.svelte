@@ -24,6 +24,7 @@
 		<Icon name="browserUrl" />
 		Copy link
 	</Command.Item>
+	<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 	<a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
 		<Command.Item
 			class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:aria-selected:stroke-foreground [&>*]:stroke-foreground/50 [&>*]:stroke-[2px]"

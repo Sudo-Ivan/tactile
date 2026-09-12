@@ -1,9 +1,45 @@
-import { db } from '@/database/client';
-import { collection as collectionTable, entry as entryTable } from '@/database/schema';
+import { COLLECTIONS_PATH, DAILY_NOTES_DIR, TRASH_DIR } from '@/constants';
+import { getStorage } from '@/storage';
 import { appState } from '@/store.svelte';
-import type { FileEntry } from '@/types';
-import { buildFileTree, sortFileEntry } from '@/utils';
-import { and, eq } from 'drizzle-orm';
+import type { CollectionParams, FileEntry } from '@/types';
+import { hideDotFiles, sortFileEntry } from '@/utils';
+import { StorageError } from '@tactile/storage';
+
+// Recursively read a directory into the FileEntry tree the UI expects.
+// Directories get a children array; files get none.
+const readDirRecursive = async (dirPath: string): Promise<FileEntry[]> => {
+	const storage = await getStorage();
+	const dirEntries = await storage.readDir(dirPath);
+	const entries: FileEntry[] = [];
+
+	for (const dirEntry of dirEntries) {
+		const entry: FileEntry = {
+			name: dirEntry.name,
+			path: `${dirPath}/${dirEntry.name}`.replace('//', '/')
+		};
+
+		if (dirEntry.isDirectory) {
+			entry.children = await readDirRecursive(entry.path);
+		}
+
+		entries.push(entry);
+	}
+
+	return entries;
+};
+
+// Ensure the internal folders every collection needs exist. Mirrors the
+// desktop app's .tactile layout so collections can move between platforms.
+const validateTactileFolder = async (collectionPath: string) => {
+	const storage = await getStorage();
+	for (const dir of [
+		`${collectionPath}/.tactile`,
+		`${collectionPath}/${TRASH_DIR}`,
+		`${collectionPath}${DAILY_NOTES_DIR}`
+	]) {
+		await storage.mkdir(dir, { recursive: true });
+	}
+};
 
 // Fetch the collection entries
 export const fetchCollectionEntries = async (
@@ -14,27 +50,16 @@ export const fetchCollectionEntries = async (
 	dirPath = dirPath || appState.collection;
 	if (!dirPath) throw new Error('No directory path provided');
 
-	// Get collection by path
-	const collectionObj = await db
-		.select()
-		.from(collectionTable)
-		.where(eq(collectionTable.path, appState.collection!));
-
-	if (collectionObj.length === 0) throw new Error('Collection not found');
-
-	// Read all entries linked to the collection
-	const entries = await db
-		.select()
-		.from(entryTable)
-		.where(
-			and(
-				eq(entryTable.collectionPath, appState.collection!),
-				dirPath !== appState.collection ? eq(entryTable.parentPath, dirPath) : undefined
-			)
-		);
-
-	// Convert entries to FileEntry[] format with recursive children
-	const fileEntries = buildFileTree(entries, dirPath);
+	let fileEntries: FileEntry[];
+	try {
+		fileEntries = await readDirRecursive(dirPath);
+	} catch (error) {
+		if (error instanceof StorageError && error.code === 'not_found') {
+			fileEntries = [];
+		} else {
+			throw error;
+		}
+	}
 
 	// Sort entries recursively
 	const sortEntries = (entries: FileEntry[]) => {
@@ -55,22 +80,7 @@ export const fetchCollectionEntries = async (
 	};
 
 	sortEntries(fileEntries);
-
-	// Hide dotfiles recursively
-	const filterDotfiles = (entries: FileEntry[]): FileEntry[] => {
-		return entries.filter((entry) => {
-			if (!showDotfiles && entry.name?.startsWith('.')) {
-				return false;
-			}
-			if (entry.children) {
-				entry.children = filterDotfiles(entry.children);
-			}
-			return true;
-		});
-	};
-
-	// Set collectionEntries if length is different
-	appState.collectionEntries = showDotfiles ? fileEntries : filterDotfiles(fileEntries);
+	appState.collectionEntries = showDotfiles ? fileEntries : hideDotFiles(fileEntries);
 
 	return appState.collectionEntries;
 };
@@ -79,6 +89,8 @@ export const loadCollection = async (path?: string | undefined) => {
 	// Return if no path is provided
 	if (!path) return;
 
+	const storage = await getStorage();
+
 	// Set collection path
 	appState.collection = path;
 
@@ -86,31 +98,39 @@ export const loadCollection = async (path?: string | undefined) => {
 	appState.noteHistory = [];
 	appState.activeFile = null;
 
+	// Validate .tactile folder
+	await validateTactileFolder(path);
+
 	// Add collection to collections data
-	const collectionObj = {
+	const collectionObj: CollectionParams = {
 		path: path,
 		name: path.split('/').pop()!,
-		lastOpened: new Date()
+		lastOpened: new Date().toISOString()
 	};
 
-	// Check if collection already exists
-	const collections = await db.select().from(collectionTable).where(eq(collectionTable.path, path));
-
-	if (collections && collections.length > 0) {
-		// Update collection
-		await db
-			.update(collectionTable)
-			.set({ lastOpened: new Date() })
-			.where(eq(collectionTable.path, path));
-	} else {
-		// Insert collection
-		await db.insert(collectionTable).values(collectionObj);
+	let collections: CollectionParams[];
+	try {
+		collections = JSON.parse(await storage.readTextFile(COLLECTIONS_PATH));
+	} catch {
+		collections = [];
 	}
+
+	const index = collections.findIndex((item) => item.path === path);
+	if (index !== -1) collections.splice(index, 1);
+	collections.push(collectionObj);
+
+	await storage.mkdir('/.tactile', { recursive: true });
+	await storage.writeTextFile(COLLECTIONS_PATH, JSON.stringify(collections), {
+		keepVersion: false
+	});
 };
 
 // Get all collections
-export const getCollections = async (): Promise<(typeof collectionTable.$inferSelect)[]> => {
-	const collections = await db.select().from(collectionTable);
-
-	return collections;
+export const getCollections = async (): Promise<CollectionParams[]> => {
+	const storage = await getStorage();
+	try {
+		return JSON.parse(await storage.readTextFile(COLLECTIONS_PATH));
+	} catch {
+		return [];
+	}
 };

@@ -1,18 +1,17 @@
 <script lang="ts">
-	import migrations from '$lib/database/migrations/migrations.sql?raw';
-	import seed from '$lib/database/migrations/seed.sql?raw';
+	import { getCollections } from '@/api/collection';
 	import { loadSettings } from '@/api/settings';
 	import Footer from '@/components/layout/footer.svelte';
 	import Header from '@/components/layout/header.svelte';
 	import Sidebar from '@/components/layout/sidebar.svelte';
 	import Command from '@/components/shared/command-menu/command.svelte';
 	import Icon from '@/components/shared/icon.svelte';
-	import { db, pgClient } from '@/database/client';
-	import { collection as collectionTable } from '@/database/schema';
 	import { appState } from '@/store.svelte';
+	import { initStorage } from '@/storage';
 	import { createDeviceDetector } from '@/utils';
 	import '@tactile/ui/app.web.css';
 	import { ModeWatcher } from 'mode-watcher';
+	import { Loader } from 'lucide-svelte';
 	import { onMount, type Snippet } from 'svelte';
 
 	interface Props {
@@ -24,21 +23,14 @@
 	// Device detector
 	const device = createDeviceDetector();
 
-	// Migrate database
-	async function migrateDatabase() {
-		try {
-			await pgClient.exec(migrations);
-
-			// Seed database
-			await pgClient.exec(seed);
-		} catch {
-			console.log('Table already exists');
-		}
-	}
+	// Storage bootstrap state. The app cannot render until collections are
+	// readable, so block on init rather than flash a broken UI.
+	let storageState = $state<'loading' | 'ready' | 'error'>('loading');
+	let storageError = $state<string>('');
 
 	// Load latest collection
 	async function loadLatestCollection() {
-		const collections = await db.select().from(collectionTable);
+		const collections = await getCollections();
 
 		if (!collections || collections.length === 0) return;
 
@@ -51,10 +43,17 @@
 	}
 
 	onMount(async () => {
-		// Migrate database
-		await migrateDatabase();
+		// Storage init runs format check, PGlite migration and seeding.
+		try {
+			await initStorage();
+			storageState = 'ready';
+		} catch (error) {
+			console.error('storage: init failed', error);
+			storageError = error instanceof Error ? error.message : String(error);
+			storageState = 'error';
+			return;
+		}
 
-		console.log(await db.select().from(collectionTable));
 		// Load latest collection on mount
 		await loadLatestCollection();
 
@@ -105,7 +104,22 @@
 	<meta property="twitter:image" content="https://github.com/Sudo-Ivan/tactile/landing.png" />
 </svelte:head>
 
-{#if device.isDesktop}
+{#if storageState === 'loading'}
+	<main class="flex min-h-screen w-full items-center justify-center">
+		<div class="flex flex-col items-center gap-2">
+			<Loader class="w-5 h-5 animate-spin text-muted-foreground" />
+			<p class="text-sm text-muted-foreground">Loading your notes...</p>
+		</div>
+	</main>
+{:else if storageState === 'error'}
+	<main class="flex min-h-screen w-full items-center justify-center">
+		<div class="flex flex-col items-center gap-2 text-center max-w-md">
+			<Icon name="cloudX" class="w-9 h-9 fill-none text-destructive" />
+			<h1 class="text-secondary-foreground">Storage could not be initialized</h1>
+			<p class="text-muted-foreground text-sm leading-relaxed">{storageError}</p>
+		</div>
+	</main>
+{:else if device.isDesktop}
 	<Command />
 	<ModeWatcher />
 	<Header />

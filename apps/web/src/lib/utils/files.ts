@@ -1,45 +1,21 @@
-import { entry as entryTable } from '@/database/schema';
-import { appState } from '@/store.svelte';
 import type { FileEntry } from '../types';
 
 // Filter out all hidden file entries (dotfiles)
-export function buildFileTree(
-	entries: (typeof entryTable.$inferSelect)[],
-	rootPath?: string
-): FileEntry[] {
-	const entryMap = new Map<string, FileEntry>();
-
-	// First pass: create FileEntry objects for all entries
-	entries.forEach((entry) => {
-		entryMap.set(entry.path, {
-			path: entry.path,
-			name: entry.name || undefined,
-			children: entry.isFolder ? [] : undefined
-		});
-	});
-
-	// Second pass: build the tree structure
-	const rootEntries: FileEntry[] = [];
-	entries.forEach((entry) => {
-		const fileEntry = entryMap.get(entry.path)!;
-
-		// If it's a root entry, add it to rootEntries
-		if (entry.parentPath === appState.collection || entry.parentPath === rootPath) {
-			rootEntries.push(fileEntry);
-		} else {
-			const parentEntry = entryMap.get(entry.parentPath);
-			if (parentEntry && parentEntry.children) {
-				parentEntry.children.push(fileEntry);
-			}
+export function hideDotFiles(entries: FileEntry[]): FileEntry[] {
+	return entries.filter((entry) => {
+		if (entry.name?.startsWith('.')) {
+			return false;
 		}
+		if (entry.children) {
+			entry.children = hideDotFiles(entry.children);
+		}
+		return true;
 	});
-
-	return rootEntries;
 }
 
 // Helper function to get the next available untitled name
 export const getNextUntitledName = (
-	files: (typeof entryTable.$inferSelect)[],
+	files: { name?: string }[],
 	prefix: string,
 	extension: string = ''
 ) => {
