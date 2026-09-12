@@ -5,6 +5,8 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
+    "check": "turbo run check",
+    "test": "turbo run test",
     "knip": "knip",
     "format": "prettier --write .",
     "prepare": "husky"

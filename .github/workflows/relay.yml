@@ -1,0 +1,49 @@
+name: relay
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'relay/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'relay/**'
+
+concurrency:
+  group: relay-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    name: relay
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: relay/go.mod
+
+      - name: Build
+        working-directory: relay
+        run: go build ./...
+
+      - name: Vet
+        working-directory: relay
+        run: go vet ./...
+
+      - name: Test
+        working-directory: relay
+        run: go test ./...

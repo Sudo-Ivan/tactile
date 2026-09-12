@@ -7,6 +7,10 @@
       "outputs": [".svelte-kit/**", "build/**", "dist/**"]
     },
     "lint": {},
+    "check": {},
+    "test": {
+      "outputs": []
+    },
     "dev": {
       "cache": false,
       "persistent": true
