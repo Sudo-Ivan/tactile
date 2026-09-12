@@ -11,6 +11,7 @@
 	import { Input } from '@tactile/ui/components/input';
 	import { cn } from '@tactile/ui/lib/utils';
 	import { ALargeSmall, Replace, ReplaceAll, WholeWord } from 'lucide-svelte';
+	import { untrack } from 'svelte';
 
 	let replaceValue = $state('');
 	let caseSensitive = $state(false);
@@ -20,9 +21,15 @@
 	const editor = $derived(appState.editor.instance);
 
 	$effect(() => {
-		if (editor) {
-			editor.commands.setReplaceTerm(replaceValue);
-			editor.commands.setCaseSensitive(caseSensitive);
+		// `instance` is rewritten on every editor transaction to drive
+		// isActive reactivity, and tiptap commands always dispatch a
+		// transaction - tracking it here reschedules this effect forever.
+		const rv = replaceValue;
+		const cs = caseSensitive;
+		const ed = untrack(() => appState.editor.instance);
+		if (ed) {
+			ed.commands.setReplaceTerm(rv);
+			ed.commands.setCaseSensitive(cs);
 		}
 	});
 
@@ -32,7 +39,7 @@
 		caseSensitive = false;
 		wholeWord = false;
 		expanded = false;
-		editor.commands.resetIndex();
+		editor?.commands.resetIndex();
 		appState.editorSearchActive = false;
 	};
 
@@ -49,19 +56,20 @@
 	// Keep the editor search term in sync with the search value
 	$effect(() => {
 		const value = appState.editorSearchValue;
-		if (editor) {
+		const ed = untrack(() => appState.editor.instance);
+		if (ed) {
 			// Filter out regex special characters
 			// TODO: Find a fix for this, for some reason regex characters throw an error and makes app unresponsive
 			const filteredValue = value.replace(/[.*+?^${}()|[\]\\]/g, '');
 
 			if (wholeWord) {
-				editor.commands.setSearchTerm(`\\b${filteredValue}\\b`);
+				ed.commands.setSearchTerm(`\\b${filteredValue}\\b`);
 			} else {
-				editor.commands.setSearchTerm(filteredValue);
+				ed.commands.setSearchTerm(filteredValue);
 			}
 
 			try {
-				goToSearchResult(editor);
+				goToSearchResult(ed);
 			} catch (error) {
 				// This is usually triggered while search active is true and page is navigated
 				console.error('Error selecting search result:', error);

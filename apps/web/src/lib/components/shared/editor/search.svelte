@@ -17,10 +17,15 @@
 	let expanded = $state(false);
 
 	$effect(() => {
-		const editor = appState.editor.instance;
+		// `instance` is rewritten on every editor transaction to drive
+		// isActive reactivity, and tiptap commands always dispatch a
+		// transaction - tracking it here reschedules this effect forever.
+		const rv = replaceValue;
+		const cs = caseSensitive;
+		const editor = untrack(() => appState.editor.instance);
 		if (editor) {
-			editor.commands.setReplaceTerm(replaceValue);
-			editor.commands.setCaseSensitive(caseSensitive);
+			editor.commands.setReplaceTerm(rv);
+			editor.commands.setCaseSensitive(cs);
 		}
 	});
 
