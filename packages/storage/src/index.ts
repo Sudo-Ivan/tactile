@@ -5,9 +5,11 @@ export * from './mutex';
 export * from './opfs';
 export * from './idbfs';
 export * from './tauri';
+export * from './broadcast';
 export * from './versioned';
 export * from './format';
 
+import { BroadcastBackend } from './broadcast';
 import { IdbFsBackend } from './idbfs';
 import { OpfsBackend } from './opfs';
 import type { StorageBackend } from './types';
@@ -18,7 +20,10 @@ export function isOpfsAvailable(): boolean {
 }
 
 // Pick the best browser backend: OPFS where available, IndexedDB records
-// otherwise. Wraps it with versioning unless disabled.
+// otherwise. The broadcast wrapper gives every tab live change events even
+// though OPFS has no watcher, and versioning wraps the result. Write path:
+// VersionedBackend -> BroadcastBackend -> base, so snapshot writes broadcast
+// like any other change.
 export function createBrowserBackend(options?: {
   rootName?: string;
   versioning?: false | VersioningOptions;
@@ -26,6 +31,7 @@ export function createBrowserBackend(options?: {
   const base: StorageBackend = isOpfsAvailable()
     ? new OpfsBackend(options?.rootName)
     : new IdbFsBackend();
-  if (options?.versioning === false) return base;
-  return new VersionedBackend(base, options?.versioning);
+  const broadcast = new BroadcastBackend(base, options?.rootName);
+  if (options?.versioning === false) return broadcast;
+  return new VersionedBackend(broadcast, options?.versioning);
 }

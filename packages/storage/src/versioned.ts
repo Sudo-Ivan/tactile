@@ -13,6 +13,11 @@ export interface VersioningOptions {
   // writes every keystroke debounce; without a floor the version cap would
   // churn through history in seconds. Set to 0 to snapshot every write.
   minIntervalMs?: number;
+  // Resolve the collection root for a path; history lands in
+  // <root>/<versionsDir>. Default: the first path segment, which matches the
+  // web layout where collections live at /Name. Desktop collections sit at
+  // arbitrary absolute paths, so the desktop app passes its own resolver.
+  rootFor?: (path: string) => string | undefined;
   // Which paths get versioned. Default: files under a collection root
   // (/Name/...) excluding hidden segments like .tactile.
   shouldVersion?: (path: string) => boolean;
@@ -44,6 +49,7 @@ export class VersionedBackend implements VersionedStorageBackend {
   private maxFileBytes: number;
   private minInterval: number;
   private lastSnapshotAt = new Map<string, number>();
+  private rootFor: (path: string) => string | undefined;
   private shouldVersion: (path: string) => boolean;
 
   constructor(
@@ -55,20 +61,27 @@ export class VersionedBackend implements VersionedStorageBackend {
     this.maxVersions = options.maxVersionsPerFile ?? DEFAULT_MAX_VERSIONS;
     this.maxFileBytes = options.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES;
     this.minInterval = options.minIntervalMs ?? DEFAULT_MIN_INTERVAL_MS;
+    this.rootFor =
+      options.rootFor ??
+      ((path: string) => {
+        const segments = pathSegments(path);
+        // Only files inside a collection root (/Collection/...) count.
+        return segments.length >= 2 ? '/' + segments[0] : undefined;
+      });
     this.shouldVersion =
       options.shouldVersion ??
       ((path: string) => {
-        const segments = pathSegments(path);
-        // Only files inside a collection root (/Collection/...), never
-        // inside hidden dirs such as .tactile itself.
-        return segments.length >= 2 && !hasHiddenSegment(path);
+        // Only files inside a collection root, never inside hidden dirs
+        // such as .tactile itself.
+        return this.rootFor(path) !== undefined && !hasHiddenSegment(path);
       });
   }
 
   // e.g. /Notes/a/b.md -> /Notes/.tactile/versions/%2FNotes%2Fa%2Fb.md-<hash>
-  private versionDirFor(path: string): string {
+  private versionDirFor(path: string): string | undefined {
     const normalized = normalizePath(path);
-    const root = '/' + pathSegments(normalized)[0];
+    const root = this.rootFor(normalized);
+    if (!root) return undefined;
     return `${root}/${this.versionsDir}/${encodePathAsDir(normalized)}`;
   }
 
@@ -84,6 +97,7 @@ export class VersionedBackend implements VersionedStorageBackend {
 
     const previous = await this.inner.readFile(path);
     const dir = this.versionDirFor(path);
+    if (!dir) return;
     await this.inner.mkdir(dir, { recursive: true });
 
     // Guard against two snapshots landing in the same millisecond: bump the
@@ -112,7 +126,7 @@ export class VersionedBackend implements VersionedStorageBackend {
 
   async listVersions(path: string): Promise<FileVersion[]> {
     const dir = this.versionDirFor(path);
-    if (!(await this.inner.exists(dir))) return [];
+    if (!dir || !(await this.inner.exists(dir))) return [];
     const names = (await this.inner.readDir(dir))
       .filter((e) => e.isFile && e.name.endsWith('.md'))
       .map((e) => e.name);
@@ -135,7 +149,9 @@ export class VersionedBackend implements VersionedStorageBackend {
     if (id.includes('/') || id.includes('..')) {
       throw new Error(`Invalid version id: ${id}`);
     }
-    return this.inner.readTextFile(`${this.versionDirFor(path)}/${id}`);
+    const dir = this.versionDirFor(path);
+    if (!dir) throw new Error(`Path is not versioned: ${path}`);
+    return this.inner.readTextFile(`${dir}/${id}`);
   }
 
   async restoreVersion(path: string, id: string): Promise<void> {
@@ -186,7 +202,7 @@ export class VersionedBackend implements VersionedStorageBackend {
     // Drop history for permanently removed paths.
     if (this.shouldVersion(normalized)) {
       const dir = this.versionDirFor(normalized);
-      if (await this.inner.exists(dir)) {
+      if (dir && (await this.inner.exists(dir))) {
         await this.inner.remove(dir, { recursive: true, keepVersion: false, origin: 'local' });
       }
     }
