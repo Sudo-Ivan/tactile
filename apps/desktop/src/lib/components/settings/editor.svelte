@@ -124,7 +124,6 @@
 			</div>
 			<div class="flex items-center gap-2">
 				<Switch
-					disabled
 					checked={settings.editor.show_line_numbers}
 					onCheckedChange={(value) =>
 						setSettings('collection', {
@@ -132,9 +131,14 @@
 							editor: { ...settings.editor, show_line_numbers: value }
 						})}
 				/>
-				<Label class={cn('text-sm font-normal transition-colors text-foreground/60')}
-					>Show line numbers</Label
+				<Label
+					class={cn(
+						'text-sm font-normal transition-colors',
+						settings.editor.show_line_numbers ? 'text-foreground/90' : 'text-foreground/60'
+					)}
 				>
+					Show line numbers in source mode
+				</Label>
 			</div>
 			<div class="flex items-center gap-2">
 				<Switch

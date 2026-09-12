@@ -140,7 +140,7 @@
 						</div>
 					</ContextMenu.Trigger>
 					<ContextMenu.Content class="w-44">
-						<ContextMenu.Item class="flex items-center gap-2 font-base group">
+						<ContextMenu.Item class="flex items-center gap-2 group">
 							<Icon
 								name="editPencil"
 								class="w-3.5 h-3.5 fill-foreground/70 group-hover:fill-foreground"
@@ -153,7 +153,7 @@
 						{#if !isMobile}
 							<ContextMenu.Separator />
 							<ContextMenu.Item
-								class="flex items-center gap-2 font-base group"
+								class="flex items-center gap-2 group"
 								onclick={() => showInFolder(entry.path)}
 							>
 								<Icon
@@ -168,7 +168,7 @@
 						{/if}
 						<ContextMenu.Separator />
 						<ContextMenu.Item
-							class="flex text-destructive data-[highlighted]:bg-destructive/20 data-[highlighted]:text-destructive items-center gap-2 font-base group"
+							class="flex text-destructive data-[highlighted]:bg-destructive/20 data-[highlighted]:text-destructive items-center gap-2 group"
 							onclick={() => deleteNote(entry.path)}
 						>
 							<Icon

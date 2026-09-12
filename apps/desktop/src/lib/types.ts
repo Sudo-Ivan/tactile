@@ -27,6 +27,8 @@ export interface AppSettingsParams {
 	theme: string;
 	theme_mode: string;
 	interface_font: string;
+	// Custom Tactile Sync relay URL. Empty uses the default hosted relay.
+	sync_server: string;
 }
 
 export interface CollectionSettingsParams {

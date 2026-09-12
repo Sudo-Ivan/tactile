@@ -4,6 +4,7 @@
 	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
 	import { goToSearchResult } from '@/utils/editor';
+	import type { SearchResultParams } from '@/utils/search';
 	import * as Collapsible from '@tactile/ui/components/collapsible';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
@@ -12,7 +13,7 @@
 	import markdownit from 'markdown-it';
 	import { onMount } from 'svelte';
 
-	let tasks = $state<{ path: string; context_preview: string }[]>([]);
+	let tasks = $state<SearchResultParams[]>([]);
 	let loading = $state(false);
 	let openState = $state<Record<string, boolean>>({});
 
@@ -54,13 +55,18 @@
 		loading = true;
 
 		try {
-			tasks = (await invoke(SEARCH_FILES_COMMAND, {
+			const results = (await invoke(SEARCH_FILES_COMMAND, {
 				dirPath: appState.collection,
 				query: '- [ ]',
 				caseSensitive: false,
 				matchWord: false,
-				recursive: true
-			})) as { path: string; context_preview: string }[];
+				recursive: true,
+				// Literal matching only: fuzzy search would treat the task
+				// marker's punctuation as a subsequence and catch unrelated lines.
+				mode: 'exact'
+			})) as SearchResultParams[];
+			// Name matches (a file literally named "- [ ]...") are not tasks.
+			tasks = results.filter((result) => result.kind === 'content');
 
 			loading = false;
 		} catch (error) {
@@ -86,7 +92,7 @@
 			const activeFileInResults = tasks.find((task) => task.path === appState.activeFile);
 			if (activeFileInResults) {
 				openNote(activeFileInResults.path, true);
-			} else if (appState.activeFile !== tasks[0]?.path) {
+			} else if (tasks[0] && appState.activeFile !== tasks[0].path) {
 				openNote(tasks[0].path, true);
 			}
 		}

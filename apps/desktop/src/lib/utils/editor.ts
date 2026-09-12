@@ -54,6 +54,35 @@ export function goToSearchResult(editor: Editor, index?: number) {
 	scrollEditorSelectionIntoView(editor);
 }
 
+export type EditorMode = 'edit' | 'view' | 'source';
+
+// Switch between the rich editor, read-only view and raw markdown source.
+// Entering source mode serializes the current document; leaving it parses the
+// buffer back, so edits made in either mode carry over.
+export function setEditorMode(next: EditorMode) {
+	const mode = appState.editorMode;
+	if (next === mode) return;
+
+	const editor = appState.editor.instance;
+
+	if (mode === 'source') {
+		// Parse the raw buffer back into the document.
+		setEditorContent(appState.sourceContent);
+	}
+
+	if (next === 'source') {
+		// Capture the document exactly as markdown for the source buffer.
+		appState.sourceContent = editor?.storage.markdown.getMarkdown() ?? '';
+		editor?.setEditable(false);
+		// The tiptap find/replace panel has no effect on the source buffer.
+		appState.editorSearchActive = false;
+	} else {
+		editor?.setEditable(next === 'edit');
+	}
+
+	appState.editorMode = next;
+}
+
 // Get the text of the current editor selection
 export function getEditorSelectionText(editor: Editor) {
 	const { from, to } = editor.state.selection;

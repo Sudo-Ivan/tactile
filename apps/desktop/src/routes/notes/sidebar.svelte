@@ -10,6 +10,7 @@
 	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
 	import type { FileEntry } from '@/types';
+	import type { SearchResultParams } from '@/utils/search';
 	import { Button } from '@tactile/ui/components/button';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
@@ -19,7 +20,7 @@
 	import SearchPanel from './search-panel.svelte';
 	import SearchResults from './search-results.svelte';
 
-	let searchResults = $state<{ path: string; context_preview: string }[]>([]);
+	let searchResults = $state<SearchResultParams[]>([]);
 	let searchLoading = $state(false);
 	let searchQuery = $state('');
 	let searchOptions = $state({ caseSensitive: false, wholeWord: false });
@@ -206,12 +207,7 @@
 		data-path={appState.collection}
 	>
 		{#if appState.collectionSearchActive}
-			<SearchResults
-				results={searchResults}
-				query={searchQuery}
-				searchSettings={searchOptions}
-				loading={searchLoading}
-			/>
+			<SearchResults results={searchResults} query={searchQuery} loading={searchLoading} />
 		{:else}
 			{#if entries.length === 0}
 				<div class="w-full h-full flex flex-col gap-1 items-center justify-center">

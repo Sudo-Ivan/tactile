@@ -33,7 +33,7 @@
 						{#if command.icon}
 							<Icon name={command.icon} />
 						{/if}
-						<span class="text-foreground/80 group:hover:text-foreground/100"></span>
+						<span class="text-foreground/80 group-hover:text-foreground"></span>
 						{command.title}
 					</div>
 					{#if command.shortcut}

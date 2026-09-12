@@ -5,7 +5,9 @@ import type { AppSettingsParams, CollectionSettingsParams, SettingsStateParams }
 export const appState = $state({
 	activeFile: null as string | null,
 	noteHistory: [] as string[],
-	editorMode: 'edit' as 'edit' | 'view',
+	editorMode: 'edit' as 'edit' | 'view' | 'source',
+	sourceContent: '',
+	noteDetailTab: 'metadata' as 'metadata' | 'toc' | 'history',
 	editorSearchValue: '',
 	editorSearchActive: false,
 	collection: undefined as string | undefined,

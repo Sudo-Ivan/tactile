@@ -2,6 +2,7 @@ import type { CollectionSettingsParams, ShortcutParams } from './types';
 
 export const SHORTCUTS: Record<string, ShortcutParams> = {
 	'editor:toggle-mode': { command: true, key: 'e' },
+	'editor:source-mode': { command: true, shift: true, key: 'e' },
 	'editor:search': { command: true, key: 'f' },
 	'command:open-note': { command: true, key: 'j' },
 	'command:move-note': { command: true, shift: true, key: 'm' },
@@ -34,7 +35,8 @@ export const SHORTCUTS: Record<string, ShortcutParams> = {
 export const BASE_APP_SETTINGS = {
 	theme: 'dark',
 	theme_mode: 'system',
-	interface_font: 'system-ui'
+	interface_font: 'system-ui',
+	sync_server: ''
 };
 
 export const BASE_COLLECTION_SETTINGS: CollectionSettingsParams = {

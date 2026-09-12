@@ -9,6 +9,7 @@
 		SHORTCUTS
 	} from '@/constants';
 	import { appState } from '@/store.svelte';
+	import type { SearchResultParams } from '@/utils/search';
 	import { Button } from '@tactile/ui/components/button';
 	import { cn } from '@tactile/ui/lib/utils';
 	import { invoke } from '@tauri-apps/api/core';
@@ -22,7 +23,7 @@
 		query = $bindable(),
 		options = $bindable()
 	}: {
-		results: { path: string; context_preview: string }[];
+		results: SearchResultParams[];
 		loading: boolean;
 		query: string;
 		options: { caseSensitive: boolean; wholeWord: boolean };
@@ -58,7 +59,7 @@
 				caseSensitive: options.caseSensitive,
 				matchWord: options.wholeWord,
 				recursive: true
-			})) as { path: string; context_preview: string }[];
+			})) as SearchResultParams[];
 
 			loading = false;
 		} catch (error) {
@@ -125,7 +126,7 @@
 			>
 				<ALargeSmall
 					class={cn(
-						'w-18px] h-[18px] stroke-muted-foreground group-hover:stroke-foreground transition-all stroke-[1.5px]',
+						'w-[18px] h-[18px] stroke-muted-foreground group-hover:stroke-foreground transition-all stroke-[1.5px]',
 						options.caseSensitive ? 'stroke-foreground' : ''
 					)}
 				/>

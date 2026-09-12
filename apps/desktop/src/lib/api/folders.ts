@@ -1,8 +1,9 @@
-import { OS_TRASH_DIR, TRASH_DIR, UNTITLED_NAME } from '@/constants';
+import { OS_TRASH_DIR, UNTITLED_NAME } from '@/constants';
 import { appState } from '@/store.svelte';
 import { getNextUntitledName } from '@/utils/fs';
 import { homeDir } from '@tauri-apps/api/path';
 import { storage } from '@/storage';
+import { moveToTrash } from './trash';
 
 // Create a new folder
 export const createFolder = async (dirPath: string) => {
@@ -43,7 +44,7 @@ export const deleteFolder = async (path: string, recursive = false) => {
 			);
 			break;
 		case 'tactile':
-			await storage.rename(path, `${appState.collection}/${TRASH_DIR}/${path.split('/').pop()!}`);
+			await moveToTrash(path, true);
 			break;
 		case 'delete':
 			await storage.remove(path);

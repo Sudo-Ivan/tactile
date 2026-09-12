@@ -10,6 +10,7 @@
 	import OpenCollectionPage from './pages/open-collection.svelte';
 	import OpenNotePage from './pages/open-note.svelte';
 	import SharePage from './pages/share.svelte';
+	import TrashPage from './pages/trash.svelte';
 
 	let open = $state(false);
 	let search = $state('');
@@ -128,6 +129,8 @@
 			<HelpPage onPageChange={handlePageState} />
 		{:else if page === 'share'}
 			<SharePage onPageChange={handlePageState} />
+		{:else if page === 'trash'}
+			<TrashPage onPageChange={handlePageState} />
 		{/if}
 	</Command.List>
 </Command.Dialog>

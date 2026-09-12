@@ -1,11 +1,13 @@
-import { MARKDOWN_EXTENSION, OS_TRASH_DIR, TRASH_DIR, UNTITLED_NAME } from '@/constants';
+import { MARKDOWN_EXTENSION, OS_TRASH_DIR, UNTITLED_NAME } from '@/constants';
 import { appState } from '@/store.svelte';
 import type { NoteMetadataParams } from '@/types';
 import { setEditorContent } from '@/utils/editor';
 import { calculateReadingTime } from '@/utils/format';
 import { getNextUntitledName } from '@/utils/fs';
 import { homeDir } from '@tauri-apps/api/path';
+import { isVersioned, normalizePath, type FileVersion } from '@tactile/storage';
 import { storage } from '@/storage';
+import { moveToTrash } from './trash';
 
 // Create a new note
 export const createNote = async (dirPath: string, name?: string) => {
@@ -28,6 +30,9 @@ export const createNote = async (dirPath: string, name?: string) => {
 export async function openNote(path: string, skipHistory = false) {
 	const fileContent = await storage.readTextFile(path);
 	setEditorContent(fileContent);
+	// Keep the source buffer in sync so switching notes while in source mode
+	// never shows stale content.
+	appState.sourceContent = fileContent;
 	appState.activeFile = path;
 	if (!skipHistory) {
 		if (appState.noteHistory[appState.noteHistory.length - 1] !== path) {
@@ -46,7 +51,7 @@ export const deleteNote = async (path: string) => {
 			);
 			break;
 		case 'tactile':
-			await storage.rename(path, `${appState.collection}/${TRASH_DIR}/${path.split('/').pop()!}`);
+			await moveToTrash(path);
 			break;
 		case 'delete':
 			await storage.remove(path);
@@ -78,10 +83,14 @@ export const renameNote = async (path: string, name: string) => {
 	appState.activeFile = `${path.split('/').slice(0, -1).join('/')}/${name}`;
 };
 
-// Save active note
+// Save active note. In source mode the raw buffer is written; otherwise the
+// document is serialized to markdown first.
 export const saveNote = async (path: string) => {
 	// Get note content
-	let content = appState.editor.instance.storage.markdown.getMarkdown();
+	let content =
+		appState.editorMode === 'source'
+			? appState.sourceContent
+			: appState.editor.instance.storage.markdown.getMarkdown();
 
 	// Remove the first heading title
 	content = content.replace(/^# .*\n/, '');
@@ -155,4 +164,32 @@ export const getNoteMetadataParams = async (path: string): Promise<NoteMetadataP
 			avgReadingTime: avgReadingTime
 		}
 	};
+};
+
+// Version history for a note, newest first. Empty when the backend has no
+// versioning support.
+export const listNoteVersions = async (path: string): Promise<FileVersion[]> => {
+	if (!isVersioned(storage)) return [];
+	return storage.listVersions(normalizePath(path));
+};
+
+// Reads the stored contents of one version snapshot.
+export const readNoteVersion = async (path: string, versionId: string): Promise<string> => {
+	if (!isVersioned(storage)) throw new Error('Versioning is not available');
+	return storage.readVersion(normalizePath(path), versionId);
+};
+
+// Reads the current on-disk contents of a note (used to diff a version
+// against the latest state).
+export const readNoteContent = async (path: string): Promise<string> => {
+	return storage.readTextFile(normalizePath(path));
+};
+
+// Restores a version snapshot. The current contents are snapshotted first,
+// so restoring is never destructive.
+export const restoreNoteVersion = async (path: string, versionId: string) => {
+	if (!isVersioned(storage)) throw new Error('Versioning is not available');
+	await storage.restoreVersion(normalizePath(path), versionId);
+	appState.editor.notifySaveEvent();
+	openNote(normalizePath(path), true);
 };

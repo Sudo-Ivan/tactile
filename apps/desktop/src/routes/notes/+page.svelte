@@ -4,6 +4,7 @@
 	import EditorToolbar from '$lib/components/shared/editor/toolbar.svelte';
 	import { createNote } from '@/api/notes';
 	import Editor from '@/components/shared/editor/editor.svelte';
+	import SourceEditor from '@/components/shared/editor/source.svelte';
 	import { SHORTCUTS } from '@/constants';
 	import { isMobile } from '@/platform.svelte';
 	import { appState } from '@/store.svelte';
@@ -61,8 +62,15 @@
 		</div>
 	</div>
 	<div class={cn('w-full h-full', appState.activeFile === null && 'hidden')}>
-		<EditorSearch />
+		{#if appState.editorMode !== 'source'}
+			<EditorSearch />
+		{/if}
 		<EditorInlineTitle />
-		<Editor />
+		<div class={cn(appState.editorMode === 'source' && 'hidden')}>
+			<Editor />
+		</div>
+		{#if appState.editorMode === 'source'}
+			<SourceEditor />
+		{/if}
 	</div>
 </div>

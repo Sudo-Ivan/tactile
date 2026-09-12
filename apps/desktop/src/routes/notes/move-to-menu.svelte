@@ -45,14 +45,14 @@
 </script>
 
 <ContextMenu.Sub>
-	<ContextMenu.SubTrigger class="flex items-center gap-2 font-base group">
+	<ContextMenu.SubTrigger class="flex items-center gap-2 group">
 		<Icon name="motionCirclesLines" class="w-3.5 h-3.5 fill-foreground/70" />
 		Move {type} to...
 	</ContextMenu.SubTrigger>
 	<ContextMenu.SubContent class="w-40">
 		{#each targets as directory (directory.path)}
 			<ContextMenu.Item
-				class="flex items-center gap-2 font-base group"
+				class="flex items-center gap-2 group"
 				onclick={() => moveTo(directory.path)}
 			>
 				<Icon name="folder" class="w-3.5 h-3.5 fill-foreground/70 group-hover:fill-foreground" />
@@ -61,7 +61,7 @@
 		{/each}
 
 		{#if targets.length === 0}
-			<ContextMenu.Item class="flex items-center gap-2 font-base group" onclick={moveToNewFolder}>
+			<ContextMenu.Item class="flex items-center gap-2 group" onclick={moveToNewFolder}>
 				<Icon
 					name="folderPlus"
 					class="w-3.5 h-3.5 fill-foreground/70 group-hover:fill-foreground"

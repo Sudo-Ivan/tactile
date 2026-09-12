@@ -1,4 +1,4 @@
-import { APP_SETTINGS_FILENAME, COLLECTION_SETTINGS_PATH } from '@/constants';
+import { APP_SETTINGS_FILENAME, BASE_APP_SETTINGS, COLLECTION_SETTINGS_PATH } from '@/constants';
 import { appState } from '@/store.svelte';
 import type { AppSettingsParams, CollectionSettingsParams } from '@/types';
 import { BaseDirectory } from '@tauri-apps/api/path';
@@ -15,7 +15,8 @@ export const loadSettings = async (loadApp: boolean, loadCollection: boolean) =>
 		if (!appSettingsText) {
 			setSettings('app');
 		} else {
-			appState.appSettings = JSON.parse(appSettingsText);
+			// Merge over defaults so keys added in later versions exist.
+			appState.appSettings = { ...BASE_APP_SETTINGS, ...JSON.parse(appSettingsText) };
 		}
 	}
 
