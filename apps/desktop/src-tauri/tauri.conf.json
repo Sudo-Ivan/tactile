@@ -63,7 +63,7 @@
 	"plugins": {
 		"updater": {
 			"endpoints": ["https://github.com/Sudo-Ivan/tactile/releases/latest/download/latest.json"],
-			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDMxQjA0RjhDQjBFN0I4MTkKUldRWnVPZXdqRSt3TWN0QjNDZUV1SDRtNVdyNFRtWnZQR3ZsL3RWY1plbVBFeFVMeHFLVU5tcnIK",
+			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEFGMzZGNUU4MUU5NzM2OTYKUldTV05wY2U2UFUycjJaMzgzOEh6b2pOMXh2dkIrUzlQSjJkdXNUc3NISDlPQ0FndExaNEdYZ2IK",
 			"windows": {
 				"installMode": "passive"
 			}
