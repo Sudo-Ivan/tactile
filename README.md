@@ -8,7 +8,7 @@ Tactile is a fork of [haptic](https://github.com/chroxify/haptic) by chroxify
 
 - Markdown notes with a TipTap-based editor
 - Local-first: notes stay on your machine
-- Desktop app built with Tauri, web app powered by PGlite
+- Desktop app built with Tauri, web app stores notes as files in OPFS
 - Command menu, daily notes and tasks
 - Dark mode
 - No third-party trackers or hosted backends required
