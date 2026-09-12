@@ -4,6 +4,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "vite dev",
+		"prepare": "svelte-kit sync",
 		"dev:tauri": "tauri dev",
 		"tauri": "tauri",
 		"build": "vite build",
