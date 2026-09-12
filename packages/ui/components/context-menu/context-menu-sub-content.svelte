@@ -10,13 +10,15 @@
 	}: ContextMenuPrimitive.SubContentProps = $props();
 </script>
 
-<ContextMenuPrimitive.SubContent
-	bind:ref
-	class={cn(
-		'z-50 min-w-[8rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-lg focus:outline-none',
-		className
-	)}
-	{...rest}
->
-	{@render children?.()}
-</ContextMenuPrimitive.SubContent>
+<ContextMenuPrimitive.Portal>
+	<ContextMenuPrimitive.SubContent
+		bind:ref
+		class={cn(
+			'z-50 min-w-[8rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-lg focus:outline-none',
+			className
+		)}
+		{...rest}
+	>
+		{@render children?.()}
+	</ContextMenuPrimitive.SubContent>
+</ContextMenuPrimitive.Portal>
