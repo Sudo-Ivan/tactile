@@ -25,8 +25,8 @@
 	<meta property="og:description" content={description} />
 	<meta property="og:image" content={image} />
 	<meta property="og:image:alt" content="Tactile - markdown notes" />
-	<meta property="og:image:width" content="1200" />
-	<meta property="og:image:height" content="627" />
+	<meta property="og:image:width" content="1180" />
+	<meta property="og:image:height" content="675" />
 
 	<!-- Twitter -->
 	<meta name="twitter:card" content="summary_large_image" />

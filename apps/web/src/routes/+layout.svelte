@@ -73,10 +73,13 @@
 		property="og:description"
 		content="Tactile is a new local-first & privacy-focused home for your markdown notes. It's a minimalistic, lightweight and fast note-taking app that's designed to be distraction-free."
 	/>
-	<meta property="og:image" content="https://github.com/Sudo-Ivan/tactile/landing.png" />
+	<meta
+		property="og:image"
+		content="https://raw.githubusercontent.com/Sudo-Ivan/tactile/main/apps/homepage/static/landing.png"
+	/>
 	<meta property="og:image:alt" content="Tactile - Markdown Editor" />
-	<meta property="og:image:width" content="1200" />
-	<meta property="og:image:height" content="627" />
+	<meta property="og:image:width" content="1180" />
+	<meta property="og:image:height" content="675" />
 
 	<!-- Twitter -->
 	<meta property="twitter:card" content="summary_large_image" />
@@ -86,7 +89,10 @@
 		property="twitter:description"
 		content="Tactile is a new local-first & privacy-focused home for your markdown notes. It's a minimalistic, lightweight and fast note-taking app that's designed to be distraction-free."
 	/>
-	<meta property="twitter:image" content="https://github.com/Sudo-Ivan/tactile/landing.png" />
+	<meta
+		property="twitter:image"
+		content="https://raw.githubusercontent.com/Sudo-Ivan/tactile/main/apps/homepage/static/landing.png"
+	/>
 </svelte:head>
 
 {#if storageState === 'loading'}
