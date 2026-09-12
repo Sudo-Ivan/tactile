@@ -63,12 +63,22 @@
 					class: 'prose prose-theme mx-auto focus:outline-none min-h-full pb-6 select-text'
 				}
 			},
+			onCreate: ({ editor }) => {
+				// Expose the instance immediately so openNote/setEditorContent
+				// work before the first user transaction.
+				appState.editor.instance = editor;
+			},
 			onTransaction: () => {
 				// force re-render so `editor.isActive` works as expected
 				tiptapEditor = tiptapEditor;
 				appState.editor.instance = tiptapEditor!;
 			},
 			onUpdate: async () => {
+				const path = appState.activeFile;
+				if (!path) return;
+				appState.editor.dirtyPath = path;
+				const generation = ++appState.editor.saveGeneration;
+
 				// If timeout before 500ms, clear it
 				if (timeout) {
 					clearTimeout(timeout);
@@ -76,9 +86,16 @@
 
 				// Set timeout to update the store
 				timeout = setTimeout(async () => {
-					if (appState.collectionSettings.editor.auto_save) {
-						saveNote(appState.activeFile!)
+					if (
+						appState.collectionSettings.editor.auto_save &&
+						appState.editor.dirtyPath === path &&
+						appState.activeFile === path
+					) {
+						saveNote(path)
 							.then(() => {
+								if (appState.editor.saveGeneration === generation) {
+									appState.editor.dirtyPath = null;
+								}
 								appState.editor.notifySaveEvent();
 							})
 							.catch((error) => {
@@ -91,6 +108,7 @@
 	});
 
 	onDestroy(() => {
+		clearTimeout(timeout);
 		if (tiptapEditor) {
 			tiptapEditor.destroy();
 		}

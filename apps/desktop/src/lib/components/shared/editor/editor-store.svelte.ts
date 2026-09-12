@@ -7,6 +7,14 @@ class EditorStore {
 	#instance = $state<Editor>();
 	#saveListeners = new SvelteSet<SaveListener>();
 
+	// Path of the note with unpersisted edits. Set on editor updates; used to
+	// flush pending saves before navigation and to skip stale debounced saves.
+	dirtyPath: string | null = null;
+
+	// Bumped on every editor update so a completed save only clears dirtyPath
+	// when no newer edits happened while it was in flight.
+	saveGeneration = 0;
+
 	get instance() {
 		return this.#instance as Editor;
 	}

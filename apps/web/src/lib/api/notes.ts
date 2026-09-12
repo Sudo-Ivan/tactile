@@ -52,12 +52,28 @@ export const createNote = async (dirPath: string, name?: string) => {
 // Open a note
 export async function openNote(path: string, skipHistory = false) {
 	const storage = await getStorage();
+
+	// Persist pending edits to the previous note before swapping content, so a
+	// pending debounced save can never write stale content into this note.
+	const dirtyPath = appState.editor.dirtyPath;
+	if (dirtyPath) {
+		appState.editor.dirtyPath = null;
+		try {
+			await saveNote(dirtyPath);
+		} catch (error) {
+			console.error('Error saving note:', error);
+		}
+	}
+
 	const fileContent = await storage.readTextFile(path);
-	setEditorContent(fileContent);
 	// Keep the source buffer in sync so switching notes while in source mode
 	// never shows stale content.
 	appState.sourceContent = fileContent;
 	appState.activeFile = path;
+	setEditorContent(fileContent);
+	// setContent fires onUpdate, which would otherwise mark the freshly loaded
+	// note as dirty and write it back on the next debounce.
+	appState.editor.dirtyPath = null;
 	if (!skipHistory) {
 		if (appState.noteHistory[appState.noteHistory.length - 1] !== path) {
 			appState.noteHistory.push(path);
@@ -79,6 +95,9 @@ export const deleteNote = async (path: string) => {
 		default:
 			await moveToTrash(path, false);
 			break;
+	}
+	if (appState.editor.dirtyPath === path) {
+		appState.editor.dirtyPath = null;
 	}
 	appState.activeFile = null;
 };
@@ -112,6 +131,9 @@ export const renameNote = async (path: string, name: string) => {
 
 	// Rename the file
 	await storage.rename(path, `${parentPath}/${name}`);
+	if (appState.editor.dirtyPath === path) {
+		appState.editor.dirtyPath = `${parentPath}/${name}`;
+	}
 	appState.activeFile = `${parentPath}/${name}`;
 };
 
@@ -159,6 +181,12 @@ export const moveNote = async (source: string, target: string) => {
 	}
 
 	await storage.rename(source, `${target}/${noteName}`.replace('//', '/'));
+
+	// The file moved, so pending edits must flush to the new path instead of
+	// recreating the file at the source path.
+	if (appState.editor.dirtyPath === source) {
+		appState.editor.dirtyPath = `${target}/${noteName}`.replace('//', '/');
+	}
 
 	// Open the note
 	openNote(target + '/' + noteName);

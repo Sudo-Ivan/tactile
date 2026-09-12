@@ -15,11 +15,24 @@
 	let showGutter = $derived(appState.collectionSettings.editor.show_line_numbers);
 
 	function scheduleSave() {
+		const path = appState.activeFile;
+		if (!path) return;
+		appState.editor.dirtyPath = path;
+		const generation = ++appState.editor.saveGeneration;
 		clearTimeout(saveTimeout);
 		saveTimeout = setTimeout(() => {
-			if (appState.collectionSettings.editor.auto_save && appState.activeFile) {
-				saveNote(appState.activeFile)
-					.then(() => appState.editor.notifySaveEvent())
+			if (
+				appState.collectionSettings.editor.auto_save &&
+				appState.editor.dirtyPath === path &&
+				appState.activeFile === path
+			) {
+				saveNote(path)
+					.then(() => {
+						if (appState.editor.saveGeneration === generation) {
+							appState.editor.dirtyPath = null;
+						}
+						appState.editor.notifySaveEvent();
+					})
 					.catch((error) => console.error('Error saving note:', error));
 			}
 		}, appState.collectionSettings.editor.auto_save_debounce);
