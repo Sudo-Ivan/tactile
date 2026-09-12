@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
+import { base } from '$app/paths';
 
 export function load() {
-	redirect(301, '/notes');
+	redirect(301, `${base}/notes`);
 }

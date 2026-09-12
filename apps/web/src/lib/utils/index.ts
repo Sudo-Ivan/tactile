@@ -3,5 +3,6 @@ export * from './device.svelte';
 export * from './editor';
 export * from './files';
 export * from './format';
+export * from './fuzzy';
 export * from './search';
 export * from './theme';

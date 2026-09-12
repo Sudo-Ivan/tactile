@@ -8,10 +8,15 @@ const config = {
 	preprocess: vitePreprocess(),
 
 	kit: {
-		// adapter-auto only supports some environments, see https://kit.svelte.dev/docs/adapter-auto for a list.
-		// If your environment is not supported or you settled on a specific environment, switch out the adapter.
-		// See https://kit.svelte.dev/docs/adapters for more information about adapters.
-		adapter: adapter(),
+		adapter: adapter({
+			// SPA shell for unknown paths (GitHub Pages serves 404.html).
+			fallback: '404.html'
+		}),
+		// Base path for hosting under a subpath (e.g. /tactile/app on
+		// GitHub Pages). Set PUBLIC_BASE_PATH at build time; empty means root.
+		paths: {
+			base: process.env.PUBLIC_BASE_PATH || ''
+		},
 		alias: {
 			'@/*': './src/lib'
 		}
