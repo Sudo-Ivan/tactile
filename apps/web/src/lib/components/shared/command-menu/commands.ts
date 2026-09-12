@@ -1,19 +1,9 @@
 import type { IconKey } from '$lib/components/shared/icon.svelte';
 import { createFolder } from '@/api/folders';
 import { createNote, deleteNote, duplicateNote, saveNote } from '@/api/notes';
-import { SHORTCUTS } from '@/constants';
-import {
-	collection,
-	collectionSearchActive,
-	editor,
-	editorMode,
-	editorSearchActive,
-	isNoteDetailSidebarOpen,
-	isPageSidebarOpen,
-	settingsStore
-} from '@/store';
+import { SHORTCUTS, TIMING } from '@/constants';
+import { appState } from '@/store.svelte';
 import type { ShortcutParams } from '@/types';
-import { get } from 'svelte/store';
 
 type Command = {
 	title: string;
@@ -22,7 +12,7 @@ type Command = {
 	onSelect?: () => string | void;
 };
 
-type CommandGroup = {
+export type CommandGroup = {
 	name: string;
 	commands: Command[];
 };
@@ -36,7 +26,7 @@ export const mainCommands: CommandGroup[] = [
 				icon: 'notePlus',
 				shortcut: SHORTCUTS['notes:create'],
 				onSelect: () => {
-					createNote(get(collection));
+					createNote(appState.collection!);
 				}
 			},
 			{
@@ -44,7 +34,7 @@ export const mainCommands: CommandGroup[] = [
 				icon: 'folderPlus',
 				shortcut: SHORTCUTS['notes:create-folder'],
 				onSelect: () => {
-					createFolder(get(collection));
+					createFolder(appState.collection!);
 				}
 			},
 			{
@@ -60,7 +50,7 @@ export const mainCommands: CommandGroup[] = [
 				icon: 'searchDocument',
 				shortcut: SHORTCUTS['notes:search'],
 				onSelect: () => {
-					collectionSearchActive.set(true);
+					appState.collectionSearchActive = true;
 				}
 			},
 			{
@@ -68,8 +58,9 @@ export const mainCommands: CommandGroup[] = [
 				icon: 'cursorI',
 				shortcut: SHORTCUTS['editor:toggle-mode'],
 				onSelect: () => {
-					get(editor).setEditable(!get(editor).isEditable);
-					editorMode.update((mode) => (mode === 'edit' ? 'view' : 'edit'));
+					const editor = appState.editor.instance;
+					editor?.setEditable(!editor.isEditable);
+					appState.editorMode = appState.editorMode === 'edit' ? 'view' : 'edit';
 				}
 			},
 			{
@@ -77,7 +68,7 @@ export const mainCommands: CommandGroup[] = [
 				icon: 'searchDocument',
 				shortcut: SHORTCUTS['editor:search'],
 				onSelect: () => {
-					editorSearchActive.set(true);
+					appState.editorSearchActive = true;
 				}
 			}
 		]
@@ -118,7 +109,7 @@ export const mainCommands: CommandGroup[] = [
 				icon: 'settings',
 				shortcut: SHORTCUTS['app:settings'],
 				onSelect: () => {
-					settingsStore.update((state) => ({ ...state, isOpen: true }));
+					appState.settingsStore.isOpen = true;
 				}
 			},
 			{
@@ -173,7 +164,7 @@ export const mainCommands: CommandGroup[] = [
 				icon: 'sidebarMenuLeft',
 				shortcut: SHORTCUTS['notes:toggle-sidebar'],
 				onSelect: () => {
-					isPageSidebarOpen.update((open) => !open);
+					appState.isPageSidebarOpen = !appState.isPageSidebarOpen;
 				}
 			},
 			{
@@ -181,7 +172,7 @@ export const mainCommands: CommandGroup[] = [
 				icon: 'sidebarMenuRight',
 				shortcut: SHORTCUTS['notes:toggle-details'],
 				onSelect: () => {
-					isNoteDetailSidebarOpen.update((open) => !open);
+					appState.isNoteDetailSidebarOpen = !appState.isNoteDetailSidebarOpen;
 				}
 			}
 		]
@@ -214,7 +205,7 @@ export const createNoteCommands = (notePath: string): CommandGroup => {
 				shortcut: SHORTCUTS['note:rename'],
 				onSelect: () => {
 					// Blur the editor
-					get(editor).commands.blur();
+					appState.editor.instance?.commands.blur();
 
 					// Get the inline title input (#inline-title-input)
 					const inlineTitleInput = document.getElementById(
@@ -225,7 +216,7 @@ export const createNoteCommands = (notePath: string): CommandGroup => {
 					window.setTimeout(() => {
 						inlineTitleInput?.focus();
 						inlineTitleInput?.select();
-					}, 50);
+					}, TIMING.renameFocusDelay);
 				}
 			},
 			{

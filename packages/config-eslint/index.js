@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import ts from 'typescript-eslint';
 import svelte from 'eslint-plugin-svelte';
+import svelteParser from 'svelte-eslint-parser';
 import prettier from 'eslint-config-prettier';
 import turbo from 'eslint-config-turbo/flat';
 import globals from 'globals';
@@ -25,6 +26,15 @@ export default [
   {
     files: ['**/*.svelte'],
     languageOptions: {
+      parserOptions: {
+        parser: ts.parser
+      }
+    }
+  },
+  {
+    files: ['**/*.svelte.ts', '**/*.svelte.js'],
+    languageOptions: {
+      parser: svelteParser,
       parserOptions: {
         parser: ts.parser
       }

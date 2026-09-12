@@ -3,15 +3,19 @@
 	import Footer from '@/components/layout/footer.svelte';
 	import Header from '@/components/layout/header.svelte';
 	import Sidebar from '@/components/layout/sidebar.svelte';
-	import { platform as osPlatform } from '@tauri-apps/plugin-os';
 	import Command from '@/components/shared/command-menu/command.svelte';
-	import { appTheme, collection, platform } from '@/store';
-	import { updateWindowTheme, validateTactileFolder } from '@/utils';
+	import { COLLECTIONS_FILENAME } from '@/constants';
+	import { appState } from '@/store.svelte';
+	import { validateTactileFolder } from '@/utils/fs';
+	import { updateWindowTheme } from '@/utils/theme';
 	import '@tactile/ui/app.desktop.css';
+	import { setTheme } from '@tauri-apps/api/app';
+	import { platform as osPlatform } from '@tauri-apps/plugin-os';
 	import { BaseDirectory } from '@tauri-apps/api/path';
 	import { readTextFile } from '@tauri-apps/plugin-fs';
-	import { setTheme } from '@tauri-apps/api/app';
-	import { onMount } from 'svelte';
+	import { onMount, type Snippet } from 'svelte';
+
+	let { children }: { children?: Snippet } = $props();
 
 	// Prevent right-clicking in production
 	// TODO: Test if this even works in production (not sure if tauri has access to env variables)
@@ -21,7 +25,7 @@
 
 	// Load latest collection
 	async function loadLatestCollection() {
-		const collections = await readTextFile('collections.json', {
+		const collections = await readTextFile(COLLECTIONS_FILENAME, {
 			baseDir: BaseDirectory.AppData
 		}).catch(() => null);
 
@@ -34,7 +38,7 @@
 			}
 		)[0];
 
-		collection.set(latestCollection.path);
+		appState.collection = latestCollection.path;
 	}
 
 	onMount(async () => {
@@ -42,19 +46,21 @@
 		await loadLatestCollection();
 
 		// Validate tactile folder
-		await validateTactileFolder($collection);
+		await validateTactileFolder(appState.collection!);
 
 		// Load app & collection settings
 		loadSettings(true, true);
 
 		// Set platform
-		platform.set((await osPlatform()) as 'darwin' | 'linux' | 'windows');
+		appState.platform = (await osPlatform()) as 'darwin' | 'linux' | 'windows';
 	});
 
 	// Keep local theme synced
-	appTheme.subscribe(async (value) => {
+	$effect(() => {
+		const theme = appState.appTheme;
+
 		// Update app theme, auto maps to null which follows the system theme
-		await setTheme(value === 'auto' ? null : value);
+		void setTheme(theme === 'auto' ? null : theme);
 
 		// Update window theme
 		updateWindowTheme();
@@ -63,12 +69,12 @@
 
 <Command />
 
-{#if $platform === 'darwin'}
+{#if appState.platform === 'darwin'}
 	<Header />
 {/if}
 <Sidebar />
 <main class="flex min-h-screen w-full items-center justify-center">
-	<slot />
+	{@render children?.()}
 </main>
 <Footer />
 
@@ -87,5 +93,12 @@
 		&:hover {
 			background-color: hsl(var(--foreground) / 0.15);
 		}
+	}
+
+	/* Sidebar drag-resize cursor */
+	:global(body.cursor-col-resize) {
+		cursor: col-resize !important;
+		user-select: none !important;
+		pointer-events: none;
 	}
 </style>

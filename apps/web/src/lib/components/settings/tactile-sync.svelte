@@ -23,10 +23,10 @@
 		{ value: '1m', label: '1 month' }
 	];
 
-	let autoSync = false;
-	let autoBackup = false;
-	let selectedSyncInterval = '5m';
-	let selectedBackupInterval = '1w';
+	let autoSync = $state(false);
+	let autoBackup = $state(false);
+	let selectedSyncInterval = $state('5m');
+	let selectedBackupInterval = $state('1w');
 </script>
 
 <div class="space-y-5">

@@ -2,7 +2,7 @@
 
 Local-first, privacy-focused markdown notes. Minimal, lightweight and fast.
 
-Tactile is a hard fork of [haptic](https://github.com/chroxify/haptic) by chroxify, continued under [Sudo-Ivan](https://github.com/Sudo-Ivan).
+Tactile is a fork of [haptic](https://github.com/chroxify/haptic) by chroxify
 
 ## Features
 

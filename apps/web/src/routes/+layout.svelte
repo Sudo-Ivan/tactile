@@ -9,11 +9,17 @@
 	import Icon from '@/components/shared/icon.svelte';
 	import { db, pgClient } from '@/database/client';
 	import { collection as collectionTable } from '@/database/schema';
-	import { collection } from '@/store';
+	import { appState } from '@/store.svelte';
 	import { createDeviceDetector } from '@/utils';
 	import '@tactile/ui/app.web.css';
 	import { ModeWatcher } from 'mode-watcher';
-	import { onMount } from 'svelte';
+	import { onMount, type Snippet } from 'svelte';
+
+	interface Props {
+		children?: Snippet;
+	}
+
+	let { children }: Props = $props();
 
 	// Device detector
 	const device = createDeviceDetector();
@@ -25,7 +31,7 @@
 
 			// Seed database
 			await pgClient.exec(seed);
-		} catch (error) {
+		} catch {
 			console.log('Table already exists');
 		}
 	}
@@ -41,7 +47,7 @@
 			prev.lastOpened > current.lastOpened ? prev : current
 		);
 
-		collection.set(latestCollection.path);
+		appState.collection = latestCollection.path;
 	}
 
 	onMount(async () => {
@@ -99,13 +105,13 @@
 	<meta property="twitter:image" content="https://github.com/Sudo-Ivan/tactile/landing.png" />
 </svelte:head>
 
-{#if $device.isDesktop}
+{#if device.isDesktop}
 	<Command />
 	<ModeWatcher />
 	<Header />
 	<Sidebar />
 	<main class="flex min-h-screen w-full items-center justify-center">
-		<slot />
+		{@render children?.()}
 	</main>
 	<Footer />
 {:else}

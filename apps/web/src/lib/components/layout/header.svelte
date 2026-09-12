@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { collection } from '$lib/store';
+	import { appState } from '$lib/store.svelte';
+	import { GITHUB_URL } from '@/constants';
 	import Button from '@tactile/ui/components/button/button.svelte';
 </script>
 
@@ -10,19 +11,15 @@
 	<p
 		class="pointer-events-none text-sm text-foreground/85 hover:text-foreground/100 transition-all cursor-default outline-none -mr-[159px]"
 	>
-		{$collection?.split('/').pop() || ''}
+		{appState.collection?.split('/').pop() || ''}
 	</p>
 	<div class="flex gap-1">
-		<a href="https://github.com/Sudo-Ivan/tactile" target="_blank" rel="noopener noreferrer">
+		<a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
 			<Button variant="secondary" size="sm" scale="sm" class="rounded-full h-[27px] px-2.5"
 				>Star on Github</Button
 			>
 		</a>
-		<a
-			href="https://github.com/Sudo-Ivan/tactile/releases"
-			target="_blank"
-			rel="noopener noreferrer"
-		>
+		<a href="{GITHUB_URL}/releases" target="_blank" rel="noopener noreferrer">
 			<Button size="sm" scale="sm" class="rounded-full h-[27px] px-2.5">Download</Button>
 		</a>
 	</div>

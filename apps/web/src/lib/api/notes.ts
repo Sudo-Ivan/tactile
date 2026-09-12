@@ -1,34 +1,33 @@
 import { db } from '@/database/client';
 import { entry as entryTable } from '@/database/schema';
-import { activeFile, collection, editor, noteHistory } from '@/store';
+import { MARKDOWN_EXTENSION, UNTITLED_NAME } from '@/constants';
+import { appState } from '@/store.svelte';
 import type { NoteMetadataParams } from '@/types';
 import { calculateReadingTime, getNextUntitledName, setEditorContent } from '@/utils';
 import { eq, and } from 'drizzle-orm';
-import { get } from 'svelte/store';
 
 // Create a new note
 export const createNote = async (dirPath: string, name?: string) => {
+	const collectionPath = appState.collection!;
+
 	// Read the directory
 	const dirEntry = await db.select().from(entryTable).where(eq(entryTable.path, dirPath));
 
 	let files;
 	if (dirEntry.length === 0) {
-		files = await db
-			.select()
-			.from(entryTable)
-			.where(eq(entryTable.collectionPath, get(collection)));
+		files = await db.select().from(entryTable).where(eq(entryTable.collectionPath, collectionPath));
 	} else {
 		files = await db
 			.select()
 			.from(entryTable)
 			.where(
-				and(eq(entryTable.parentPath, dirPath), eq(entryTable.collectionPath, get(collection)))
+				and(eq(entryTable.parentPath, dirPath), eq(entryTable.collectionPath, collectionPath))
 			);
 	}
 
 	// Generate a new name (Untitled.md, if there are any exiting Untitled notes, increment the number by 1)
 	if (!name) {
-		name = getNextUntitledName(files, 'Untitled', '.md');
+		name = getNextUntitledName(files, UNTITLED_NAME, MARKDOWN_EXTENSION);
 	}
 
 	// Save the new note
@@ -37,7 +36,7 @@ export const createNote = async (dirPath: string, name?: string) => {
 		path: `${dirPath}/${name}`.replace('//', '/'),
 		content: '',
 		parentPath: dirPath,
-		collectionPath: get(collection)
+		collectionPath
 	});
 
 	// Open the note
@@ -48,28 +47,25 @@ export const createNote = async (dirPath: string, name?: string) => {
 export async function openNote(path: string, skipHistory = false) {
 	const file = await db.select().from(entryTable).where(eq(entryTable.path, path));
 	setEditorContent(file[0].content ?? '');
-	activeFile.set(path);
+	appState.activeFile = path;
 	if (!skipHistory) {
-		noteHistory.update((history) => {
-			if (history[history.length - 1] !== path) {
-				return [...history, path];
-			}
-			return history;
-		});
+		if (appState.noteHistory[appState.noteHistory.length - 1] !== path) {
+			appState.noteHistory.push(path);
+		}
 	}
 }
 
 // Delete a note
 export const deleteNote = async (path: string) => {
 	await db.delete(entryTable).where(eq(entryTable.path, path));
-	activeFile.set(null);
+	appState.activeFile = null;
 };
 
 // Rename a note
 export const renameNote = async (path: string, name: string) => {
 	// Make sure file extension is included
-	if (!name.endsWith('.md')) {
-		name += '.md';
+	if (!name.endsWith(MARKDOWN_EXTENSION)) {
+		name += MARKDOWN_EXTENSION;
 	}
 
 	// Remove breaking characters
@@ -94,13 +90,13 @@ export const renameNote = async (path: string, name: string) => {
 		.update(entryTable)
 		.set({ name, path: `${path.split('/').slice(0, -1).join('/')}/${name}` })
 		.where(eq(entryTable.path, path));
-	activeFile.set(`${path.split('/').slice(0, -1).join('/')}/${name}`);
+	appState.activeFile = `${path.split('/').slice(0, -1).join('/')}/${name}`;
 };
 
 // Save active note
 export const saveNote = async (path: string) => {
 	// Get note content
-	let content = get(editor).storage.markdown.getMarkdown();
+	let content = appState.editor.instance?.storage.markdown.getMarkdown() ?? '';
 
 	// Remove the first heading title
 	content = content.replace(/^# .*\n/, '');
@@ -183,8 +179,8 @@ export const getNoteMetadataParams = async (path: string): Promise<NoteMetadataP
 	const fileMetadata = await db.select().from(entryTable).where(eq(entryTable.path, path));
 
 	// Get editor metadata
-	const editorWordCount = get(editor).storage.characterCount.words();
-	const editorCharacterCount = get(editor).storage.characterCount.characters();
+	const editorWordCount = appState.editor.instance?.storage.characterCount.words() ?? 0;
+	const editorCharacterCount = appState.editor.instance?.storage.characterCount.characters() ?? 0;
 
 	// Calculate average reading time (in seconds if < 1min and in minutes if >= 1min)
 	const avgReadingTime = calculateReadingTime(editorWordCount);

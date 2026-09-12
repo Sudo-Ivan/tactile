@@ -1,8 +1,11 @@
 <script lang="ts">
-	import NotesSidebar from './sidebar.svelte';
 	import Layout from '$lib/components/notes/layout.svelte';
+	import type { Snippet } from 'svelte';
+	import NotesSidebar from './sidebar.svelte';
+
+	let { children }: { children?: Snippet } = $props();
 </script>
 
 <Layout sidebar={NotesSidebar}>
-	<slot />
+	{@render children?.()}
 </Layout>

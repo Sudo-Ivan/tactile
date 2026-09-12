@@ -4,27 +4,22 @@
 	import Shortcut from '@/components/shared/shortcut.svelte';
 	import Tooltip from '@/components/shared/tooltip.svelte';
 	import { SHORTCUTS } from '@/constants';
-	import {
-		activeFile,
-		collection,
-		editor,
-		editorMode,
-		editorSearchActive,
-		isNoteDetailSidebarOpen,
-		isPageSidebarOpen,
-		noteHistory
-	} from '@/store';
+	import { appState } from '@/store.svelte';
 	import Button from '@tactile/ui/components/button/button.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
 
-	export let hideHistory: boolean = false;
-	export let hideParentDirectories: boolean = false;
+	interface Props {
+		hideHistory?: boolean;
+		hideParentDirectories?: boolean;
+	}
 
-	let historyIndex: number = 0;
+	let { hideHistory = false, hideParentDirectories = false }: Props = $props();
 
-	noteHistory.subscribe((value) => {
-		historyIndex = value.length - 1;
-	});
+	let historyIndex = $derived(appState.noteHistory.length - 1);
+
+	let breadcrumbs = $derived(
+		appState.activeFile?.replace(appState.collection ?? '', '').split('/') ?? []
+	);
 </script>
 
 <div
@@ -32,7 +27,7 @@
 >
 	<div class="flex gap-1.5 select-none">
 		<Tooltip
-			text={$isPageSidebarOpen ? 'Collapse' : 'Expand'}
+			text={appState.isPageSidebarOpen ? 'Collapse' : 'Expand'}
 			side="bottom"
 			shortcut={SHORTCUTS['notes:toggle-sidebar']}
 		>
@@ -42,7 +37,7 @@
 				scale="md"
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
 				onclick={() => {
-					isPageSidebarOpen.update((state) => !state);
+					appState.isPageSidebarOpen = !appState.isPageSidebarOpen;
 				}}
 			>
 				<Shortcut options={SHORTCUTS['notes:toggle-sidebar']} />
@@ -50,7 +45,7 @@
 					name="sidebarArrow"
 					class={cn(
 						'w-4 h-4 transform transition-transform',
-						$isPageSidebarOpen ? 'rotate-180' : ''
+						appState.isPageSidebarOpen ? 'rotate-180' : ''
 					)}
 				/>
 			</Button>
@@ -62,20 +57,26 @@
 					variant="ghost"
 					scale="md"
 					class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
-					disabled={!$noteHistory?.length || $noteHistory?.length === 1 || historyIndex === 0}
+					disabled={!appState.noteHistory?.length ||
+						appState.noteHistory?.length === 1 ||
+						historyIndex === 0}
 					onclick={() => {
 						// Decrement the history index
 						historyIndex--;
 
 						// Set the active file to the previous note
-						openNote($noteHistory[historyIndex], true);
+						openNote(appState.noteHistory[historyIndex], true);
 					}}
 				>
 					<Shortcut
 						options={SHORTCUTS['notes:history-back']}
 						callback={() => {
 							// Make sure the history index is not out of bounds / button is not disabled
-							if (!$noteHistory?.length || $noteHistory?.length === 1 || historyIndex === 0) {
+							if (
+								!appState.noteHistory?.length ||
+								appState.noteHistory?.length === 1 ||
+								historyIndex === 0
+							) {
 								return;
 							}
 
@@ -83,7 +84,7 @@
 							historyIndex--;
 
 							// Set the active file to the previous note
-							openNote($noteHistory[historyIndex], true);
+							openNote(appState.noteHistory[historyIndex], true);
 						}}
 					/>
 					<Icon name="arrowLeft" class="w-4 h-4" />
@@ -95,15 +96,15 @@
 					variant="ghost"
 					scale="md"
 					class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
-					disabled={!$noteHistory?.length ||
-						$noteHistory?.length === 1 ||
-						historyIndex === $noteHistory?.length - 1}
+					disabled={!appState.noteHistory?.length ||
+						appState.noteHistory?.length === 1 ||
+						historyIndex === appState.noteHistory?.length - 1}
 					onclick={() => {
 						// Increment the history index
 						historyIndex++;
 
 						// Set the active file to the next note
-						openNote($noteHistory[historyIndex], true);
+						openNote(appState.noteHistory[historyIndex], true);
 					}}
 				>
 					<Shortcut
@@ -111,9 +112,9 @@
 						callback={() => {
 							// Make sure the history index is not out of bounds / button is not disabled
 							if (
-								!$noteHistory?.length ||
-								$noteHistory?.length === 1 ||
-								historyIndex === $noteHistory?.length - 1
+								!appState.noteHistory?.length ||
+								appState.noteHistory?.length === 1 ||
+								historyIndex === appState.noteHistory?.length - 1
 							) {
 								return;
 							}
@@ -122,7 +123,7 @@
 							historyIndex++;
 
 							// Set the active file to the next note
-							openNote($noteHistory[historyIndex], true);
+							openNote(appState.noteHistory[historyIndex], true);
 						}}
 					/>
 					<Icon name="arrowRight" class="w-4 h-4" />
@@ -136,7 +137,7 @@
 	<div class="flex gap-1.5">
 		<p class="text-xs flex items-center text-muted-foreground fill-muted-foreground">
 			{#if !hideParentDirectories}
-				{#each $activeFile?.replace($collection, '').split('/') ?? [] as folder, i (i)}
+				{#each breadcrumbs as folder, i (i)}
 					{#if i !== 0}
 						<Button
 							size="sm"
@@ -144,13 +145,12 @@
 							scale="sm"
 							class={cn(
 								'h-6 text-[13px] w-fit px-1.5 fill-muted-foreground hover:fill-foreground transition-all font-normal',
-								i === ($activeFile?.replace($collection, '').split('/') ?? [])?.length - 1 &&
-									'text-foreground font-medium'
+								i === breadcrumbs.length - 1 && 'text-foreground font-medium'
 							)}
 						>
 							{folder}
 						</Button>
-						{#if i !== ($activeFile?.replace($collection, '').split('/') ?? [])?.length - 1}
+						{#if i !== breadcrumbs.length - 1}
 							<Icon name="chevron" class="w-3.5 h-3.5 inline-block" />
 						{/if}
 					{/if}
@@ -162,14 +162,17 @@
 					scale="sm"
 					class="h-6 text-[13px] w-fit px-1.5 text-foreground transition-all font-medium"
 				>
-					{$activeFile?.replace($collection, '').split('/')?.slice(-1)[0] ?? ''}
+					{appState.activeFile
+						?.replace(appState.collection ?? '', '')
+						.split('/')
+						?.slice(-1)[0] ?? ''}
 				</Button>
 			{/if}
 		</p>
 	</div>
 	<div class="flex gap-1.5">
 		<Tooltip
-			text={$editorMode === 'edit' ? 'View mode' : 'Edit mode'}
+			text={appState.editorMode === 'edit' ? 'View mode' : 'Edit mode'}
 			side="bottom"
 			shortcut={SHORTCUTS['editor:toggle-mode']}
 		>
@@ -181,18 +184,18 @@
 				onclick={() => {
 					// TODO: Implement source mode in future
 					// Set the mode
-					if ($editorMode === 'edit') {
-						$editor.setEditable(false);
-						editorMode.set('view');
-					} else if ($editorMode === 'view') {
-						$editor.setEditable(true);
-						editorMode.set('edit');
+					if (appState.editorMode === 'edit') {
+						appState.editor.instance?.setEditable(false);
+						appState.editorMode = 'view';
+					} else if (appState.editorMode === 'view') {
+						appState.editor.instance?.setEditable(true);
+						appState.editorMode = 'edit';
 					}
 				}}
 			>
 				<Shortcut options={SHORTCUTS['editor:toggle-mode']} />
-				<Icon name="editPencil" class={cn('w-4 h-4', $editorMode === 'edit' && 'hidden')} />
-				<Icon name="glasses" class={cn('w-4 h-4', $editorMode === 'view' && 'hidden')} />
+				<Icon name="editPencil" class={cn('w-4 h-4', appState.editorMode === 'edit' && 'hidden')} />
+				<Icon name="glasses" class={cn('w-4 h-4', appState.editorMode === 'view' && 'hidden')} />
 			</Button>
 		</Tooltip>
 		<Tooltip text="Search" side="bottom" shortcut={SHORTCUTS['editor:search']}>
@@ -202,7 +205,7 @@
 				scale="md"
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
 				onclick={() => {
-					editorSearchActive.set($editorSearchActive ? false : true);
+					appState.editorSearchActive = !appState.editorSearchActive;
 				}}
 			>
 				<Icon name="searchDocument" class={cn('w-4 h-4')} />
@@ -215,7 +218,7 @@
 				scale="md"
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
 				onclick={() => {
-					isNoteDetailSidebarOpen.update((state) => !state);
+					appState.isNoteDetailSidebarOpen = !appState.isNoteDetailSidebarOpen;
 				}}
 			>
 				<Shortcut options={SHORTCUTS['notes:toggle-details']} />
@@ -223,7 +226,7 @@
 					name="sidebarArrow"
 					class={cn(
 						'w-4 h-4 transform transition-transform',
-						$isNoteDetailSidebarOpen ? '' : 'rotate-180'
+						appState.isNoteDetailSidebarOpen ? '' : 'rotate-180'
 					)}
 				/>
 			</Button>

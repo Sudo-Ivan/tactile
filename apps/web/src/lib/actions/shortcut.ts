@@ -1,4 +1,4 @@
-import { onDestroy, onMount, afterUpdate } from 'svelte';
+import type { Action } from 'svelte/action';
 
 // Interface for shortcut parameters
 export interface ShortcutParams {
@@ -16,57 +16,45 @@ export interface ShortcutParams {
 const shortcuts: ShortcutParams[] = [];
 
 // Global event listener
-window.addEventListener('keydown', (e: KeyboardEvent) => {
-	for (const shortcut of shortcuts) {
-		if (
-			!!shortcut.alt !== e.altKey ||
-			!!shortcut.shift !== e.shiftKey ||
-			!!shortcut.command !== (e.ctrlKey || e.metaKey) ||
-			(shortcut.key.toLowerCase() !== e.key.toLowerCase() &&
-				!(shortcut.code && shortcut.code === e.code)) ||
-			(shortcut.hover && !(shortcut.node?.parentNode as Element)?.matches(':hover'))
-		)
-			continue;
+if (typeof window !== 'undefined') {
+	window.addEventListener('keydown', (e: KeyboardEvent) => {
+		for (const shortcut of shortcuts) {
+			if (
+				!!shortcut.alt !== e.altKey ||
+				!!shortcut.shift !== e.shiftKey ||
+				!!shortcut.command !== (e.ctrlKey || e.metaKey) ||
+				(shortcut.key.toLowerCase() !== e.key.toLowerCase() &&
+					!(shortcut.code && shortcut.code === e.code)) ||
+				(shortcut.hover && !(shortcut.node?.parentNode as Element)?.matches(':hover'))
+			)
+				continue;
 
-		e.preventDefault();
-		if (shortcut.callback) {
-			shortcut.callback();
-		} else {
-			shortcut.node?.click();
-		}
-	}
-});
-
-// Function to handle shortcut
-const handleShortcut = (
-	node: HTMLElement | (HTMLElement & { click: () => void }),
-	params: ShortcutParams
-): { destroy: () => void } => {
-	params.node = node;
-
-	// Add shortcut to registry on mount and after every update
-	onMount(() => {
-		shortcuts.push(params);
-	});
-
-	afterUpdate(() => {
-		const index = shortcuts.indexOf(params);
-		if (index === -1) {
-			shortcuts.push(params);
+			e.preventDefault();
+			if (shortcut.callback) {
+				shortcut.callback();
+			} else {
+				shortcut.node?.click();
+			}
 		}
 	});
+}
 
-	// Remove shortcut from registry on destroy
-	onDestroy(() => {
-		const index = shortcuts.indexOf(params);
-		if (index > -1) {
-			shortcuts.splice(index, 1);
-		}
-	});
+// Action to register a shortcut on an element
+const shortcut: Action<HTMLElement, ShortcutParams> = (node, params) => {
+	let current = { ...params, node };
+	shortcuts.push(current);
 
 	return {
+		update: (newParams: ShortcutParams) => {
+			const index = shortcuts.indexOf(current);
+			if (index > -1) {
+				shortcuts.splice(index, 1);
+			}
+			current = { ...newParams, node };
+			shortcuts.push(current);
+		},
 		destroy: () => {
-			const index = shortcuts.indexOf(params);
+			const index = shortcuts.indexOf(current);
 			if (index > -1) {
 				shortcuts.splice(index, 1);
 			}
@@ -74,4 +62,4 @@ const handleShortcut = (
 	};
 };
 
-export default handleShortcut;
+export default shortcut;

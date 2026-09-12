@@ -1,88 +1,25 @@
 <script lang="ts">
+	import { sidebarResize } from '@/actions/sidebar-resize';
 	import { getNoteMetadataParams } from '@/api/notes';
 	import Icon from '@/components/shared/icon.svelte';
 	import Tooltip from '@/components/shared/tooltip.svelte';
-	import {
-		activeFile,
-		editor,
-		isNoteDetailSidebarOpen,
-		noteDetailSidebarWidth,
-		resizingNoteDetailSidebar
-	} from '@/store';
+	import { appState } from '@/store.svelte';
 	import { type NoteMetadataParams } from '@/types';
 	import { formatFileSize, formatTimeAgo } from '@/utils';
 	import { Button } from '@tactile/ui/components/button';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
 	import type { NodePos } from '@tiptap/core';
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy, onMount, untrack } from 'svelte';
 
-	let tab: 'metadata' | 'toc' = 'metadata';
-	let nodeHeadings: NodePos[] | null = null;
-	let activeNoteMetadataParams: NoteMetadataParams | null = null;
+	let tab = $state<'metadata' | 'toc'>('metadata');
+	let nodeHeadings = $state<NodePos[] | null>(null);
+	let activeNoteMetadataParams = $state<NoteMetadataParams | null>(null);
 
 	// Reactive variables
-	let createdTimeAgo: string;
-	let modifiedTimeAgo: string;
-	let timeUpdateInterval: NodeJS.Timeout;
-
-	// Sidebar handlers
-	const handleMouseMove = (e: MouseEvent) => {
-		resizingNoteDetailSidebar.set(true);
-		const x = e.x;
-		const clientWidth = document.body.clientWidth;
-
-		// Set collapsing bounds
-		if (clientWidth - x < 100) {
-			resizingNoteDetailSidebar.set(false);
-			isNoteDetailSidebarOpen.set(false);
-			return;
-		} else if (x > 100 && !$isNoteDetailSidebarOpen) {
-			resizingNoteDetailSidebar.set(false);
-			isNoteDetailSidebarOpen.set(true);
-			return;
-		}
-
-		// Set cursor resize bounds to prevent resizing when cursor is outside of the width bounds
-		if (clientWidth - x < 245 || clientWidth - x > 500) {
-			return;
-		}
-
-		// Resize sidebar
-		if (
-			$noteDetailSidebarWidth - e.movementX >= 210 &&
-			$noteDetailSidebarWidth - e.movementX <= 500
-		) {
-			noteDetailSidebarWidth.update((value) => value - e.movementX);
-		}
-	};
-
-	// Resize sidebar handler
-	const resizeHandler = () => {
-		// Set resizing state
-		resizingNoteDetailSidebar.set(true);
-
-		// Blur the editor
-		$editor.commands.blur();
-
-		// Set cusor-col-resize class to body
-		document.body.classList.toggle('cursor-col-resize');
-
-		// Mouse up event listener
-		const handleMouseUp = () => {
-			document.removeEventListener('mousemove', handleMouseMove);
-			document.removeEventListener('mouseup', handleMouseUp);
-
-			// Remove cursor-col-resize class from body
-			document.body.classList.remove('cursor-col-resize');
-
-			resizingNoteDetailSidebar.set(false);
-		};
-
-		// Add event listeners
-		document.addEventListener('mousemove', handleMouseMove);
-		document.addEventListener('mouseup', handleMouseUp);
-	};
+	let createdTimeAgo = $state('');
+	let modifiedTimeAgo = $state('');
+	let timeUpdateInterval: ReturnType<typeof setInterval>;
 
 	// Handle reactivity for time ago values
 	function updateTimes() {
@@ -92,12 +29,14 @@
 		}
 	}
 
-	$: if (activeNoteMetadataParams && tab === 'metadata') {
-		updateTimes();
-	}
+	$effect(() => {
+		if (activeNoteMetadataParams && tab === 'metadata') {
+			updateTimes();
+		}
+	});
 
 	// Calculate TOC items
-	$: tocItems = tab === 'toc' && nodeHeadings ? calculateTocItems(nodeHeadings) : [];
+	let tocItems = $derived(tab === 'toc' && nodeHeadings ? calculateTocItems(nodeHeadings) : []);
 
 	function calculateTocItems(headings: NodePos[]) {
 		let minLevel = Math.min(...headings.map((h) => h.attributes.level));
@@ -108,22 +47,25 @@
 	}
 
 	// Watch for active file changes
-	const stopWatching = activeFile.subscribe(async (filePath) => {
-		if (filePath) {
-			nodeHeadings = $editor.$nodes('heading');
-			activeNoteMetadataParams = await getNoteMetadataParams(filePath);
-		} else {
-			nodeHeadings = null;
-			activeNoteMetadataParams = null;
-		}
+	$effect(() => {
+		const filePath = appState.activeFile;
+		untrack(async () => {
+			if (filePath) {
+				nodeHeadings = appState.editor.instance?.$nodes('heading') ?? null;
+				activeNoteMetadataParams = await getNoteMetadataParams(filePath);
+			} else {
+				nodeHeadings = null;
+				activeNoteMetadataParams = null;
+			}
+		});
 	});
 
 	// Subscribe to save events
-	const unsubscribeSave = editor.subscribeToSaveEvents(async () => {
+	const unsubscribeSave = appState.editor.subscribeToSaveEvents(async () => {
 		if (tab === 'metadata') {
-			activeNoteMetadataParams = await getNoteMetadataParams($activeFile!);
+			activeNoteMetadataParams = await getNoteMetadataParams(appState.activeFile!);
 		} else if (tab === 'toc') {
-			nodeHeadings = $editor.$nodes('heading');
+			nodeHeadings = appState.editor.instance?.$nodes('heading') ?? null;
 		}
 	});
 
@@ -133,22 +75,45 @@
 
 	onDestroy(() => {
 		unsubscribeSave();
-		stopWatching();
 		clearInterval(timeUpdateInterval);
 	});
+
+	function goToHeading(item: { text: string; indent: number }) {
+		const editor = appState.editor.instance;
+		if (!nodeHeadings || !editor) return;
+
+		// Set cursor focus to the heading
+		editor
+			.chain()
+			.focus('end', { scrollIntoView: false })
+			.setTextSelection(nodeHeadings[tocItems.indexOf(item)].pos)
+			.run();
+
+		const { node } = editor.view.domAtPos(editor.state.selection.anchor);
+		if (node instanceof HTMLElement) {
+			const rect = node.getBoundingClientRect();
+			const isAboveView = rect.top < 0;
+			const isBelowView = rect.bottom > window.innerHeight;
+			if (isAboveView || isBelowView) {
+				// Smooth scroll doesn't seem to work well from bottom to top
+				const behavior = isAboveView ? 'auto' : 'smooth';
+				node.scrollIntoView({ behavior, block: 'center' });
+			}
+		}
+	}
 </script>
 
 <div
 	class={cn(
 		'fixed right-0 h-[calc(100vh-4.5rem)] flex flex-col justify-start items-center bg-background overflow-y-auto transform transition-transform duration-300',
-		!$isNoteDetailSidebarOpen && 'translate-x-full'
+		!appState.isNoteDetailSidebarOpen && 'translate-x-full'
 	)}
-	style={`width: ${$noteDetailSidebarWidth}px`}
+	style={`width: ${appState.noteDetailSidebarWidth}px`}
 >
 	<!-- Drag border -->
 	<div
 		class="h-full w-1 border-l cursor-col-resize absolute top-0 left-0 z-10 hover:bg-foreground/10 hover:delay-75 transition-all duration-200 active:bg-foreground/20 active:!cursor-col-resize"
-		on:mousedown={resizeHandler}
+		use:sidebarResize={'detail'}
 		role="presentation"
 	></div>
 
@@ -253,28 +218,7 @@
 						type="button"
 						class="flex flex-row items-center justify-between w-full min-h-[24px] h-6 text-[13px] truncate font-normal text-muted-foreground hover:text-primary transition-all"
 						style="padding-left: {item.indent}rem"
-						on:click={() => {
-							if (!nodeHeadings) return;
-
-							// Set cursor focus to the heading
-							$editor
-								.chain()
-								.focus('end', { scrollIntoView: false })
-								.setTextSelection(nodeHeadings[tocItems.indexOf(item)].pos)
-								.run();
-
-							const { node } = $editor.view.domAtPos($editor.state.selection.anchor);
-							if (node instanceof HTMLElement) {
-								const rect = node.getBoundingClientRect();
-								const isAboveView = rect.top < 0;
-								const isBelowView = rect.bottom > window.innerHeight;
-								if (isAboveView || isBelowView) {
-									// Smooth scroll doesn't seem to work well from bottom to top
-									const behavior = isAboveView ? 'auto' : 'smooth';
-									node.scrollIntoView({ behavior, block: 'center' });
-								}
-							}
-						}}
+						onclick={() => goToHeading(item)}
 					>
 						<p class="truncate">{item.text}</p>
 					</button>

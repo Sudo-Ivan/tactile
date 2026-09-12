@@ -1,10 +1,9 @@
 import { db } from '@/database/client';
 import { collection as collectionTable, entry as entryTable } from '@/database/schema';
-import { activeFile, collection, collectionEntries, noteHistory } from '@/store';
+import { appState } from '@/store.svelte';
 import type { FileEntry } from '@/types';
 import { buildFileTree, sortFileEntry } from '@/utils';
 import { and, eq } from 'drizzle-orm';
-import { get } from 'svelte/store';
 
 // Fetch the collection entries
 export const fetchCollectionEntries = async (
@@ -12,14 +11,14 @@ export const fetchCollectionEntries = async (
 	sort: 'name' | 'date' = 'name',
 	showDotfiles = false
 ): Promise<FileEntry[]> => {
-	dirPath = dirPath || get(collection);
+	dirPath = dirPath || appState.collection;
 	if (!dirPath) throw new Error('No directory path provided');
 
 	// Get collection by path
 	const collectionObj = await db
 		.select()
 		.from(collectionTable)
-		.where(eq(collectionTable.path, get(collection)));
+		.where(eq(collectionTable.path, appState.collection!));
 
 	if (collectionObj.length === 0) throw new Error('Collection not found');
 
@@ -29,8 +28,8 @@ export const fetchCollectionEntries = async (
 		.from(entryTable)
 		.where(
 			and(
-				eq(entryTable.collectionPath, get(collection)),
-				dirPath !== get(collection) ? eq(entryTable.parentPath, dirPath) : undefined
+				eq(entryTable.collectionPath, appState.collection!),
+				dirPath !== appState.collection ? eq(entryTable.parentPath, dirPath) : undefined
 			)
 		);
 
@@ -71,9 +70,9 @@ export const fetchCollectionEntries = async (
 	};
 
 	// Set collectionEntries if length is different
-	collectionEntries.set(showDotfiles ? fileEntries : filterDotfiles(fileEntries));
+	appState.collectionEntries = showDotfiles ? fileEntries : filterDotfiles(fileEntries);
 
-	return showDotfiles ? fileEntries : filterDotfiles(fileEntries);
+	return appState.collectionEntries;
 };
 
 export const loadCollection = async (path?: string | undefined) => {
@@ -81,11 +80,11 @@ export const loadCollection = async (path?: string | undefined) => {
 	if (!path) return;
 
 	// Set collection path
-	collection.set(path);
+	appState.collection = path;
 
 	// Reset all collection states
-	noteHistory.set([]);
-	activeFile.set(null);
+	appState.noteHistory = [];
+	appState.activeFile = null;
 
 	// Add collection to collections data
 	const collectionObj = {

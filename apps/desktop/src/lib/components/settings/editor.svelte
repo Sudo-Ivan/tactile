@@ -2,14 +2,16 @@
 	import { invalidateAll } from '$app/navigation';
 	import { openNote } from '@/api/notes';
 	import { setSettings } from '@/api/settings';
-	import { activeFile, collectionSettings } from '@/store';
+	import { appState } from '@/store.svelte';
 	import { cn } from '@/utils';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import * as Select from '@tactile/ui/components/select';
 	import { Switch } from '@tactile/ui/components/switch';
 
-	let selectedFont = 'inter';
-	let selectedFontSize = 'normal';
+	let selectedFont = $state('inter');
+	let selectedFontSize = $state('normal');
+
+	const settings = $derived(appState.collectionSettings);
 </script>
 
 <div class="space-y-5">
@@ -58,17 +60,17 @@
 		<div class="flex flex-col items-start gap-2.5 pt-2">
 			<div class="flex items-center gap-2">
 				<Switch
-					checked={$collectionSettings.editor.auto_correct}
+					checked={settings.editor.auto_correct}
 					onCheckedChange={(value) =>
 						setSettings('collection', {
-							...$collectionSettings,
-							editor: { ...$collectionSettings.editor, auto_correct: value }
+							...settings,
+							editor: { ...settings.editor, auto_correct: value }
 						})}
 				/>
 				<Label
 					class={cn(
 						'text-sm font-normal transition-colors',
-						$collectionSettings.editor.auto_correct ? 'text-foreground/90' : 'text-foreground/60'
+						settings.editor.auto_correct ? 'text-foreground/90' : 'text-foreground/60'
 					)}
 				>
 					Auto Correct
@@ -76,17 +78,17 @@
 			</div>
 			<div class="flex items-center gap-2">
 				<Switch
-					checked={$collectionSettings.editor.spell_check}
+					checked={settings.editor.spell_check}
 					onCheckedChange={(value) =>
 						setSettings('collection', {
-							...$collectionSettings,
-							editor: { ...$collectionSettings.editor, spell_check: value }
+							...settings,
+							editor: { ...settings.editor, spell_check: value }
 						})}
 				/>
 				<Label
 					class={cn(
 						'text-sm font-normal transition-colors',
-						$collectionSettings.editor.spell_check ? 'text-foreground/90' : 'text-foreground/60'
+						settings.editor.spell_check ? 'text-foreground/90' : 'text-foreground/60'
 					)}
 				>
 					Spell Check
@@ -101,22 +103,20 @@
 		<div class="flex flex-col items-start gap-2.5 pt-2">
 			<div class="flex items-center gap-2">
 				<Switch
-					checked={$collectionSettings.editor.show_inline_title}
+					checked={settings.editor.show_inline_title}
 					onCheckedChange={(value) => {
 						setSettings('collection', {
-							...$collectionSettings,
-							editor: { ...$collectionSettings.editor, show_inline_title: value }
+							...settings,
+							editor: { ...settings.editor, show_inline_title: value }
 						});
 						invalidateAll();
-						openNote($activeFile || '', true);
+						openNote(appState.activeFile || '', true);
 					}}
 				/>
 				<Label
 					class={cn(
 						'text-sm font-normal transition-colors',
-						$collectionSettings.editor.show_inline_title
-							? 'text-foreground/90'
-							: 'text-foreground/60'
+						settings.editor.show_inline_title ? 'text-foreground/90' : 'text-foreground/60'
 					)}
 				>
 					Show inline title
@@ -125,11 +125,11 @@
 			<div class="flex items-center gap-2">
 				<Switch
 					disabled
-					checked={$collectionSettings.editor.show_line_numbers}
+					checked={settings.editor.show_line_numbers}
 					onCheckedChange={(value) =>
 						setSettings('collection', {
-							...$collectionSettings,
-							editor: { ...$collectionSettings.editor, show_line_numbers: value }
+							...settings,
+							editor: { ...settings.editor, show_line_numbers: value }
 						})}
 				/>
 				<Label class={cn('text-sm font-normal transition-colors text-foreground/60')}
@@ -138,17 +138,17 @@
 			</div>
 			<div class="flex items-center gap-2">
 				<Switch
-					checked={$collectionSettings.editor.show_toolbar}
+					checked={settings.editor.show_toolbar}
 					onCheckedChange={(value) =>
 						setSettings('collection', {
-							...$collectionSettings,
-							editor: { ...$collectionSettings.editor, show_toolbar: value }
+							...settings,
+							editor: { ...settings.editor, show_toolbar: value }
 						})}
 				/>
 				<Label
 					class={cn(
 						'text-sm font-normal transition-colors',
-						$collectionSettings.editor.show_toolbar ? 'text-foreground/90' : 'text-foreground/60'
+						settings.editor.show_toolbar ? 'text-foreground/90' : 'text-foreground/60'
 					)}
 				>
 					Show editor toolbar

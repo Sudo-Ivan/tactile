@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { setSettings } from '@/api/settings';
-	import { collectionSettings } from '@/store';
+	import { BASE_COLLECTION_SETTINGS } from '@/constants';
+	import { appState } from '@/store.svelte';
 	import { Button } from '@tactile/ui/components/button';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import * as Select from '@tactile/ui/components/select';
@@ -16,11 +17,11 @@
 		<p class="text-muted-foreground text-xs">Automatically save your notes.</p>
 		<div class="flex flex-col items-start gap-3 pt-2">
 			<Switch
-				checked={$collectionSettings.editor.auto_save}
+				checked={appState.collectionSettings.editor.auto_save}
 				onCheckedChange={(value) => {
 					setSettings('collection', {
-						...$collectionSettings,
-						editor: { ...$collectionSettings.editor, auto_save: value }
+						...appState.collectionSettings,
+						editor: { ...appState.collectionSettings.editor, auto_save: value }
 					});
 				}}
 			/>
@@ -28,7 +29,7 @@
 			<Label
 				class={cn(
 					'text-destructive text-xs font-normal',
-					$collectionSettings.editor.auto_save && 'hidden'
+					appState.collectionSettings.editor.auto_save && 'hidden'
 				)}
 			>
 				Note: Disabling auto save may result in data loss and is strongly discouraged.
@@ -42,19 +43,19 @@
 		<div class="flex items-center gap-1 pt-2">
 			<Select.Root
 				type="single"
-				value={String($collectionSettings.editor.auto_save_debounce)}
+				value={String(appState.collectionSettings.editor.auto_save_debounce)}
 				onValueChange={(value) => {
 					if (!value) return;
 					setSettings('collection', {
-						...$collectionSettings,
-						editor: { ...$collectionSettings.editor, auto_save_debounce: Number(value) }
+						...appState.collectionSettings,
+						editor: { ...appState.collectionSettings.editor, auto_save_debounce: Number(value) }
 					});
 				}}
-				disabled={!$collectionSettings.editor.auto_save}
+				disabled={!appState.collectionSettings.editor.auto_save}
 			>
 				<Select.Trigger>
 					<Select.Value class="text-xs text-foreground/85"
-						>{$collectionSettings.editor.auto_save_debounce}ms</Select.Value
+						>{appState.collectionSettings.editor.auto_save_debounce}ms</Select.Value
 					>
 				</Select.Trigger>
 				<Select.Content align="start" class="!w-28">
@@ -68,18 +69,21 @@
 				</Select.Content>
 			</Select.Root>
 
-			{#if $collectionSettings.editor.auto_save_debounce != 750}
+			{#if appState.collectionSettings.editor.auto_save_debounce !== BASE_COLLECTION_SETTINGS.editor.auto_save_debounce}
 				<Tooltip text="Reset to default" side="bottom">
 					<Button
 						variant="ghost"
 						size="icon"
 						class="h-7 w-7 fill-muted-foreground hover:fill-foreground"
 						scale="md"
-						disabled={!$collectionSettings.editor.auto_save}
+						disabled={!appState.collectionSettings.editor.auto_save}
 						onclick={() => {
 							setSettings('collection', {
-								...$collectionSettings,
-								editor: { ...$collectionSettings.editor, auto_save_debounce: 750 }
+								...appState.collectionSettings,
+								editor: {
+									...appState.collectionSettings.editor,
+									auto_save_debounce: BASE_COLLECTION_SETTINGS.editor.auto_save_debounce
+								}
 							});
 						}}
 					>

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { setSettings } from '@/api/settings';
-	import { collectionSettings } from '@/store';
+	import { appState } from '@/store.svelte';
 	import { Button } from '@tactile/ui/components/button';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import * as Select from '@tactile/ui/components/select';
@@ -9,13 +9,15 @@
 	import Icon from '../shared/icon.svelte';
 	import Tooltip from '../shared/tooltip.svelte';
 
+	const settings = $derived(appState.collectionSettings);
+
 	const handleValueChange = (value: string) => {
 		if (!value) return;
 
 		setSettings('collection', {
-			...$collectionSettings,
+			...settings,
 			notes: {
-				...$collectionSettings.notes,
+				...settings.notes,
 				trash_dir: value as 'system' | 'tactile' | 'delete'
 			}
 		});
@@ -28,20 +30,17 @@
 		<p class="text-muted-foreground text-xs">Automatically save your notes.</p>
 		<div class="flex flex-col items-start gap-3 pt-2">
 			<Switch
-				checked={$collectionSettings.editor.auto_save}
+				checked={settings.editor.auto_save}
 				onCheckedChange={(value) => {
 					setSettings('collection', {
-						...$collectionSettings,
-						editor: { ...$collectionSettings.editor, auto_save: value }
+						...settings,
+						editor: { ...settings.editor, auto_save: value }
 					});
 				}}
 			/>
 
 			<Label
-				class={cn(
-					'text-destructive text-xs font-normal',
-					$collectionSettings.editor.auto_save && 'hidden'
-				)}
+				class={cn('text-destructive text-xs font-normal', settings.editor.auto_save && 'hidden')}
 			>
 				Note: Disabling auto save may result in data loss and is strongly discouraged.
 			</Label>
@@ -54,15 +53,15 @@
 		<div class="flex items-center gap-1 pt-2">
 			<Select.Root
 				type="single"
-				value={$collectionSettings.editor.auto_save_debounce.toString()}
+				value={settings.editor.auto_save_debounce.toString()}
 				onValueChange={(value) => {
 					if (!value) return;
 					setSettings('collection', {
-						...$collectionSettings,
-						editor: { ...$collectionSettings.editor, auto_save_debounce: Number(value) }
+						...settings,
+						editor: { ...settings.editor, auto_save_debounce: Number(value) }
 					});
 				}}
-				disabled={!$collectionSettings.editor.auto_save}
+				disabled={!settings.editor.auto_save}
 			>
 				<Select.Trigger>
 					<Select.Value class="text-xs text-foreground/85" />
@@ -78,18 +77,18 @@
 				</Select.Content>
 			</Select.Root>
 
-			{#if $collectionSettings.editor.auto_save_debounce != 750}
+			{#if settings.editor.auto_save_debounce != 750}
 				<Tooltip text="Reset to default" side="bottom">
 					<Button
 						variant="ghost"
 						size="icon"
 						class="h-7 w-7 fill-muted-foreground hover:fill-foreground"
 						scale="md"
-						disabled={!$collectionSettings.editor.auto_save}
+						disabled={!settings.editor.auto_save}
 						onclick={() => {
 							setSettings('collection', {
-								...$collectionSettings,
-								editor: { ...$collectionSettings.editor, auto_save_debounce: 750 }
+								...settings,
+								editor: { ...settings.editor, auto_save_debounce: 750 }
 							});
 						}}
 					>
@@ -104,11 +103,7 @@
 		<Label class="text-sm">Deleted files location</Label>
 		<p class="text-muted-foreground text-xs">Where to move deleted files to.</p>
 		<div class="flex items-center gap-2 pt-2">
-			<Select.Root
-				type="single"
-				value={$collectionSettings.notes.trash_dir}
-				onValueChange={handleValueChange}
-			>
+			<Select.Root type="single" value={settings.notes.trash_dir} onValueChange={handleValueChange}>
 				<Select.Trigger>
 					<Select.Value class="text-xs text-foreground/85" />
 				</Select.Trigger>

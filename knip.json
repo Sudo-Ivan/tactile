@@ -1,0 +1,29 @@
+{
+	"$schema": "https://unpkg.com/knip@latest/schema.json",
+	"workspaces": {
+		"apps/desktop": {
+			"entry": ["src/routes/**/+{page,layout,server}.{js,ts,svelte}", "src/app.{html,d.ts}"],
+			"project": ["src/**/*.{js,ts,svelte}"],
+			"ignoreDependencies": ["tailwindcss", "@tailwindcss/typography"]
+		},
+		"apps/web": {
+			"entry": ["src/routes/**/+{page,layout,server}.{js,ts,svelte}", "src/app.{html,d.ts}"],
+			"project": ["src/**/*.{js,ts,svelte}"],
+			"ignoreDependencies": ["tailwindcss", "@tailwindcss/typography"]
+		},
+		"apps/homepage": {
+			"entry": ["src/routes/**/+{page,layout,server}.{js,ts,svelte}", "src/app.{html,d.ts}"],
+			"project": ["src/**/*.{js,ts,svelte}"],
+			"ignoreDependencies": ["tailwindcss"]
+		},
+		"packages/config-tailwind": {
+			"entry": ["theme.css"],
+			"ignoreDependencies": ["@tailwindcss/typography"]
+		},
+		"packages/ui": {
+			"entry": ["components/**/index.ts", "lib/utils.ts"],
+			"project": ["**/*.{js,ts,svelte,css}"]
+		}
+	},
+	"ignoreDependencies": ["@tactile/tailwind-config"]
+}

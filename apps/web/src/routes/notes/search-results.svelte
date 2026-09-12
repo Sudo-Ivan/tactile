@@ -1,19 +1,25 @@
 <script lang="ts">
 	import { openNote } from '@/api/notes';
-	import { activeFile, editor, editorSearchActive, editorSearchValue } from '@/store';
+	import { TIMING } from '@/constants';
+	import { appState } from '@/store.svelte';
+	import type { SearchResultParams } from '@/types';
 	import * as Collapsible from '@tactile/ui/components/collapsible';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
 	import { ChevronDown, Loader } from 'lucide-svelte';
 	import markdownit from 'markdown-it';
 
-	export let query: string;
-	export let searchSettings: { caseSensitive: boolean; wholeWord: boolean };
-	export let results: { path: string; context_preview: string }[] = [];
-	export let loading = false;
-	let openState: Record<string, boolean> = {};
-	let groupedResults: Record<string, { context_preview: string }[]>;
-	$: groupedResults = groupResults(results);
+	interface Props {
+		query: string;
+		searchSettings: { caseSensitive: boolean; wholeWord: boolean };
+		results?: SearchResultParams[];
+		loading?: boolean;
+	}
+
+	let { query, searchSettings, results = [], loading = false }: Props = $props();
+
+	let openState = $state<Record<string, boolean>>({});
+	let groupedResults = $derived(groupResults(results));
 
 	// group results function which groups all the results from the same path together in an array
 	function groupResults(
@@ -36,23 +42,23 @@
 	}
 
 	// Initialize all collapsibles as open
-	$: {
+	$effect(() => {
 		Object.keys(groupedResults).forEach((path) => {
 			if (openState[path] === undefined) {
 				openState[path] = true;
 			}
 		});
-	}
+	});
 
 	function toggleOpen(path: string) {
 		openState[path] = !openState[path];
-		openState = openState; // Trigger reactivity
 	}
 
 	const goToResult = (index: number) => {
-		if (!$editor) return;
+		const editor = appState.editor.instance;
+		if (!editor) return;
 
-		const { results } = $editor.storage.searchAndReplace;
+		const { results } = editor.storage.searchAndReplace;
 		const position: {
 			from: number;
 			to: number;
@@ -60,9 +66,9 @@
 
 		if (!position) return;
 
-		$editor.commands.setTextSelection(position);
+		editor.commands.setTextSelection(position);
 
-		const { node } = $editor.view.domAtPos($editor.state.selection.anchor);
+		const { node } = editor.view.domAtPos(editor.state.selection.anchor);
 		if (node instanceof HTMLElement) {
 			const rect = node.getBoundingClientRect();
 			const isAboveView = rect.top < 0;
@@ -102,31 +108,31 @@
 				{#each groupedResults[path] as result, index (result.context_preview)}
 					<button
 						class="flex items-start min-w-full overflow-hidden text-start p-2 bg-secondary-background border rounded-md text-xs hover:bg-accent hover:text-accent-foreground"
-						on:click={async () => {
+						onclick={async () => {
 							// set search term
-							editorSearchValue.set('');
+							appState.editorSearchValue = '';
 
 							// Open the file
-							if ($activeFile !== path) {
+							if (appState.activeFile !== path) {
 								openNote(path, true);
 							}
 
 							setTimeout(() => {
 								// set search active
-								if (!$editorSearchActive) editorSearchActive.set(true);
+								if (!appState.editorSearchActive) appState.editorSearchActive = true;
 
 								// blur editor - this helps the search in focusing the result later
-								$editor.commands.blur();
+								appState.editor.instance?.commands.blur();
 
 								// set search term
-								if ($editorSearchValue !== query) editorSearchValue.set(query);
+								if (appState.editorSearchValue !== query) appState.editorSearchValue = query;
 
 								// go to result
 								goToResult(index);
 
 								// highlight result
-								$editor.commands.setSearchResult(index);
-							}, 300);
+								appState.editor.instance?.commands.setSearchResult(index);
+							}, TIMING.searchResultDelay);
 						}}
 					>
 						<!-- eslint-disable-next-line svelte/no-at-html-tags -->

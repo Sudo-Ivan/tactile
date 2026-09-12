@@ -1,14 +1,9 @@
-import { onDestroy, onMount, afterUpdate } from 'svelte';
+import type { ShortcutParams as BaseShortcutParams } from '@/types';
+import type { Action } from 'svelte/action';
 
 // Interface for shortcut parameters
-export interface ShortcutParams {
-	alt?: boolean;
-	shift?: boolean;
-	command?: boolean;
-	key: string;
-	code?: string;
+export interface ShortcutParams extends BaseShortcutParams {
 	callback?: () => void;
-	hover?: boolean;
 	node?: HTMLElement;
 }
 
@@ -37,32 +32,10 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
 	}
 });
 
-// Function to handle shortcut
-const handleShortcut = (
-	node: HTMLElement | (HTMLElement & { click: () => void }),
-	params: ShortcutParams
-): { destroy: () => void } => {
+// Action registering a shortcut while the node is mounted
+const handleShortcut: Action<HTMLElement, ShortcutParams> = (node, params) => {
 	params.node = node;
-
-	// Add shortcut to registry on mount and after every update
-	onMount(() => {
-		shortcuts.push(params);
-	});
-
-	afterUpdate(() => {
-		const index = shortcuts.indexOf(params);
-		if (index === -1) {
-			shortcuts.push(params);
-		}
-	});
-
-	// Remove shortcut from registry on destroy
-	onDestroy(() => {
-		const index = shortcuts.indexOf(params);
-		if (index > -1) {
-			shortcuts.splice(index, 1);
-		}
-	});
+	shortcuts.push(params);
 
 	return {
 		destroy: () => {

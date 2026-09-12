@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { SHORTCUTS } from '@/constants';
-	import { activeFile } from '@/store';
+	import { appState } from '@/store.svelte';
 	import { shortcutToString, toggleTheme } from '@/utils';
 	import { Button } from '@tactile/ui/components/button';
 	import * as Collapsible from '@tactile/ui/components/collapsible';
@@ -13,35 +13,27 @@
 	import Icon from '../shared/icon.svelte';
 	import Tooltip from '../shared/tooltip.svelte';
 
-	import { settingsStore } from '@/store';
 	import Shortcut from '../shared/shortcut.svelte';
 
-	let open = false;
-	let searchValue = '';
-	let collapsedCategories: string[] = [];
-	let filteredCommands = [...commands];
+	let open = $state(false);
+	let searchValue = $state('');
+	let collapsedCategories = $state<string[]>([]);
 
-	activeFile.subscribe((notePath) => {
-		// Remove last note specific commands
-		if (filteredCommands[0].name !== 'Notes') {
-			filteredCommands.shift();
-		}
+	// Note specific commands are prepended when a note is open, then filtered by the search value
+	let filteredCommands = $derived.by(() => {
+		const groups = appState.activeFile
+			? [createNoteCommands(appState.activeFile), ...commands]
+			: [...commands];
 
-		if (notePath) {
-			// Add notePath specific commands to the top of the list
-			filteredCommands.unshift(createNoteCommands(notePath));
-		}
+		return groups
+			.map((group) => ({
+				...group,
+				commands: group.commands.filter((command) =>
+					command.title.toLowerCase().includes(searchValue.toLowerCase())
+				)
+			}))
+			.filter((group) => group.commands.length > 0);
 	});
-
-	// Filter commands based on search value
-	$: filteredCommands = commands
-		.map((group) => ({
-			...group,
-			commands: group.commands.filter((command) =>
-				command.title.toLowerCase().includes(searchValue.toLowerCase())
-			)
-		}))
-		.filter((group) => group.commands.length > 0);
 </script>
 
 <footer
@@ -73,7 +65,7 @@
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
 				scale="md"
 				onclick={() => {
-					settingsStore.set({ isOpen: true, activePage: 'tactile sync' });
+					appState.settingsStore = { isOpen: true, activePage: 'tactile sync' };
 				}}
 			>
 				<Icon name="cloudX" class="w-4 h-4" />

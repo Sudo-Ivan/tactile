@@ -1,9 +1,8 @@
-import { OS_TRASH_DIR } from '@/constants';
-import { collection, collectionSettings, platform } from '@/store';
-import { getNextUntitledName } from '@/utils';
-import { mkdir, readDir, remove, rename } from '@tauri-apps/plugin-fs';
+import { OS_TRASH_DIR, TRASH_DIR, UNTITLED_NAME } from '@/constants';
+import { appState } from '@/store.svelte';
+import { getNextUntitledName } from '@/utils/fs';
 import { homeDir } from '@tauri-apps/api/path';
-import { get } from 'svelte/store';
+import { mkdir, readDir, remove, rename } from '@tauri-apps/plugin-fs';
 
 // Create a new folder
 export const createFolder = async (dirPath: string) => {
@@ -11,7 +10,7 @@ export const createFolder = async (dirPath: string) => {
 	const files = await readDir(dirPath);
 
 	// Generate a new name
-	const name = getNextUntitledName(files, 'Untitled');
+	const name = getNextUntitledName(files, UNTITLED_NAME);
 
 	// Save the new folder
 	await mkdir(`${dirPath}/${name}`);
@@ -36,12 +35,12 @@ export const deleteFolder = async (path: string, recursive = false) => {
 		}
 	}
 
-	switch (get(collectionSettings).notes.trash_dir) {
+	switch (appState.collectionSettings.notes.trash_dir) {
 		case 'system':
-			await rename(path, `${await homeDir()}${OS_TRASH_DIR[get(platform)]}${folderName}`);
+			await rename(path, `${await homeDir()}${OS_TRASH_DIR[appState.platform!]}${folderName}`);
 			break;
 		case 'tactile':
-			await rename(path, `${get(collection)}/.tactile/trash/${path.split('/').pop()!}`);
+			await rename(path, `${appState.collection}/${TRASH_DIR}/${path.split('/').pop()!}`);
 			break;
 		case 'delete':
 			await remove(path);

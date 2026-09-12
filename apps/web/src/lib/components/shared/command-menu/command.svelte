@@ -1,26 +1,25 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import Icon from '$lib/components/shared/icon.svelte';
-	import { db } from '$lib/database/client';
-	import { entry as entryTable } from '$lib/database/schema';
-	import { getCollections, loadCollection } from '@/api/collection';
-	import { moveNote, openNote } from '@/api/notes';
-	import { activeFile, collection } from '@/store';
-	import { formatTimeAgo, shortcutToString } from '@/utils';
+	import { appState } from '@/store.svelte';
 	import * as Command from '@tactile/ui/components/command';
-	import { Loader, Share2 } from 'lucide-svelte';
-	import { setMode, userPrefersMode } from 'mode-watcher';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
+	import ChangeTheme from './change-theme.svelte';
+	import CommandGroups from './command-groups.svelte';
 	import { mainCommands as commands, createNoteCommands } from './commands';
-	import { getAllItems } from './helpers';
+	import Help from './help.svelte';
+	import MoveNote from './move-note.svelte';
+	import OpenCollection from './open-collection.svelte';
+	import OpenNote from './open-note.svelte';
+	import Share from './share.svelte';
 
-	let open = false;
-	let search = '';
-	let value: string | undefined = undefined;
-	let page: string | undefined = undefined;
-	let openedWithShortcut = '';
-	let fileInput: HTMLInputElement | null = null;
-	let loadingCollection: { loading: boolean; progress: number } | undefined = undefined;
+	let open = $state(false);
+	let search = $state('');
+	let value = $state<string | undefined>(undefined);
+	let page = $state<string | undefined>(undefined);
+	let openedWithShortcut = $state('');
+	let loadingCollection = $state<{ loading: boolean; progress: number } | undefined>(undefined);
+
+	// Rendered groups mirror commands, which is mutated with the active note commands
+	let groups = $state([...commands]);
 
 	const shortcutKeyMap: Record<string, string | undefined> = {
 		'cmd+k': 'default',
@@ -85,111 +84,26 @@
 		};
 	});
 
-	activeFile.subscribe((notePath) => {
-		// Remove last note specific commands
-		if (commands[0].name !== 'Notes') {
-			commands.shift();
-		}
+	$effect(() => {
+		const notePath = appState.activeFile;
 
-		if (notePath) {
-			// Add notePath specific commands to the top of the list
-			commands.unshift(createNoteCommands(notePath));
+		untrack(() => {
+			// Remove last note specific commands
+			if (commands[0].name !== 'Notes') {
+				commands.shift();
+			}
 
-			// Set value to first command
-			value = commands[0].commands[0].title;
-		}
+			if (notePath) {
+				// Add notePath specific commands to the top of the list
+				commands.unshift(createNoteCommands(notePath));
+
+				// Set value to first command
+				value = commands[0].commands[0].title;
+			}
+
+			groups = [...commands];
+		});
 	});
-
-	async function openCollection() {
-		if (!files || files.length === 0) {
-			return console.error('No files selected');
-		}
-
-		// Set loading state
-		loadingCollection = { loading: true, progress: 0 };
-
-		// Load collection
-		const collectionName = files[0]?.webkitRelativePath.split('/')[0];
-		await loadCollection(`/${collectionName}`);
-
-		const processedPaths = new Set<string>();
-
-		for (let i = 0; i < files.length; i++) {
-			const file = files[i];
-			if (!file) continue;
-
-			const filePath = `/${file.webkitRelativePath}`;
-			const pathParts = file.webkitRelativePath.split('/');
-			const fileName = pathParts[pathParts.length - 1];
-
-			// Log progress
-			let progress = Math.round(((i + 1) / files.length) * 100);
-			loadingCollection = { loading: true, progress };
-
-			// Create folder entries
-			let currentPath = '';
-			for (let j = 0; j < pathParts.length - 1; j++) {
-				currentPath += '/' + pathParts[j];
-				if (!processedPaths.has(currentPath)) {
-					await createFolderEntry(currentPath, collectionName);
-					processedPaths.add(currentPath);
-				}
-			}
-
-			// Process file
-			if (file.name.toLowerCase().endsWith('.md')) {
-				try {
-					const fileText = await file.text();
-					await db.insert(entryTable).values({
-						name: fileName,
-						path: filePath,
-						content: fileText,
-						parentPath: currentPath,
-						collectionPath: `/${collectionName}`,
-						size: file.size,
-						isFolder: false
-					});
-					console.log('Inserted file:', fileName);
-				} catch (error) {
-					console.error('Error processing file:', fileName, error);
-				}
-			} else {
-				console.warn('Skipping non-Markdown file:', fileName);
-			}
-		}
-
-		// Reset loading state
-		loadingCollection = undefined;
-
-		// Close dialog
-		await goto('/notes');
-		handlePageState(undefined);
-	}
-
-	async function createFolderEntry(path: string, collectionName: string) {
-		const pathParts = path.split('/').filter(Boolean);
-		const folderName = pathParts[pathParts.length - 1];
-		const parentPath = '/' + pathParts.slice(0, -1).join('/');
-
-		try {
-			await db.insert(entryTable).values({
-				name: folderName,
-				path: path,
-				content: undefined,
-				parentPath: parentPath,
-				collectionPath: `/${collectionName}`,
-				isFolder: true
-			});
-			console.log('Created folder entry:', path);
-		} catch (error) {
-			console.error('Error creating folder entry:', path, error);
-		}
-	}
-
-	let files: FileList | undefined;
-	$: if (files) {
-		openCollection();
-	}
 </script>
 
 <Command.Dialog
@@ -216,278 +130,19 @@
 			<Command.Empty class="text-foreground/60 font-light">No commands found</Command.Empty>
 		{/if}
 		{#if page === 'default'}
-			{#each commands as group (group.name)}
-				<Command.Group heading={group.name}>
-					{#each group.commands as command (command.title)}
-						<Command.Item
-							class="[&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-							value={command.title}
-							onSelect={() => {
-								const page = command.onSelect?.();
-								if (typeof page === 'undefined') {
-									handlePageState(undefined);
-								} else {
-									handlePageState(page);
-								}
-							}}
-						>
-							<div class="flex w-full items-center justify-between">
-								<div class="flex items-center gap-1.5">
-									{#if command.icon}
-										<Icon name={command.icon} />
-									{/if}
-									<span class="text-foreground/80 group:hover:text-foreground/100"></span>
-									{command.title}
-								</div>
-								{#if command.shortcut}
-									<span class="ml-auto text-xs tracking-widest text-muted-foreground h-full"
-										>{shortcutToString(command.shortcut)}
-									</span>
-								{/if}
-							</div>
-						</Command.Item>
-					{/each}
-				</Command.Group>
-			{/each}
+			<CommandGroups {groups} onPageChange={handlePageState} />
 		{:else if page === 'move_note'}
-			<Command.Group heading="Move note to...">
-				{#await getAllItems(true)}
-					<!-- TODO: Make this a loading spinner -->
-					<Command.Loading class="text-foreground/90">Loading folders...</Command.Loading>
-				{:then folders}
-					{#each folders as folder (folder.path)}
-						{#if folder.path + `/${$activeFile?.split('/').pop()}` !== $activeFile}
-							<Command.Item
-								class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-								value={folder.path}
-								onSelect={() => {
-									moveNote($activeFile || '', folder.path);
-									handlePageState(undefined);
-								}}
-							>
-								<Icon name="folder" />
-								{folder.name.slice(1).replaceAll('/', ' > ')}
-							</Command.Item>
-						{/if}
-					{/each}
-				{:catch error}
-					<Command.Item class="text-foreground/90"
-						>Error loading folders: {error.message}</Command.Item
-					>
-				{/await}
-			</Command.Group>
+			<MoveNote onPageChange={handlePageState} />
 		{:else if page === 'open_note'}
-			<Command.Group heading="Open note...">
-				{#await getAllItems()}
-					<Command.Loading class="text-foreground/90">Loading notes...</Command.Loading>
-				{:then notes}
-					{#each notes as note (note.path)}
-						<Command.Item
-							class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-							value={note.path}
-							onSelect={() => {
-								openNote(note.path);
-								handlePageState(undefined);
-							}}
-						>
-							<Icon name="note" />
-							{note.name.slice(1).replaceAll('/', ' > ')}
-						</Command.Item>
-					{/each}
-				{:catch error}
-					<Command.Item class="text-foreground/90"
-						>Error loading notes: {error.message}</Command.Item
-					>
-				{/await}
-			</Command.Group>
+			<OpenNote onPageChange={handlePageState} />
 		{:else if page === 'change_theme'}
-			<Command.Group heading="Change theme...">
-				{#if userPrefersMode.current !== 'light'}
-					<Command.Item
-						class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-						value="light"
-						onSelect={() => {
-							setMode('light');
-							handlePageState(undefined);
-						}}
-					>
-						<Icon name="sun" />
-						Light
-					</Command.Item>
-				{/if}
-				{#if userPrefersMode.current !== 'dark'}
-					<Command.Item
-						class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-						value="dark"
-						onSelect={() => {
-							setMode('dark');
-							handlePageState(undefined);
-						}}
-					>
-						<Icon name="moon" />
-						Dark
-					</Command.Item>
-				{/if}
-				{#if userPrefersMode.current !== 'system'}
-					<Command.Item
-						class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-						value="system"
-						onSelect={() => {
-							setMode('system');
-							handlePageState(undefined);
-						}}
-					>
-						<Icon name="monitor" />
-						System
-					</Command.Item>
-				{/if}
-			</Command.Group>
+			<ChangeTheme onPageChange={handlePageState} />
 		{:else if page === 'open_collection'}
-			{#if loadingCollection}
-				<Command.Empty class="text-foreground/60 font-light">
-					<div class="flex flex-col items-center gap-1.5">
-						<Loader class="w-3.5 h-3.5 animate-spin text-muted-foreground" />
-						<div class="flex flex-col gap-0.5">
-							Loading collection... ({loadingCollection.progress}%)
-							<span class="text-xs text-muted-foreground"
-								>Hint: You can close this window and continue working.</span
-							>
-						</div>
-					</div>
-				</Command.Empty>
-			{:else}
-				<Command.Group heading="Open collection">
-					<Command.Item
-						class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-						onSelect={async () => {
-							fileInput?.click();
-						}}
-					>
-						<Icon name="folderPlus" />
-						<!-- Accept folders only -->
-						<input
-							type="file"
-							bind:files
-							bind:this={fileInput}
-							class="hidden"
-							webkitdirectory
-							multiple
-						/>
-						Open new collection
-					</Command.Item>
-				</Command.Group>
-				{#await getCollections()}
-					<Command.Loading class="text-foreground/90">Recent collections</Command.Loading>
-				{:then collections}
-					{#if collections.filter((c) => c.path !== $collection).length > 0}
-						<Command.Group heading="Browse recent collections">
-							{#each collections
-								.filter((c) => c.path !== $collection)
-								.sort((a, b) => +new Date(b.lastOpened) - +new Date(a.lastOpened)) as collection (collection.path)}
-								<Command.Item
-									class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-									value={collection.path}
-									onSelect={async () => {
-										await goto('/notes');
-										loadCollection(collection.path);
-										handlePageState(undefined);
-									}}
-								>
-									<div class="flex w-full items-center justify-between">
-										<div class="flex items-center gap-1.5">
-											<Icon name="folder" />
-											<span class="text-foreground/80 group:hover:text-foreground/100"></span>
-											{collection.name}
-										</div>
-										<span class="ml-auto text-xs text-muted-foreground h-full"
-											>{formatTimeAgo(new Date(collection.lastOpened))}
-										</span>
-									</div>
-								</Command.Item>
-							{/each}
-						</Command.Group>
-					{/if}
-				{:catch error}
-					<Command.Group heading="Browse recent collections">
-						<Command.Item class="text-foreground/90"
-							>Error loading collections: {error.message}</Command.Item
-						>
-					</Command.Group>
-				{/await}
-			{/if}
+			<OpenCollection bind:loading={loadingCollection} onPageChange={handlePageState} />
 		{:else if page === 'help_and_feedback'}
-			<Command.Group heading="Help & Support">
-				<a href="https://github.com/sponsors/Sudo-Ivan" target="_blank" rel="noopener noreferrer">
-					<Command.Item
-						class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-						value="sponsor"
-						onSelect={() => {
-							handlePageState(undefined);
-						}}
-					>
-						<Icon name="heart" />
-						Sponsor Tactile
-					</Command.Item>
-				</a>
-				<a
-					href="https://github.com/Sudo-Ivan/tactile/issues"
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					<Command.Item
-						class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-						value="help"
-						onSelect={() => {
-							handlePageState(undefined);
-						}}
-					>
-						<Icon name="lifebouy" />
-						Get help
-					</Command.Item>
-				</a>
-				<a
-					href="https://github.com/Sudo-Ivan/tactile/issues"
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					<Command.Item
-						class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-						value="feedback"
-						onSelect={() => {
-							handlePageState(undefined);
-						}}
-					>
-						<Icon name="commentSquareText" />
-						Leave feedback
-					</Command.Item>
-				</a>
-			</Command.Group>
+			<Help onPageChange={handlePageState} />
 		{:else if page === 'share'}
-			<Command.Group heading="Share">
-				<Command.Item
-					class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-					value="copy_link"
-					onSelect={() => {
-						navigator.clipboard.writeText('https://github.com/Sudo-Ivan/tactile');
-						handlePageState(undefined);
-					}}
-				>
-					<Icon name="browserUrl" />
-					Copy link
-				</Command.Item>
-				<a href="https://github.com/Sudo-Ivan/tactile" target="_blank" rel="noopener noreferrer">
-					<Command.Item
-						class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:stroke-foreground [&>*]:stroke-foreground/50 [&>*]:stroke-[2px]"
-						value="share_on_twitter"
-						onSelect={() => {
-							handlePageState(undefined);
-						}}
-					>
-						<Share2 />
-						Share on X
-					</Command.Item>
-				</a>
-			</Command.Group>
+			<Share onPageChange={handlePageState} />
 		{/if}
 	</Command.List>
 </Command.Dialog>

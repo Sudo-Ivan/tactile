@@ -9,6 +9,7 @@
     "eslint-config-turbo": "^2.10.12",
     "eslint-plugin-svelte": "catalog:",
     "globals": "catalog:",
+    "svelte-eslint-parser": "^1.8.1",
     "typescript-eslint": "catalog:"
   },
   "publishConfig": {

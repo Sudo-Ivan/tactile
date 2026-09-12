@@ -53,3 +53,46 @@ export const BASE_COLLECTION_SETTINGS: CollectionSettingsParams = {
 		excluded_files: []
 	}
 };
+
+// App route paths
+export const ROUTES = {
+	notes: '/notes',
+	daily: '/daily',
+	tasks: '/tasks'
+} as const;
+
+// localStorage keys
+export const STORAGE_KEYS = {
+	appSettings: 'appSettings'
+} as const;
+
+// Default names and paths for new entries
+export const UNTITLED_NAME = 'Untitled';
+export const MARKDOWN_EXTENSION = '.md';
+export const DAILY_NOTES_DIR = '/.tactile/daily';
+export const DAILY_NOTE_NAME_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+export const TASK_MARKER = '- [ ]';
+
+// Shared timing values in milliseconds
+export const TIMING = {
+	searchDebounce: 500,
+	searchFocusDelay: 250,
+	searchResultDelay: 300,
+	renameFocusDelay: 50,
+	folderRenameDelay: 100,
+	tooltipGroupDelay: 500
+} as const;
+
+// Sidebar size and resize bounds in pixels
+export const SIDEBAR = {
+	defaultWidth: 210,
+	minWidth: 210,
+	maxWidth: 500,
+	collapseThreshold: 100,
+	pageCursorBounds: { min: 245, max: 550 },
+	detailCursorBounds: { min: 245, max: 500 }
+};
+
+export const GITHUB_URL = 'https://github.com/Sudo-Ivan/tactile';
+export const GITHUB_ISSUES_URL = `${GITHUB_URL}/issues`;
+export const GITHUB_SPONSOR_URL = 'https://github.com/sponsors/Sudo-Ivan';

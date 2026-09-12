@@ -1,103 +1,66 @@
 <script lang="ts">
-	import { Input } from '@tactile/ui/components/input';
 	import Icon from '@/components/shared/icon.svelte';
-	import * as Collapsible from '@tactile/ui/components/collapsible';
-	import { Button } from '@tactile/ui/components/button';
-	import { Replace, ReplaceAll, WholeWord, ALargeSmall } from 'lucide-svelte';
-	import {
-		collectionSettings,
-		editor,
-		editorSearchActive,
-		editorSearchValue,
-		isNoteDetailSidebarOpen,
-		noteDetailSidebarWidth,
-		platform
-	} from '@/store';
-	import { cn } from '@tactile/ui/lib/utils';
 	import Shortcut from '@/components/shared/shortcut.svelte';
-	import { SHORTCUTS } from '@/constants';
 	import Tooltip from '@/components/shared/tooltip.svelte';
+	import { EDITOR_SEARCH_INPUT_ID, SHORTCUTS } from '@/constants';
+	import { appState } from '@/store.svelte';
+	import { getEditorSelectionText, goToSearchResult } from '@/utils/editor';
+	import { Button } from '@tactile/ui/components/button';
+	import * as Collapsible from '@tactile/ui/components/collapsible';
+	import { Input } from '@tactile/ui/components/input';
+	import { cn } from '@tactile/ui/lib/utils';
+	import { ALargeSmall, Replace, ReplaceAll, WholeWord } from 'lucide-svelte';
 
-	let replaceValue = '';
-	let caseSensitive = false;
-	let wholeWord = false;
-	let expanded = false;
+	let replaceValue = $state('');
+	let caseSensitive = $state(false);
+	let wholeWord = $state(false);
+	let expanded = $state(false);
 
-	$: {
-		if ($editor) {
-			$editor.commands.setReplaceTerm(replaceValue);
-			$editor.commands.setCaseSensitive(caseSensitive);
+	const editor = $derived(appState.editor.instance);
+
+	$effect(() => {
+		if (editor) {
+			editor.commands.setReplaceTerm(replaceValue);
+			editor.commands.setCaseSensitive(caseSensitive);
 		}
-	}
-
-	const goToSelection = () => {
-		if (!$editor) return;
-
-		const { results, resultIndex } = $editor.storage.searchAndReplace;
-		const position: {
-			from: number;
-			to: number;
-		} = results[resultIndex];
-
-		if (!position) return;
-
-		$editor.commands.setTextSelection(position);
-
-		const { node } = $editor.view.domAtPos($editor.state.selection.anchor);
-		if (node instanceof HTMLElement) {
-			const rect = node.getBoundingClientRect();
-			const isAboveView = rect.top < 0;
-			const isBelowView = rect.bottom > window.innerHeight;
-
-			if (isAboveView || isBelowView) {
-				// Smooth scroll doesn't seem to work well from bottom to top
-				const behavior = isAboveView ? 'auto' : 'smooth';
-				node.scrollIntoView({ behavior, block: 'center' });
-			}
-		}
-	};
-
-	const getCurrentTextSelection = () => {
-		if (!$editor) return;
-
-		const { from, to } = $editor.state.selection;
-		return $editor.state.doc.textBetween(from, to);
-	};
+	});
 
 	const close = () => {
-		editorSearchValue.set('');
+		appState.editorSearchValue = '';
 		replaceValue = '';
 		caseSensitive = false;
 		wholeWord = false;
 		expanded = false;
-		$editor.commands.resetIndex();
-		editorSearchActive.set(false);
+		editor.commands.resetIndex();
+		appState.editorSearchActive = false;
 	};
 
-	editorSearchActive.subscribe((value) => {
-		// Should focus inputs when search is active
-		if (value) {
-			const input = document.querySelector('#editorSearch') as HTMLInputElement;
+	// Focus the input when search becomes active
+	$effect(() => {
+		if (appState.editorSearchActive) {
+			const input = document.getElementById(EDITOR_SEARCH_INPUT_ID) as HTMLInputElement;
 			if (input) {
 				input.focus();
 			}
 		}
 	});
 
-	editorSearchValue.subscribe((value) => {
-		if ($editor) {
+	// Keep the editor search term in sync with the search value
+	$effect(() => {
+		const value = appState.editorSearchValue;
+		if (editor) {
 			// Filter out regex special characters
 			// TODO: Find a fix for this, for some reason regex characters throw an error and makes app unresponsive
 			const filteredValue = value.replace(/[.*+?^${}()|[\]\\]/g, '');
 
 			if (wholeWord) {
-				$editor.commands.setSearchTerm(`\\b${filteredValue}\\b`);
+				editor.commands.setSearchTerm(`\\b${filteredValue}\\b`);
 			} else {
-				$editor.commands.setSearchTerm(filteredValue);
+				editor.commands.setSearchTerm(filteredValue);
 			}
 
 			try {
-				goToSelection();
+				goToSearchResult(editor);
 			} catch (error) {
 				// This is usually triggered while search active is true and page is navigated
 				console.error('Error selecting search result:', error);
@@ -109,32 +72,32 @@
 <div
 	class={cn(
 		'fixed w-96 min-h-10 bg-secondary-background border z-30 rounded-md flex items-center px-1 py-1.5 transition-all duration-200',
-		$editorSearchActive ? 'translate-y-0' : '-translate-y-96',
-		$platform === 'darwin'
-			? $collectionSettings.editor.show_toolbar
+		appState.editorSearchActive ? 'translate-y-0' : '-translate-y-96',
+		appState.platform === 'darwin'
+			? appState.collectionSettings.editor.show_toolbar
 				? 'top-[80px]'
 				: 'top-[48px]'
-			: $collectionSettings.editor.show_toolbar
+			: appState.collectionSettings.editor.show_toolbar
 				? 'top-[44px]'
 				: 'top-[12px]'
 	)}
-	style={`right: ${$isNoteDetailSidebarOpen ? $noteDetailSidebarWidth + 16 : 16}px`}
+	style={`right: ${appState.isNoteDetailSidebarOpen ? appState.noteDetailSidebarWidth + 16 : 16}px`}
 >
 	<Shortcut
 		options={SHORTCUTS['editor:search']}
 		callback={() => {
-			if ($editorSearchActive) {
+			if (appState.editorSearchActive) {
 				close();
 			} else {
-				editorSearchValue.set(getCurrentTextSelection() || '');
-				editorSearchActive.set(true);
+				appState.editorSearchValue = getEditorSelectionText(editor) || '';
+				appState.editorSearchActive = true;
 			}
 		}}
 	/>
 	<Shortcut
 		options={{ key: 'Escape' }}
 		callback={() => {
-			if ($editorSearchActive) {
+			if (appState.editorSearchActive) {
 				close();
 			}
 		}}
@@ -142,18 +105,18 @@
 	<Shortcut
 		options={{ key: 'Enter' }}
 		callback={() => {
-			if ($editorSearchActive) {
-				$editor.commands.nextSearchResult();
-				goToSelection();
+			if (appState.editorSearchActive) {
+				editor.commands.nextSearchResult();
+				goToSearchResult(editor);
 			}
 		}}
 	/>
 	<Shortcut
 		options={{ shift: true, key: 'Enter' }}
 		callback={() => {
-			if ($editorSearchActive) {
-				$editor.commands.previousSearchResult();
-				goToSelection();
+			if (appState.editorSearchActive) {
+				editor.commands.previousSearchResult();
+				goToSearchResult(editor);
 			}
 		}}
 	/>
@@ -173,11 +136,11 @@
 		</Collapsible.Trigger>
 		<div class="flex flex-row items-center justify-between h-full w-full gap-1 -mt-[1px]">
 			<Input
-				id="editorSearch"
+				id={EDITOR_SEARCH_INPUT_ID}
 				class="w-full h-7"
 				placeholder="Find"
 				spellcheck="false"
-				bind:value={$editorSearchValue}
+				bind:value={appState.editorSearchValue}
 			/>
 			<div class="flex items-center h-full gap-0.5">
 				<Tooltip text="Case sensitive" side="bottom">
@@ -223,8 +186,8 @@
 						scale="md"
 						class="h-7 w-7 fill-muted-foreground hover:fill-foreground transition-all"
 						onclick={() => {
-							$editor.commands.previousSearchResult();
-							goToSelection();
+							editor.commands.previousSearchResult();
+							goToSearchResult(editor);
 						}}
 					>
 						<Icon name="arrowUp" class="w-4 h-4" />
@@ -237,8 +200,8 @@
 						scale="md"
 						class="h-7 w-7 fill-muted-foreground hover:fill-foreground transition-all"
 						onclick={() => {
-							$editor.commands.nextSearchResult();
-							goToSelection();
+							editor.commands.nextSearchResult();
+							goToSearchResult(editor);
 						}}
 					>
 						<Icon name="arrowDown" class="w-4 h-4" />
@@ -275,8 +238,8 @@
 							scale="md"
 							class="h-7 w-7 group"
 							onclick={() => {
-								$editor.commands.replace();
-								goToSelection();
+								editor.commands.replace();
+								goToSearchResult(editor);
 							}}
 						>
 							<Replace
@@ -291,8 +254,8 @@
 							scale="md"
 							class="h-7 w-7 group"
 							onclick={() => {
-								$editor.commands.replaceAll();
-								goToSelection();
+								editor.commands.replaceAll();
+								goToSearchResult(editor);
 							}}
 						>
 							<ReplaceAll

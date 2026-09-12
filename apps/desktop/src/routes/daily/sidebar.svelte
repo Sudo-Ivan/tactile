@@ -1,116 +1,66 @@
 <script lang="ts">
+	import { sidebarResize } from '@/actions/sidebar-resize';
 	import { fetchCollectionEntries } from '@/api/collection';
 	import { createNote, openNote } from '@/api/notes';
-	import {
-		activeFile,
-		collection,
-		editor,
-		isPageSidebarOpen,
-		pageSidebarWidth,
-		resizingPageSidebar,
-		platform
-	} from '@/store';
+	import { DAILY_DIR, MARKDOWN_EXTENSION } from '@/constants';
+	import { appState } from '@/store.svelte';
+	import type { FileEntry } from '@/types';
+	import { CalendarDate, getLocalTimeZone, today, type DateValue } from '@internationalized/date';
 	import { Calendar } from '@tactile/ui/components/calendar';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
-	import { CalendarDate, getLocalTimeZone, today, type DateValue } from '@internationalized/date';
 	import type { UnlistenFn } from '@tauri-apps/api/event';
-	import type { FileEntry } from '@/types';
 	import { watchImmediate } from '@tauri-apps/plugin-fs';
 	import Entries from './entries.svelte';
 
-	let calValue = today(getLocalTimeZone());
-	let entries: FileEntry[] = [];
-	let stopWatching: UnlistenFn;
+	let calValue = $state(today(getLocalTimeZone()));
+	let entries = $state<FileEntry[]>([]);
+	let stopWatching: UnlistenFn | undefined;
+
+	const dailyDir = $derived(`${appState.collection}/${DAILY_DIR}`);
 
 	// Watch for changes in the collection
 	async function watchCollection() {
-		const stopWatching = await watchImmediate(
-			$collection + '/.tactile/daily',
+		const unlisten = await watchImmediate(
+			dailyDir,
 			async () => {
-				entries = await fetchCollectionEntries($collection + '/.tactile/daily');
+				entries = await fetchCollectionEntries(dailyDir);
 			},
 			{ recursive: true }
 		);
 
-		return stopWatching;
+		return unlisten;
 	}
 
-	collection.subscribe(async (value) => {
-		entries = await fetchCollectionEntries(value + '/.tactile/daily');
+	async function onCollectionChange(collectionPath: string | undefined) {
+		entries = await fetchCollectionEntries(`${collectionPath}/${DAILY_DIR}`);
 
 		// Validate if there is a note for today
 		const today = new Date().toISOString().split('T')[0];
 		const dailyExists = entries.some((entry) => entry.path.includes(today));
 
 		if (!dailyExists) {
-			await createNote(value + '/.tactile/daily', today + '.md');
+			await createNote(`${collectionPath}/${DAILY_DIR}`, today + MARKDOWN_EXTENSION);
 		}
 
 		// Open today's note
-		openNote(value + '/.tactile/daily/' + today + '.md', true);
+		openNote(`${collectionPath}/${DAILY_DIR}/${today}${MARKDOWN_EXTENSION}`, true);
 
-		if (value) {
+		if (collectionPath) {
 			if (stopWatching) stopWatching();
 			stopWatching = await watchCollection();
 		}
-	});
+	}
 
-	let startX: number | null;
-	let startWidth: number;
+	$effect(() => {
+		const collectionPath = appState.collection;
+		void onCollectionChange(collectionPath);
 
-	const handleMouseMove = (e: MouseEvent) => {
-		if (startX === null) return;
-		resizingPageSidebar.set(true);
-
-		const x = e.clientX;
-
-		// Set collapsing bounds
-		if (x < 100) {
-			resizingPageSidebar.set(false);
-			isPageSidebarOpen.set(false);
-			return;
-		} else if (x > 100 && !$isPageSidebarOpen) {
-			resizingPageSidebar.set(false);
-			isPageSidebarOpen.set(true);
-			return;
-		}
-
-		const diff = x - startX;
-		const newWidth = Math.max(210, Math.min(500, startWidth + diff));
-
-		// Set cursor resize bounds to prevent resizing when cursor is outside of the width bounds
-		if (x < 245 || x > 550) {
-			return;
-		}
-
-		pageSidebarWidth.set(newWidth);
-	};
-
-	const resizeHandler = (e: MouseEvent) => {
-		e.preventDefault();
-		startX = e.clientX;
-		startWidth = $pageSidebarWidth;
-
-		resizingPageSidebar.set(true);
-		$editor.commands.blur();
-		document.body.classList.add('cursor-col-resize');
-
-		const handleMouseUp = () => {
-			startX = null;
-			document.removeEventListener('mousemove', handleMouseMove);
-			document.removeEventListener('mouseup', handleMouseUp);
-			document.body.classList.remove('cursor-col-resize');
-			resizingPageSidebar.set(false);
-
-			if ($pageSidebarWidth < 100) {
-				isPageSidebarOpen.set(false);
-			}
+		return () => {
+			stopWatching?.();
+			stopWatching = undefined;
 		};
-
-		document.addEventListener('mousemove', handleMouseMove);
-		document.addEventListener('mouseup', handleMouseUp);
-	};
+	});
 
 	// handle open calendar day
 	const handleOpenCalendarDay = async (e: DateValue | undefined) => {
@@ -121,19 +71,17 @@
 		const paddedDay = e.day.toString().padStart(2, '0');
 
 		// Create the note name with padded month and day
-		const noteName = `${e.year}-${paddedMonth}-${paddedDay}.md`;
+		const noteName = `${e.year}-${paddedMonth}-${paddedDay}${MARKDOWN_EXTENSION}`;
 
 		// Check if note exists, if not create it - else open it
 		if (!entries.some((entry) => entry.path.includes(noteName))) {
-			createNote($collection + '/.tactile/daily', noteName);
+			createNote(dailyDir, noteName);
 		} else {
-			openNote($collection + '/.tactile/daily/' + noteName, true);
+			openNote(`${dailyDir}/${noteName}`, true);
 		}
 
 		// Get note element by data-path
-		let noteElement = document.querySelector(
-			`[data-path="${$collection}/.tactile/daily/${noteName}"]`
-		);
+		let noteElement = document.querySelector(`[data-path="${dailyDir}/${noteName}"]`);
 
 		// If note element is not found, wait for it to be rendered
 		if (!noteElement) {
@@ -141,7 +89,7 @@
 		}
 
 		// Get note element again - this is because if the note is newly created, it might not be rendered yet
-		noteElement = document.querySelector(`[data-path="${$collection}/.tactile/daily/${noteName}"]`);
+		noteElement = document.querySelector(`[data-path="${dailyDir}/${noteName}"]`);
 
 		// Scroll to note element
 		if (noteElement) {
@@ -157,9 +105,9 @@
 	};
 
 	// Listen to activeFile change and update calendar value
-	activeFile.subscribe((value) => {
+	$effect(() => {
 		// Extract date string from active file path
-		const dateString = value?.split('/').pop()?.split('.')[0];
+		const dateString = appState.activeFile?.split('/').pop()?.split('.')[0];
 		if (!dateString) return;
 
 		// Parse date string
@@ -174,15 +122,15 @@
 <div
 	class={cn(
 		'fixed left-12 flex flex-col justify-start items-center bg-background overflow-y-auto transform transition-transform duration-300',
-		!$isPageSidebarOpen && '-translate-x-52',
-		$platform === 'darwin' ? 'h-[calc(100vh-4.5rem)]' : 'h-[calc(100vh-2.25rem)]'
+		!appState.isPageSidebarOpen && '-translate-x-52',
+		appState.platform === 'darwin' ? 'h-[calc(100vh-4.5rem)]' : 'h-[calc(100vh-2.25rem)]'
 	)}
-	style={`width: ${$pageSidebarWidth}px`}
+	style={`width: ${appState.pageSidebarWidth}px`}
 >
 	<!-- Drag border -->
 	<div
 		class="h-full w-1 border-r cursor-col-resize absolute top-0 right-0 z-10 hover:bg-foreground/10 hover:delay-75 transition-all duration-200 active:bg-foreground/20 active:!cursor-col-resize"
-		on:mousedown={resizeHandler}
+		use:sidebarResize={'page'}
 		role="presentation"
 	></div>
 
@@ -190,7 +138,7 @@
 	<div
 		class="flex flex-col items-start gap-2 w-full h-full overflow-auto pt-2.5 px-2 pb-2"
 		data-collection-root
-		data-path={$collection + '/.tactile/daily'}
+		data-path={dailyDir}
 	>
 		{#if entries.length === 0}
 			<div class="w-full h-full flex flex-col gap-1 items-center justify-center">
@@ -207,11 +155,3 @@
 		onValueChange={(e) => handleOpenCalendarDay(e)}
 	/>
 </div>
-
-<style>
-	:global(body.cursor-col-resize) {
-		cursor: col-resize !important;
-		user-select: none !important;
-		pointer-events: none;
-	}
-</style>

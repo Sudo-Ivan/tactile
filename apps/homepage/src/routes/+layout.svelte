@@ -1,6 +1,9 @@
 <script lang="ts">
 	import '@tactile/ui/app.web.css';
 	import { Button } from '@tactile/ui/components/button';
+	import type { Snippet } from 'svelte';
+
+	let { children }: { children?: Snippet } = $props();
 	const currentYear = new Date().getFullYear();
 </script>
 
@@ -75,7 +78,7 @@
 	<main
 		class="flex min-h-[calc(100dvh-8rem)] w-full flex-col items-center justify-center overflow-x-hidden gap-4 max-w-screen-2xl py-16"
 	>
-		<slot />
+		{@render children?.()}
 	</main>
 
 	<!-- Footer -->

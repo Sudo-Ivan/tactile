@@ -1,10 +1,10 @@
-import { activeFile, collection, noteHistory } from '@/store';
-import { hideDotFiles, validateTactileFolder, sortFileEntry } from '@/utils';
-import { readDir, readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
-import { get } from 'svelte/store';
-import { open } from '@tauri-apps/plugin-dialog';
-import { BaseDirectory } from '@tauri-apps/api/path';
+import { COLLECTIONS_FILENAME } from '@/constants';
+import { appState } from '@/store.svelte';
 import type { CollectionParams, FileEntry } from '@/types';
+import { hideDotFiles, sortFileEntry, validateTactileFolder } from '@/utils/fs';
+import { BaseDirectory } from '@tauri-apps/api/path';
+import { open } from '@tauri-apps/plugin-dialog';
+import { readDir, readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 
 // In Tauri v2 plugin-fs, readDir is not recursive and DirEntry has no path
 // field, so the FileEntry tree is built manually to match the v1 shape.
@@ -37,11 +37,11 @@ export const fetchCollectionEntries = async (
 	sort: 'name' | 'date' = 'name',
 	showDotfiles = false
 ) => {
-	dirPath = dirPath || get(collection);
+	dirPath = dirPath || appState.collection;
 
 	if (!dirPath) new Error('No directory path provided');
 
-	let files = await readDirRecursive(dirPath);
+	let files = await readDirRecursive(dirPath!);
 
 	if (sort === 'name') {
 		files.sort((a, b) => sortFileEntry(a, b));
@@ -65,11 +65,11 @@ export const loadCollection = async (path?: string | undefined) => {
 	if (!path) return;
 
 	// Set collection path
-	collection.set(path);
+	appState.collection = path;
 
 	// Reset all collection states
-	noteHistory.set([]);
-	activeFile.set(null);
+	appState.noteHistory = [];
+	appState.activeFile = null;
 
 	// Validate .tactile folder
 	await validateTactileFolder(path);
@@ -81,12 +81,12 @@ export const loadCollection = async (path?: string | undefined) => {
 		lastOpened: new Date().toISOString()
 	};
 
-	const collections = await readTextFile('collections.json', {
+	const collections = await readTextFile(COLLECTIONS_FILENAME, {
 		baseDir: BaseDirectory.AppData
 	}).catch(() => null);
 
 	if (!collections) {
-		await writeTextFile('collections.json', JSON.stringify([collectionObj]), {
+		await writeTextFile(COLLECTIONS_FILENAME, JSON.stringify([collectionObj]), {
 			baseDir: BaseDirectory.AppData
 		});
 	} else {
@@ -98,7 +98,7 @@ export const loadCollection = async (path?: string | undefined) => {
 		}
 
 		collectionsArray.push(collectionObj);
-		await writeTextFile('collections.json', JSON.stringify(collectionsArray), {
+		await writeTextFile(COLLECTIONS_FILENAME, JSON.stringify(collectionsArray), {
 			baseDir: BaseDirectory.AppData
 		});
 	}
@@ -106,7 +106,7 @@ export const loadCollection = async (path?: string | undefined) => {
 
 // Get all collections
 export const getCollections = async (): Promise<CollectionParams[]> => {
-	const collections = await readTextFile('collections.json', {
+	const collections = await readTextFile(COLLECTIONS_FILENAME, {
 		baseDir: BaseDirectory.AppData
 	}).catch(() => null);
 

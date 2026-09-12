@@ -31,12 +31,6 @@ export interface CollectionSettingsParams {
 	};
 }
 
-export interface CollectionParams {
-	path: string;
-	name: string;
-	lastOpened: string;
-}
-
 export interface NoteMetadataParams {
 	fileMetadata: {
 		modifiedAt: Date;

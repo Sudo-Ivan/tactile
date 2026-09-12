@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { saveNote } from '@/api/notes';
 	import { SHORTCUTS } from '@/constants';
-	import { activeFile, collectionSettings, editor } from '@/store';
+	import { appState } from '@/store.svelte';
 	import { Editor } from '@tiptap/core';
 	import CharacterCount from '@tiptap/extension-character-count';
 	import Document from '@tiptap/extension-document';
@@ -11,14 +11,13 @@
 	import { Typography } from '@tiptap/extension-typography';
 	import StarterKit from '@tiptap/starter-kit';
 	import { onDestroy, onMount } from 'svelte';
-	import { get } from 'svelte/store';
 	import { Markdown } from 'tiptap-markdown';
 	import Shortcut from '../shortcut.svelte';
 	import SearchAndReplace from './extensions';
 
 	let element: HTMLDivElement;
-	let tiptapEditor: Editor;
-	let timeout: NodeJS.Timeout;
+	let tiptapEditor = $state<Editor>();
+	let timeout: ReturnType<typeof setTimeout>;
 
 	onMount(() => {
 		tiptapEditor = new Editor({
@@ -67,7 +66,7 @@
 			onTransaction: () => {
 				// force re-render so `editor.isActive` works as expected
 				tiptapEditor = tiptapEditor;
-				editor.set(tiptapEditor);
+				appState.editor.instance = tiptapEditor!;
 			},
 			onUpdate: async () => {
 				// If timeout before 500ms, clear it
@@ -77,23 +76,22 @@
 
 				// Set timeout to update the store
 				timeout = setTimeout(async () => {
-					if ($collectionSettings.editor.auto_save) {
-						console.log('Saving note...');
-						saveNote($activeFile!)
+					if (appState.collectionSettings.editor.auto_save) {
+						saveNote(appState.activeFile!)
 							.then(() => {
-								editor.notifySaveEvent();
+								appState.editor.notifySaveEvent();
 							})
 							.catch((error) => {
 								console.error('Error saving note:', error);
 							});
 					}
-				}, $collectionSettings.editor.auto_save_debounce);
+				}, appState.collectionSettings.editor.auto_save_debounce);
 			}
 		});
 	});
 
 	onDestroy(() => {
-		if (editor) {
+		if (tiptapEditor) {
 			tiptapEditor.destroy();
 		}
 	});
@@ -102,13 +100,13 @@
 <!-- >96px is required to hide scrollbar in normal size -->
 <div
 	bind:this={element}
-	spellcheck={$collectionSettings.editor.spell_check}
+	spellcheck={appState.collectionSettings.editor.spell_check}
 	class="w-full h-[calc(100%-97px)] px-8"
 >
-	<Shortcut options={SHORTCUTS['note:save']} callback={() => saveNote(get(activeFile) ?? '')} />
+	<Shortcut options={SHORTCUTS['note:save']} callback={() => saveNote(appState.activeFile ?? '')} />
 	<Shortcut
 		options={SHORTCUTS['note:copy-path']}
-		callback={() => navigator.clipboard.writeText(get(activeFile) ?? '')}
+		callback={() => navigator.clipboard.writeText(appState.activeFile ?? '')}
 	/>
 </div>
 

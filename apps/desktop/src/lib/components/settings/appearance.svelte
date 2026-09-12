@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { appTheme } from '@/store';
+	import { appState } from '@/store.svelte';
 	import { Button } from '@tactile/ui/components/button';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import * as Select from '@tactile/ui/components/select';
@@ -7,8 +7,8 @@
 	import Icon from '../shared/icon.svelte';
 	import Tooltip from '../shared/tooltip.svelte';
 
-	let selectedTheme = 'tactile';
-	let selectedFont = 'inter';
+	let selectedTheme = $state('tactile');
+	let selectedFont = $state('inter');
 </script>
 
 <div class="space-y-5">
@@ -22,10 +22,10 @@
 					variant="ghost"
 					class={cn(
 						'h-7 w-7 fill-muted-foreground hover:fill-foreground',
-						$appTheme === 'auto' && 'bg-accent fill-foreground'
+						appState.appTheme === 'auto' && 'bg-accent fill-foreground'
 					)}
 					scale="md"
-					onclick={() => appTheme.set('auto')}
+					onclick={() => (appState.appTheme = 'auto')}
 				>
 					<Icon name="monitor" class="w-4 h-4" />
 				</Button>
@@ -36,10 +36,10 @@
 					variant="ghost"
 					class={cn(
 						'h-7 w-7 fill-muted-foreground hover:fill-foreground',
-						$appTheme === 'light' && 'bg-accent fill-foreground'
+						appState.appTheme === 'light' && 'bg-accent fill-foreground'
 					)}
 					scale="md"
-					onclick={() => appTheme.set('light')}
+					onclick={() => (appState.appTheme = 'light')}
 				>
 					<Icon name="sun" class="w-4 h-4" />
 				</Button>
@@ -50,10 +50,10 @@
 					variant="ghost"
 					class={cn(
 						'h-7 w-7 fill-muted-foreground hover:fill-foreground',
-						$appTheme === 'dark' && 'bg-accent fill-foreground'
+						appState.appTheme === 'dark' && 'bg-accent fill-foreground'
 					)}
 					scale="md"
-					onclick={() => appTheme.set('dark')}
+					onclick={() => (appState.appTheme = 'dark')}
 				>
 					<Icon name="moon" class="w-4 h-4" />
 				</Button>

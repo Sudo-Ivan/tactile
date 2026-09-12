@@ -4,7 +4,7 @@
 	import EditorToolbar from '$lib/components/shared/editor/toolbar.svelte';
 	import Editor from '@/components/shared/editor/editor.svelte';
 	import { SHORTCUTS } from '@/constants';
-	import { activeFile, collectionSettings } from '@/store';
+	import { appState } from '@/store.svelte';
 	import { shortcutToString } from '@/utils';
 	import { cn } from '@tactile/ui/lib/utils';
 </script>
@@ -12,14 +12,14 @@
 <div
 	class="relative flex flex-col w-full h-full min-h-[calc(100vh-4.5rem)] items-start bg-secondary-background overflow-y-auto"
 >
-	{#if $collectionSettings.editor.show_toolbar}
+	{#if appState.collectionSettings.editor.show_toolbar}
 		<EditorToolbar hideHistory hideParentDirectories />
 	{/if}
 
 	<div
 		class={cn(
 			'flex flex-col items-center justify-center w-full h-full -mt-10',
-			$activeFile !== null && 'hidden'
+			appState.activeFile !== null && 'hidden'
 		)}
 	>
 		<div class="flex flex-col items-center justify-center w-full h-full -mt-10">
@@ -28,7 +28,7 @@
 				<div class="flex gap-5">
 					<button
 						class="text-sm gap-1.5 flex text-muted-foreground hover:text-secondary-foreground transition-colors items-center justify-center"
-						on:click={() => {
+						onclick={() => {
 							document.dispatchEvent(new KeyboardEvent('keydown', { key: 'o', metaKey: true }));
 						}}
 					>
@@ -43,7 +43,7 @@
 			</div>
 		</div>
 	</div>
-	<div class={cn('w-full h-full', $activeFile === null && 'hidden')}>
+	<div class={cn('w-full h-full', appState.activeFile === null && 'hidden')}>
 		<EditorSearch />
 		<EditorInlineTitle />
 		<Editor />

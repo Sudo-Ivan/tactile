@@ -1,30 +1,29 @@
-import { collection, appSettings, collectionSettings } from '@/store';
+import { APP_SETTINGS_FILENAME, COLLECTION_SETTINGS_PATH } from '@/constants';
+import { appState } from '@/store.svelte';
 import type { AppSettingsParams, CollectionSettingsParams } from '@/types';
 import { BaseDirectory } from '@tauri-apps/api/path';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
-import { get } from 'svelte/store';
 
 export const loadSettings = async (loadApp: boolean, loadCollection: boolean) => {
 	if (loadApp) {
-		const appSettingsPath = 'settings.json';
-		const appSettingsText = await readTextFile(appSettingsPath, {
+		const appSettingsText = await readTextFile(APP_SETTINGS_FILENAME, {
 			baseDir: BaseDirectory.AppData
 		}).catch(() => null);
 
 		if (!appSettingsText) {
 			setSettings('app');
 		} else {
-			appSettings.set(JSON.parse(appSettingsText));
+			appState.appSettings = JSON.parse(appSettingsText);
 		}
 	}
 
 	if (loadCollection) {
-		const collectionSettingsPath = `${get(collection)}/.tactile/settings.json`;
+		const collectionSettingsPath = `${appState.collection}/${COLLECTION_SETTINGS_PATH}`;
 		const collectionSettingsText = await readTextFile(collectionSettingsPath).catch(() => null);
 		if (!collectionSettingsText) {
 			setSettings('collection');
 		} else {
-			collectionSettings.set(JSON.parse(collectionSettingsText));
+			appState.collectionSettings = JSON.parse(collectionSettingsText);
 		}
 	}
 };
@@ -34,18 +33,18 @@ export const setSettings = async (
 	value?: AppSettingsParams | CollectionSettingsParams
 ) => {
 	if (settingsType === 'app') {
-		const appSettingsPath = 'settings.json';
-		const appSettingsText = JSON.stringify(value ?? get(appSettings));
-		appSettings.set((value ?? get(appSettings)) as AppSettingsParams);
-		await writeTextFile(appSettingsPath, appSettingsText, {
+		const appSettingsText = JSON.stringify(value ?? appState.appSettings);
+		appState.appSettings = (value ?? appState.appSettings) as AppSettingsParams;
+		await writeTextFile(APP_SETTINGS_FILENAME, appSettingsText, {
 			baseDir: BaseDirectory.AppData
 		});
 	}
 
 	if (settingsType === 'collection') {
-		const collectionSettingsPath = `${get(collection)}/.tactile/settings.json`;
-		const collectionSettingsText = JSON.stringify(value ?? get(collectionSettings));
-		collectionSettings.set((value ?? get(collectionSettings)) as CollectionSettingsParams);
+		const collectionSettingsPath = `${appState.collection}/${COLLECTION_SETTINGS_PATH}`;
+		const collectionSettingsText = JSON.stringify(value ?? appState.collectionSettings);
+		appState.collectionSettings = (value ??
+			appState.collectionSettings) as CollectionSettingsParams;
 		await writeTextFile(collectionSettingsPath, collectionSettingsText);
 	}
 };

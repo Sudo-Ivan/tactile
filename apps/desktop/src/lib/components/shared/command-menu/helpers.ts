@@ -1,7 +1,6 @@
 import { fetchCollectionEntries } from '@/api/collection';
-import { collection } from '@/store';
+import { appState } from '@/store.svelte';
 import type { FileEntry } from '@/types';
-import { get } from 'svelte/store';
 
 export const getAllItems = async (
 	isFolders?: boolean,
@@ -17,7 +16,7 @@ export const getAllItems = async (
 		if (isFolders) {
 			if (entry.children !== undefined && !entry.name?.startsWith('.')) {
 				const folderPath = entry.path;
-				const folderName = entry.path.replace(get(collection), '');
+				const folderName = entry.path.replace(appState.collection ?? '', '');
 				items.push({ path: folderPath, name: folderName });
 				const subItems = await getAllItems(isFolders, entry.children);
 				items.push(...subItems);
@@ -25,7 +24,7 @@ export const getAllItems = async (
 		} else {
 			if (entry.children === undefined && !entry.name?.startsWith('.')) {
 				const notePath = entry.path;
-				const noteName = entry.path.replace(get(collection), '');
+				const noteName = entry.path.replace(appState.collection ?? '', '');
 				items.push({ path: notePath, name: noteName });
 			} else {
 				const subItems = await getAllItems(isFolders, entry.children);

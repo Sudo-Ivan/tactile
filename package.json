@@ -5,6 +5,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
+    "knip": "knip",
     "format": "prettier --write .",
     "prepare": "husky"
   },
@@ -12,6 +13,7 @@
     "@tactile/eslint-config": "workspace:*",
     "eslint": "catalog:",
     "husky": "^9.1.7",
+    "knip": "^6.35.1",
     "lint-staged": "^17.5.1",
     "prettier": "catalog:",
     "prettier-plugin-svelte": "catalog:",

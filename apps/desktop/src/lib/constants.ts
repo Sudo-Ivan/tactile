@@ -61,3 +61,49 @@ export const OS_TRASH_DIR = {
 	linux: '.local/share/Trash/files/',
 	windows: '$Recycle.Bin/'
 };
+
+// File and directory names
+export const COLLECTIONS_FILENAME = 'collections.json';
+export const APP_SETTINGS_FILENAME = 'settings.json';
+export const TACTILE_DIR = '.tactile';
+export const DAILY_DIR = `${TACTILE_DIR}/daily`;
+export const TRASH_DIR = `${TACTILE_DIR}/trash`;
+export const COLLECTION_SETTINGS_PATH = `${TACTILE_DIR}/settings.json`;
+export const MARKDOWN_EXTENSION = '.md';
+export const UNTITLED_NAME = 'Untitled';
+
+// Route paths, used with resolve() from $app/paths
+export const ROUTES = {
+	notes: '/notes',
+	daily: '/daily',
+	tasks: '/tasks'
+} as const;
+export type AppRoutePath = (typeof ROUTES)[keyof typeof ROUTES];
+
+// Sidebar resize bounds
+export const SIDEBAR_MIN_WIDTH = 210;
+export const SIDEBAR_MAX_WIDTH = 500;
+export const SIDEBAR_COLLAPSE_THRESHOLD = 100;
+export const SIDEBAR_CURSOR_MIN_OFFSET = 245;
+export const SIDEBAR_CURSOR_MAX_OFFSET = 550;
+
+// Timing defaults
+export const SEARCH_DEBOUNCE_MS = 500;
+export const SEARCH_INPUT_FOCUS_DELAY_MS = 250;
+export const SEARCH_RESULT_FOCUS_DELAY_MS = 300;
+export const RENAME_INPUT_FOCUS_DELAY_MS = 50;
+export const RENAME_SPAN_FOCUS_DELAY_MS = 100;
+
+// External links
+export const GITHUB_REPO_URL = 'https://github.com/Sudo-Ivan/tactile';
+export const GITHUB_ISSUES_URL = 'https://github.com/Sudo-Ivan/tactile/issues';
+export const GITHUB_SPONSOR_URL = 'https://github.com/sponsors/Sudo-Ivan';
+
+// DOM element ids shared across components
+export const INLINE_TITLE_INPUT_ID = 'inline-title-input';
+export const NOTES_SEARCH_INPUT_ID = 'notesSearch';
+export const EDITOR_SEARCH_INPUT_ID = 'editorSearch';
+
+// Tauri command and event names
+export const SEARCH_FILES_COMMAND = 'search_files';
+export const WINDOW_THEME_EVENT = 'tactile-bg-changed';

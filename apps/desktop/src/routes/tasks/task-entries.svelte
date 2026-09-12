@@ -1,25 +1,29 @@
 <script lang="ts">
 	import { openNote } from '@/api/notes';
-	import { activeFile, collection, editor, editorSearchActive, editorSearchValue } from '@/store';
+	import { SEARCH_FILES_COMMAND, SEARCH_RESULT_FOCUS_DELAY_MS } from '@/constants';
+	import { appState } from '@/store.svelte';
+	import { goToSearchResult } from '@/utils/editor';
 	import * as Collapsible from '@tactile/ui/components/collapsible';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
 	import { invoke } from '@tauri-apps/api/core';
 	import { ChevronDown, Loader } from 'lucide-svelte';
 	import markdownit from 'markdown-it';
-	import { onDestroy, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 
-	let tasks: { path: string; context_preview: string }[] = [];
-	let loading = false;
-	let openState: Record<string, boolean> = {};
-	let groupedTasks: Record<string, { context_preview: string }[]>;
-	$: groupedTasks = groupResults(tasks);
+	let tasks = $state<{ path: string; context_preview: string }[]>([]);
+	let loading = $state(false);
+	let openState = $state<Record<string, boolean>>({});
+
+	const groupedTasks = $derived(groupResults(tasks));
 
 	// Initialize all collapsibles as open
-	$: Object.keys(groupedTasks).forEach((path) => {
-		if (openState[path] === undefined) {
-			openState[path] = true;
-		}
+	$effect(() => {
+		Object.keys(groupedTasks).forEach((path) => {
+			if (openState[path] === undefined) {
+				openState[path] = true;
+			}
+		});
 	});
 
 	function groupResults(
@@ -43,41 +47,14 @@
 
 	function toggleOpen(path: string) {
 		openState[path] = !openState[path];
-		openState = openState;
 	}
-
-	const goToResult = (index: number) => {
-		if (!$editor) return;
-
-		const { results } = $editor.storage.searchAndReplace;
-		const position: {
-			from: number;
-			to: number;
-		} = results[index];
-
-		if (!position) return;
-
-		$editor.commands.setTextSelection(position);
-
-		const { node } = $editor.view.domAtPos($editor.state.selection.anchor);
-		if (node instanceof HTMLElement) {
-			const rect = node.getBoundingClientRect();
-			const isAboveView = rect.top < 0;
-			const isBelowView = rect.bottom > window.innerHeight;
-
-			if (isAboveView || isBelowView) {
-				const behavior = isAboveView ? 'auto' : 'smooth';
-				node.scrollIntoView({ behavior, block: 'center' });
-			}
-		}
-	};
 
 	async function searchCollection() {
 		loading = true;
 
 		try {
-			tasks = (await invoke('search_files', {
-				dirPath: $collection,
+			tasks = (await invoke(SEARCH_FILES_COMMAND, {
+				dirPath: appState.collection,
 				query: '- [ ]',
 				caseSensitive: false,
 				matchWord: false,
@@ -91,27 +68,25 @@
 	}
 
 	// Subscribe to save events
-	const unsubscribeSave = editor.subscribeToSaveEvents(async () => {
-		// Re-search the collection
-		searchCollection();
+	$effect(() => {
+		return appState.editor.subscribeToSaveEvents(async () => {
+			// Re-search the collection
+			searchCollection();
+		});
 	});
 
 	onMount(async () => {
-		activeFile.set(null);
+		appState.activeFile = null;
 
 		await searchCollection();
 
 		// Handle opening file on mount
-		const activeFileInResults = tasks.find((task) => task.path === $activeFile);
+		const activeFileInResults = tasks.find((task) => task.path === appState.activeFile);
 		if (activeFileInResults) {
 			openNote(activeFileInResults.path, true);
-		} else if ($activeFile !== tasks[0]?.path) {
+		} else if (appState.activeFile !== tasks[0]?.path) {
 			openNote(tasks[0].path, true);
 		}
-	});
-
-	onDestroy(() => {
-		unsubscribeSave();
 	});
 </script>
 
@@ -139,20 +114,24 @@
 					<button
 						class="flex items-start min-w-full overflow-hidden text-start p-2 bg-secondary-background border rounded-md text-xs hover:bg-accent hover:text-accent-foreground"
 						onclick={async () => {
-							editorSearchValue.set('');
-							if ($activeFile !== path) {
-								console.log('File already open');
+							appState.editorSearchValue = '';
+							if (appState.activeFile !== path) {
 								openNote(path, true);
 							}
 
 							setTimeout(() => {
-								if (!$editorSearchActive) editorSearchActive.set(true);
-								$editor.commands.blur();
-								if ($editorSearchValue !== result.context_preview.replaceAll('- [ ]', '').trim())
-									editorSearchValue.set(result.context_preview.replaceAll('- [ ]', '').trim());
-								goToResult(index);
-								$editor.commands.setSearchResult(index);
-							}, 300);
+								if (!appState.editorSearchActive) appState.editorSearchActive = true;
+								appState.editor.instance.commands.blur();
+								if (
+									appState.editorSearchValue !==
+									result.context_preview.replaceAll('- [ ]', '').trim()
+								)
+									appState.editorSearchValue = result.context_preview
+										.replaceAll('- [ ]', '')
+										.trim();
+								goToSearchResult(appState.editor.instance, index);
+								appState.editor.instance.commands.setSearchResult(index);
+							}, SEARCH_RESULT_FOCUS_DELAY_MS);
 						}}
 					>
 						<!-- eslint-disable-next-line svelte/no-at-html-tags -->

@@ -1,10 +1,11 @@
-import { OS_TRASH_DIR } from '@/constants';
-import { activeFile, collection, collectionSettings, editor, noteHistory, platform } from '@/store';
+import { MARKDOWN_EXTENSION, OS_TRASH_DIR, TRASH_DIR, UNTITLED_NAME } from '@/constants';
+import { appState } from '@/store.svelte';
 import type { NoteMetadataParams } from '@/types';
-import { calculateReadingTime, getNextUntitledName, setEditorContent } from '@/utils';
-import { readDir, readTextFile, remove, rename, stat, writeTextFile } from '@tauri-apps/plugin-fs';
+import { setEditorContent } from '@/utils/editor';
+import { calculateReadingTime } from '@/utils/format';
+import { getNextUntitledName } from '@/utils/fs';
 import { homeDir } from '@tauri-apps/api/path';
-import { get } from 'svelte/store';
+import { readDir, readTextFile, remove, rename, stat, writeTextFile } from '@tauri-apps/plugin-fs';
 
 // Create a new note
 export const createNote = async (dirPath: string, name?: string) => {
@@ -13,7 +14,7 @@ export const createNote = async (dirPath: string, name?: string) => {
 
 	// Generate a new name (Untitled.md, if there are any exiting Untitled notes, increment the number by 1)
 	if (!name) {
-		name = getNextUntitledName(files, 'Untitled', '.md');
+		name = getNextUntitledName(files, UNTITLED_NAME, MARKDOWN_EXTENSION);
 	}
 
 	// Save the new note
@@ -27,41 +28,38 @@ export const createNote = async (dirPath: string, name?: string) => {
 export async function openNote(path: string, skipHistory = false) {
 	const fileContent = await readTextFile(path);
 	setEditorContent(fileContent);
-	activeFile.set(path);
+	appState.activeFile = path;
 	if (!skipHistory) {
-		noteHistory.update((history) => {
-			if (history[history.length - 1] !== path) {
-				return [...history, path];
-			}
-			return history;
-		});
+		if (appState.noteHistory[appState.noteHistory.length - 1] !== path) {
+			appState.noteHistory.push(path);
+		}
 	}
 }
 
 // Delete a note
 export const deleteNote = async (path: string) => {
-	switch (get(collectionSettings).notes.trash_dir) {
+	switch (appState.collectionSettings.notes.trash_dir) {
 		case 'system':
 			await rename(
 				path,
-				`${await homeDir()}${OS_TRASH_DIR[get(platform)]}${path.split('/').pop()!}`
+				`${await homeDir()}${OS_TRASH_DIR[appState.platform!]}${path.split('/').pop()!}`
 			);
 			break;
 		case 'tactile':
-			await rename(path, `${get(collection)}/.tactile/trash/${path.split('/').pop()!}`);
+			await rename(path, `${appState.collection}/${TRASH_DIR}/${path.split('/').pop()!}`);
 			break;
 		case 'delete':
 			await remove(path);
 			break;
 	}
-	activeFile.set(null);
+	appState.activeFile = null;
 };
 
 // Rename a note
 export const renameNote = async (path: string, name: string) => {
 	// Make sure file extension is included
-	if (!name.endsWith('.md')) {
-		name += '.md';
+	if (!name.endsWith(MARKDOWN_EXTENSION)) {
+		name += MARKDOWN_EXTENSION;
 	}
 
 	// Remove breaking characters
@@ -77,13 +75,13 @@ export const renameNote = async (path: string, name: string) => {
 
 	// Rename the file
 	await rename(path, `${path.split('/').slice(0, -1).join('/')}/${name}`);
-	activeFile.set(`${path.split('/').slice(0, -1).join('/')}/${name}`);
+	appState.activeFile = `${path.split('/').slice(0, -1).join('/')}/${name}`;
 };
 
 // Save active note
 export const saveNote = async (path: string) => {
 	// Get note content
-	let content = get(editor).storage.markdown.getMarkdown();
+	let content = appState.editor.instance.storage.markdown.getMarkdown();
 
 	// Remove the first heading title
 	content = content.replace(/^# .*\n/, '');
@@ -143,8 +141,8 @@ export const getNoteMetadataParams = async (path: string): Promise<NoteMetadataP
 	};
 
 	// Get editor metadata
-	const editorWordCount = get(editor).storage.characterCount.words();
-	const editorCharacterCount = get(editor).storage.characterCount.characters();
+	const editorWordCount = appState.editor.instance.storage.characterCount.words();
+	const editorCharacterCount = appState.editor.instance.storage.characterCount.characters();
 
 	// Calculate average reading time (in seconds if < 1min and in minutes if >= 1min)
 	const avgReadingTime = calculateReadingTime(editorWordCount);

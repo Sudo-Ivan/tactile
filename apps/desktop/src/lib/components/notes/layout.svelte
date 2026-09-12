@@ -1,40 +1,32 @@
 <script lang="ts">
+	import { appState } from '@/store.svelte';
 	import { cn } from '@/utils';
+	import type { Component, Snippet } from 'svelte';
 	import NoteDetails from './details.svelte';
-	import {
-		isPageSidebarOpen,
-		pageSidebarWidth,
-		resizingPageSidebar,
-		platform,
-		isNoteDetailSidebarOpen,
-		noteDetailSidebarWidth,
-		resizingNoteDetailSidebar
-	} from '@/store';
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	export let sidebar: any;
+	let { sidebar: Sidebar, children }: { sidebar: Component; children?: Snippet } = $props();
 </script>
 
 <div
 	class={cn(
 		'flex flex-col w-full h-[calc(100vh-4.5rem)] bg-secondary-background ml-12 overflow-hidden',
-		$platform !== 'darwin' && 'h-[100vh]'
+		appState.platform !== 'darwin' && 'h-[100vh]'
 	)}
 >
-	<svelte:component this={sidebar} />
+	<Sidebar />
 	<div
 		class="h-full overflow-y-auto"
 		style={`
-					margin-left: ${$isPageSidebarOpen ? $pageSidebarWidth : 0}px; 
-					margin-right: ${$isNoteDetailSidebarOpen ? $noteDetailSidebarWidth : 0}px; 
+					margin-left: ${appState.isPageSidebarOpen ? appState.pageSidebarWidth : 0}px;
+					margin-right: ${appState.isNoteDetailSidebarOpen ? appState.noteDetailSidebarWidth : 0}px;
 					transition: ${
-						$resizingPageSidebar || $resizingNoteDetailSidebar
+						appState.resizingPageSidebar || appState.resizingNoteDetailSidebar
 							? 'none'
 							: 'margin-left 300ms, margin-right 300ms'
 					}
 			`}
 	>
-		<slot />
+		{@render children?.()}
 	</div>
 	<NoteDetails />
 </div>

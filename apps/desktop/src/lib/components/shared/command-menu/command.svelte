@@ -1,22 +1,21 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import Icon from '$lib/components/shared/icon.svelte';
-	import { getCollections, loadCollection } from '@/api/collection';
-	import { moveNote, openNote } from '@/api/notes';
-	import { activeFile, appTheme, collection } from '@/store';
-	import { formatTimeAgo, shortcutToString } from '@/utils';
+	import { appState } from '@/store.svelte';
 	import * as Command from '@tactile/ui/components/command';
-	import { open as browserOpen } from '@tauri-apps/plugin-shell';
-	import { Share2 } from 'lucide-svelte';
 	import { onMount } from 'svelte';
-	import { mainCommands as commands, createNoteCommands } from './commands';
-	import { getAllItems } from './helpers';
+	import { mainCommands, createNoteCommands } from './commands';
+	import ChangeThemePage from './pages/change-theme.svelte';
+	import DefaultPage from './pages/default.svelte';
+	import HelpPage from './pages/help.svelte';
+	import MoveNotePage from './pages/move-note.svelte';
+	import OpenCollectionPage from './pages/open-collection.svelte';
+	import OpenNotePage from './pages/open-note.svelte';
+	import SharePage from './pages/share.svelte';
 
-	let open = false;
-	let search = '';
-	let value: string | undefined = undefined;
-	let page: string | undefined = undefined;
-	let openedWithShortcut = '';
+	let open = $state(false);
+	let search = $state('');
+	let value = $state<string | undefined>(undefined);
+	let page = $state<string | undefined>(undefined);
+	let openedWithShortcut = $state('');
 
 	const shortcutKeyMap: Record<string, string | undefined> = {
 		'cmd+k': 'default',
@@ -27,6 +26,11 @@
 		'cmd+shift+h': 'help_and_feedback',
 		'cmd+shift+l': 'share'
 	};
+
+	// Note specific commands are prepended to the list while a note is active
+	const commandGroups = $derived(
+		appState.activeFile ? [createNoteCommands(appState.activeFile), ...mainCommands] : mainCommands
+	);
 
 	// If a page is provided, it opens that page, otherwise it closes the menu
 	function handlePageState(newPage: string | undefined) {
@@ -56,6 +60,13 @@
 		search = '';
 	}
 
+	// Set value to first command when a note becomes active
+	$effect(() => {
+		if (appState.activeFile) {
+			value = commandGroups[0].commands[0].title;
+		}
+	});
+
 	onMount(() => {
 		function handleKeydown(e: KeyboardEvent) {
 			const keyPressed = `${e.metaKey || e.ctrlKey ? 'cmd+' : ''}${e.shiftKey ? 'shift+' : ''}${
@@ -79,21 +90,6 @@
 		return () => {
 			document.removeEventListener('keydown', handleKeydown);
 		};
-	});
-
-	activeFile.subscribe((notePath) => {
-		// Remove last note specific commands
-		if (commands[0].name !== 'Notes') {
-			commands.shift();
-		}
-
-		if (notePath) {
-			// Add notePath specific commands to the top of the list
-			commands.unshift(createNoteCommands(notePath));
-
-			// Set value to first command
-			value = commands[0].commands[0].title;
-		}
 	});
 </script>
 
@@ -119,247 +115,19 @@
 	<Command.List>
 		<Command.Empty class="text-foreground/60 font-light">No commands found</Command.Empty>
 		{#if page === 'default'}
-			{#each commands as group (group.name)}
-				<Command.Group heading={group.name}>
-					{#each group.commands as command (command.title)}
-						<Command.Item
-							class="[&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-							value={command.title}
-							onSelect={() => {
-								const page = command.onSelect?.();
-								if (typeof page === 'undefined') {
-									handlePageState(undefined);
-								} else {
-									handlePageState(page);
-								}
-							}}
-						>
-							<div class="flex w-full items-center justify-between">
-								<div class="flex items-center gap-1.5">
-									{#if command.icon}
-										<Icon name={command.icon} />
-									{/if}
-									<span class="text-foreground/80 group:hover:text-foreground/100"></span>
-									{command.title}
-								</div>
-								{#if command.shortcut}
-									<span class="ml-auto text-xs tracking-widest text-muted-foreground h-full"
-										>{shortcutToString(command.shortcut)}
-									</span>
-								{/if}
-							</div>
-						</Command.Item>
-					{/each}
-				</Command.Group>
-			{/each}
+			<DefaultPage groups={commandGroups} onPageChange={handlePageState} />
 		{:else if page === 'move_note'}
-			<Command.Group heading="Move note to...">
-				{#await getAllItems(true)}
-					<!-- TODO: Make this a loading spinner -->
-					<Command.Loading class="text-foreground/90">Loading folders...</Command.Loading>
-				{:then folders}
-					{#each folders as folder (folder.path)}
-						{#if folder.path + `/${$activeFile?.split('/').pop()}` !== $activeFile}
-							<Command.Item
-								class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-								value={folder.path}
-								onSelect={() => {
-									moveNote($activeFile || '', folder.path);
-									handlePageState(undefined);
-								}}
-							>
-								<Icon name="folder" />
-								{folder.name.slice(1).replaceAll('/', ' > ')}
-							</Command.Item>
-						{/if}
-					{/each}
-				{:catch error}
-					<Command.Item class="text-foreground/90"
-						>Error loading folders: {error.message}</Command.Item
-					>
-				{/await}
-			</Command.Group>
+			<MoveNotePage onPageChange={handlePageState} />
 		{:else if page === 'open_note'}
-			<Command.Group heading="Open note...">
-				{#await getAllItems()}
-					<Command.Loading class="text-foreground/90">Loading notes...</Command.Loading>
-				{:then notes}
-					{#each notes as note (note.path)}
-						<Command.Item
-							class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-							value={note.path}
-							onSelect={() => {
-								openNote(note.path);
-								handlePageState(undefined);
-							}}
-						>
-							<Icon name="note" />
-							{note.name.slice(1).replaceAll('/', ' > ')}
-						</Command.Item>
-					{/each}
-				{:catch error}
-					<Command.Item class="text-foreground/90"
-						>Error loading notes: {error.message}</Command.Item
-					>
-				{/await}
-			</Command.Group>
+			<OpenNotePage onPageChange={handlePageState} />
 		{:else if page === 'change_theme'}
-			<Command.Group heading="Change theme...">
-				{#if $appTheme !== 'light'}
-					<Command.Item
-						class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-						value="light"
-						onSelect={() => {
-							appTheme.set('light');
-							handlePageState(undefined);
-						}}
-					>
-						<Icon name="sun" />
-						Light
-					</Command.Item>
-				{/if}
-				{#if $appTheme !== 'dark'}
-					<Command.Item
-						class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-						value="dark"
-						onSelect={() => {
-							appTheme.set('dark');
-							handlePageState(undefined);
-						}}
-					>
-						<Icon name="moon" />
-						Dark
-					</Command.Item>
-				{/if}
-				{#if $appTheme !== 'auto'}
-					<Command.Item
-						class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-						value="system"
-						onSelect={() => {
-							appTheme.set('auto');
-							handlePageState(undefined);
-						}}
-					>
-						<Icon name="monitor" />
-						System
-					</Command.Item>
-				{/if}
-			</Command.Group>
+			<ChangeThemePage onPageChange={handlePageState} />
 		{:else if page === 'open_collection'}
-			<Command.Group heading="Open collection">
-				<Command.Item
-					class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-					onSelect={async () => {
-						await goto('/notes');
-						loadCollection();
-						handlePageState(undefined);
-					}}
-				>
-					<Icon name="folderPlus" />
-					Open new collection
-				</Command.Item>
-			</Command.Group>
-			{#await getCollections()}
-				<Command.Loading class="text-foreground/90">Recent collections</Command.Loading>
-			{:then collections}
-				{#if collections.filter((c) => c.path !== $collection).length > 0}
-					<Command.Group heading="Browse recent collections">
-						{#each collections
-							.filter((c) => c.path !== $collection)
-							.sort((a, b) => +new Date(b.lastOpened) - +new Date(a.lastOpened)) as collection (collection.path)}
-							<Command.Item
-								class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-								value={collection.path}
-								onSelect={async () => {
-									await goto('/notes');
-									loadCollection(collection.path);
-									handlePageState(undefined);
-								}}
-							>
-								<div class="flex w-full items-center justify-between">
-									<div class="flex items-center gap-1.5">
-										<Icon name="folder" />
-										<span class="text-foreground/80 group:hover:text-foreground/100"></span>
-										{collection.name}
-									</div>
-									<span class="ml-auto text-xs text-muted-foreground h-full"
-										>{formatTimeAgo(new Date(collection.lastOpened))}
-									</span>
-								</div>
-							</Command.Item>
-						{/each}
-					</Command.Group>
-				{/if}
-			{:catch error}
-				<Command.Group heading="Browse recent collections">
-					<Command.Item class="text-foreground/90"
-						>Error loading collections: {error.message}</Command.Item
-					>
-				</Command.Group>
-			{/await}
+			<OpenCollectionPage onPageChange={handlePageState} />
 		{:else if page === 'help_and_feedback'}
-			<Command.Group heading="Help & Support">
-				<Command.Item
-					class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-					value="sponsor"
-					onSelect={() => {
-						browserOpen('https://github.com/sponsors/Sudo-Ivan');
-						handlePageState(undefined);
-					}}
-				>
-					<Icon name="heart" />
-					Sponsor Tactile
-				</Command.Item>
-				<Command.Item
-					class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-					value="help"
-					onSelect={() => {
-						browserOpen('https://github.com/Sudo-Ivan/tactile/issues');
-						handlePageState(undefined);
-					}}
-				>
-					<Icon name="lifebouy" />
-					Get help
-				</Command.Item>
-
-				<Command.Item
-					class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-					value="feedback"
-					onSelect={() => {
-						browserOpen('https://github.com/Sudo-Ivan/tactile/issues');
-						handlePageState(undefined);
-					}}
-				>
-					<Icon name="commentSquareText" />
-					Leave feedback
-				</Command.Item>
-			</Command.Group>
+			<HelpPage onPageChange={handlePageState} />
 		{:else if page === 'share'}
-			<Command.Group heading="Share">
-				<Command.Item
-					class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:text-foreground [&>*]:fill-foreground/50 [&>*]:aria-selected:fill-foreground"
-					value="copy_link"
-					onSelect={() => {
-						navigator.clipboard.writeText('https://github.com/Sudo-Ivan/tactile');
-						handlePageState(undefined);
-					}}
-				>
-					<Icon name="browserUrl" />
-					Copy link
-				</Command.Item>
-				<Command.Item
-					class="text-foreground/90 gap-3 [&>*]:text-foreground/90 [&>*]:aria-selected:stroke-foreground [&>*]:stroke-foreground/50 [&>*]:stroke-[2px]"
-					value="share_on_twitter"
-					onSelect={() => {
-						// Text: Check out this awesome open-source, local-first note-taking app I found! \n\nhttps://github.com/Sudo-Ivan/tactile
-						browserOpen('https://github.com/Sudo-Ivan/tactile');
-						handlePageState(undefined);
-					}}
-				>
-					<Share2 />
-					Share on X
-				</Command.Item>
-			</Command.Group>
+			<SharePage onPageChange={handlePageState} />
 		{/if}
 	</Command.List>
 </Command.Dialog>

@@ -17,8 +17,8 @@
 		{ value: 'openSans', label: 'Open Sans' }
 	];
 
-	let selectedTheme = 'tactile';
-	let selectedFont = 'inter';
+	let selectedTheme = $state('tactile');
+	let selectedFont = $state('inter');
 </script>
 
 <div class="space-y-5">

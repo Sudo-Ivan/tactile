@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { collection } from '$lib/store';
+	import { appState } from '$lib/store.svelte';
 </script>
 
 <header
@@ -9,6 +9,6 @@
 	<p
 		class="pointer-events-none text-sm text-foreground/85 hover:text-foreground/100 transition-all cursor-default outline-none"
 	>
-		{$collection?.split('/').pop() || ''}
+		{appState.collection?.split('/').pop() || ''}
 	</p>
 </header>

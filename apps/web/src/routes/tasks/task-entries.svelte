@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { openNote } from '@/api/notes';
-	import { activeFile, collection, editor, editorSearchActive, editorSearchValue } from '@/store';
+	import { TASK_MARKER, TIMING } from '@/constants';
+	import { appState } from '@/store.svelte';
 	import type { SearchResultParams } from '@/types';
 	import { searchEntries } from '@/utils';
 	import * as Collapsible from '@tactile/ui/components/collapsible';
@@ -9,19 +10,19 @@
 	import { ChevronDown, Loader } from 'lucide-svelte';
 	import markdownit from 'markdown-it';
 	import { onDestroy, onMount } from 'svelte';
-	import { get } from 'svelte/store';
 
-	let tasks: SearchResultParams[] = [];
-	let loading = false;
-	let openState: Record<string, boolean> = {};
-	let groupedTasks: Record<string, { context_preview: string }[]>;
-	$: groupedTasks = groupResults(tasks);
+	let tasks = $state<SearchResultParams[]>([]);
+	let loading = $state(false);
+	let openState = $state<Record<string, boolean>>({});
+	let groupedTasks = $derived(groupResults(tasks));
 
 	// Initialize all collapsibles as open
-	$: Object.keys(groupedTasks).forEach((path) => {
-		if (openState[path] === undefined) {
-			openState[path] = true;
-		}
+	$effect(() => {
+		Object.keys(groupedTasks).forEach((path) => {
+			if (openState[path] === undefined) {
+				openState[path] = true;
+			}
+		});
 	});
 
 	function groupResults(
@@ -45,13 +46,13 @@
 
 	function toggleOpen(path: string) {
 		openState[path] = !openState[path];
-		openState = openState;
 	}
 
 	const goToResult = (index: number) => {
-		if (!$editor) return;
+		const editor = appState.editor.instance;
+		if (!editor) return;
 
-		const { results } = $editor.storage.searchAndReplace;
+		const { results } = editor.storage.searchAndReplace;
 		const position: {
 			from: number;
 			to: number;
@@ -59,15 +60,16 @@
 
 		if (!position) return;
 
-		$editor.commands.setTextSelection(position);
+		editor.commands.setTextSelection(position);
 
-		const { node } = $editor.view.domAtPos($editor.state.selection.anchor);
+		const { node } = editor.view.domAtPos(editor.state.selection.anchor);
 		if (node instanceof HTMLElement) {
 			const rect = node.getBoundingClientRect();
 			const isAboveView = rect.top < 0;
 			const isBelowView = rect.bottom > window.innerHeight;
 
 			if (isAboveView || isBelowView) {
+				// Smooth scroll doesn't seem to work well from bottom to top
 				const behavior = isAboveView ? 'auto' : 'smooth';
 				node.scrollIntoView({ behavior, block: 'center' });
 			}
@@ -78,7 +80,7 @@
 		loading = true;
 
 		try {
-			tasks = await searchEntries(get(collection), '- [ ]', false, false);
+			tasks = await searchEntries(appState.collection!, TASK_MARKER, false, false);
 
 			loading = false;
 		} catch (error) {
@@ -87,21 +89,21 @@
 	}
 
 	// Subscribe to save events
-	const unsubscribeSave = editor.subscribeToSaveEvents(async () => {
+	const unsubscribeSave = appState.editor.subscribeToSaveEvents(async () => {
 		// Re-search the collection
 		searchCollection();
 	});
 
 	onMount(async () => {
-		activeFile.set(null);
+		appState.activeFile = null;
 
 		await searchCollection();
 
 		// Handle opening file on mount
-		const activeFileInResults = tasks.find((task) => task.path === $activeFile);
+		const activeFileInResults = tasks.find((task) => task.path === appState.activeFile);
 		if (activeFileInResults) {
 			openNote(activeFileInResults.path, true);
-		} else if ($activeFile !== tasks[0]?.path) {
+		} else if (appState.activeFile !== tasks[0]?.path) {
 			openNote(tasks[0].path, true);
 		}
 	});
@@ -134,20 +136,21 @@
 				{#each groupedTasks[path] as result, index (result.context_preview)}
 					<button
 						class="flex items-start min-w-full overflow-hidden text-start p-2 bg-secondary-background border rounded-md text-xs hover:bg-accent hover:text-accent-foreground"
-						on:click={async () => {
-							editorSearchValue.set('');
-							if ($activeFile !== path) {
+						onclick={async () => {
+							appState.editorSearchValue = '';
+							if (appState.activeFile !== path) {
 								openNote(path, true);
 							}
 
 							setTimeout(() => {
-								if (!$editorSearchActive) editorSearchActive.set(true);
-								$editor.commands.blur();
-								if ($editorSearchValue !== result.context_preview.replaceAll('- [ ]', '').trim())
-									editorSearchValue.set(result.context_preview.replaceAll('- [ ]', '').trim());
+								if (!appState.editorSearchActive) appState.editorSearchActive = true;
+								appState.editor.instance?.commands.blur();
+								const searchTerm = result.context_preview.replaceAll(TASK_MARKER, '').trim();
+								if (appState.editorSearchValue !== searchTerm)
+									appState.editorSearchValue = searchTerm;
 								goToResult(index);
-								$editor.commands.setSearchResult(index);
-							}, 300);
+								appState.editor.instance?.commands.setSearchResult(index);
+							}, TIMING.searchResultDelay);
 						}}
 					>
 						<!-- eslint-disable-next-line svelte/no-at-html-tags -->
@@ -155,7 +158,7 @@
 							html: true,
 							linkify: true,
 							typographer: true
-						}).render(result.context_preview.replaceAll('- [ ]', '').trim())}
+						}).render(result.context_preview.replaceAll(TASK_MARKER, '').trim())}
 					</button>
 				{/each}
 			</Collapsible.Content>

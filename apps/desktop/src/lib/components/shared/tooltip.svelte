@@ -1,28 +1,39 @@
 <script lang="ts">
-	import { tooltipsOpen } from '@/store';
-	import * as Tooltip from '@tactile/ui/components/tooltip';
+	import { appState } from '@/store.svelte';
 	import type { ShortcutParams } from '@/types';
-	import { shortcutToString } from '@/utils';
-	export let text = 'Tooltip';
-	export let shortcut: ShortcutParams | undefined = undefined;
+	import { shortcutToString } from '@/utils/keyboard';
+	import * as Tooltip from '@tactile/ui/components/tooltip';
+	import type { Snippet } from 'svelte';
+
+	let {
+		text = 'Tooltip',
+		shortcut,
+		children,
+		...rest
+	}: {
+		text?: string;
+		shortcut?: ShortcutParams;
+		children?: Snippet;
+		[key: string]: unknown;
+	} = $props();
 
 	// TODO: Find out why sometimes it needs refresh to work properly again after a while #BUG
 </script>
 
 <Tooltip.Root
-	delayDuration={$tooltipsOpen >= 1 ? 0 : 300}
+	delayDuration={appState.tooltipsOpen >= 1 ? 0 : 300}
 	onOpenChange={(open) => {
 		if (open) {
-			tooltipsOpen.update((value) => value + 1);
+			appState.tooltipsOpen += 1;
 		} else {
 			setTimeout(() => {
-				tooltipsOpen.update((value) => value - 1);
+				appState.tooltipsOpen -= 1;
 			}, 500);
 		}
 	}}
 >
-	<Tooltip.Trigger><slot /></Tooltip.Trigger>
-	<Tooltip.Content {...$$props}>
+	<Tooltip.Trigger>{@render children?.()}</Tooltip.Trigger>
+	<Tooltip.Content {...rest}>
 		{text}
 		{#if shortcut}
 			<span

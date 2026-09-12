@@ -3,23 +3,27 @@
 	import Icon from '@/components/shared/icon.svelte';
 	import Shortcut from '@/components/shared/shortcut.svelte';
 	import { SHORTCUTS } from '@/constants';
-	import { activeFile } from '@/store';
+	import { appState } from '@/store.svelte';
 	import type { FileEntry } from '@/types';
 	import { shortcutToString } from '@/utils';
 	import Button from '@tactile/ui/components/button/button.svelte';
 	import * as ContextMenu from '@tactile/ui/components/context-menu';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
+	import { SvelteDate } from 'svelte/reactivity';
 
-	export let entries: FileEntry[];
-	let groupedEntries: Record<string, FileEntry[]>;
+	interface Props {
+		entries: FileEntry[];
+	}
+
+	let { entries }: Props = $props();
 
 	function groupEntries(entries: FileEntry[]): Record<string, FileEntry[]> {
 		const now = new Date();
 		const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-		const yesterday = new Date(today);
+		const yesterday = new SvelteDate(today);
 		yesterday.setDate(yesterday.getDate() - 1);
-		const thisWeekStart = new Date(today);
+		const thisWeekStart = new SvelteDate(today);
 		thisWeekStart.setDate(thisWeekStart.getDate() - thisWeekStart.getDay());
 		const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -81,7 +85,7 @@
 		return grouped;
 	}
 
-	$: groupedEntries = groupEntries(entries);
+	let groupedEntries = $derived(groupEntries(entries));
 </script>
 
 {#each Object.entries(groupedEntries) as [groupName, groupEntries] (groupName)}
@@ -107,7 +111,7 @@
 								scale="sm"
 								class={cn(
 									'h-7 w-full transition-all text-secondary-foreground/80 hover:text-foreground flex items-center gap-2 justify-start',
-									$activeFile === entry.path && 'bg-accent text-foreground'
+									appState.activeFile === entry.path && 'bg-accent text-foreground'
 								)}
 								onclick={() => openNote(entry.path, true)}
 							>

@@ -224,7 +224,7 @@ const replaceAll = (
 	}
 };
 
-export const searchAndReplacePluginKey = new PluginKey('searchAndReplacePlugin');
+const searchAndReplacePluginKey = new PluginKey('searchAndReplacePlugin');
 
 export interface SearchAndReplaceOptions {
 	searchResultClass: string;
@@ -423,5 +423,3 @@ export const SearchAndReplace = Extension.create<SearchAndReplaceOptions, Search
 		];
 	}
 });
-
-export default SearchAndReplace;

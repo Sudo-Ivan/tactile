@@ -1,45 +1,39 @@
 <script lang="ts">
-	import { Button } from '@tactile/ui/components/button';
-	import Icon from '../shared/icon.svelte';
-	import Tooltip from '../shared/tooltip.svelte';
-	import * as Sheet from '@tactile/ui/components/sheet';
-	import { Input } from '@tactile/ui/components/input';
-	import * as Collapsible from '@tactile/ui/components/collapsible';
-	import { ChevronDown } from 'lucide-svelte';
-	import { cn } from '@tactile/ui/lib/utils';
-	import { mainCommands as commands, createNoteCommands } from '../shared/command-menu/commands';
-	import { shortcutToString, toggleTheme } from '@/utils';
-	import { activeFile, appTheme } from '@/store';
 	import { SHORTCUTS } from '@/constants';
+	import { appState } from '@/store.svelte';
+	import { shortcutToString } from '@/utils/keyboard';
+	import { toggleTheme } from '@/utils/theme';
+	import { Button } from '@tactile/ui/components/button';
+	import * as Collapsible from '@tactile/ui/components/collapsible';
+	import { Input } from '@tactile/ui/components/input';
+	import * as Sheet from '@tactile/ui/components/sheet';
+	import { cn } from '@tactile/ui/lib/utils';
+	import { ChevronDown } from 'lucide-svelte';
+	import Icon from '../shared/icon.svelte';
+	import { createNoteCommands, mainCommands } from '../shared/command-menu/commands';
 	import Shortcut from '../shared/shortcut.svelte';
-	import { settingsStore } from '@/store';
+	import Tooltip from '../shared/tooltip.svelte';
 
-	let open = false;
-	let searchValue = '';
-	let collapsedCategories: string[] = [];
-	let filteredCommands = [...commands];
+	let open = $state(false);
+	let searchValue = $state('');
+	let collapsedCategories = $state<string[]>([]);
 
-	activeFile.subscribe((notePath) => {
-		// Remove last note specific commands
-		if (filteredCommands[0].name !== 'Notes') {
-			filteredCommands.shift();
-		}
-
-		if (notePath) {
-			// Add notePath specific commands to the top of the list
-			filteredCommands.unshift(createNoteCommands(notePath));
-		}
-	});
+	// Note specific commands are prepended to the list while a note is active
+	const commandGroups = $derived(
+		appState.activeFile ? [createNoteCommands(appState.activeFile), ...mainCommands] : mainCommands
+	);
 
 	// Filter commands based on search value
-	$: filteredCommands = commands
-		.map((group) => ({
-			...group,
-			commands: group.commands.filter((command) =>
-				command.title.toLowerCase().includes(searchValue.toLowerCase())
-			)
-		}))
-		.filter((group) => group.commands.length > 0);
+	const filteredCommands = $derived(
+		commandGroups
+			.map((group) => ({
+				...group,
+				commands: group.commands.filter((command) =>
+					command.title.toLowerCase().includes(searchValue.toLowerCase())
+				)
+			}))
+			.filter((group) => group.commands.length > 0)
+	);
 </script>
 
 <footer
@@ -54,9 +48,9 @@
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
 				scale="md"
 			>
-				{#if $appTheme === 'dark'}
+				{#if appState.appTheme === 'dark'}
 					<Icon name="moon" class="w-4 h-4" />
-				{:else if $appTheme === 'light'}
+				{:else if appState.appTheme === 'light'}
 					<Icon name="sun" class="w-4 h-4" />
 				{:else}
 					<Icon name="monitor" class="w-4 h-4" />
@@ -71,7 +65,7 @@
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
 				scale="md"
 				onclick={() => {
-					settingsStore.set({ isOpen: true, activePage: 'tactile sync' });
+					appState.settingsStore = { isOpen: true, activePage: 'tactile sync' };
 				}}
 			>
 				<Icon name="cloudX" class="w-4 h-4" />

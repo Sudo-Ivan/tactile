@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
 	// Define your icons object here
 	let icons = {
 		moon: {
@@ -269,16 +269,22 @@
 </script>
 
 <script lang="ts">
-	export let name: keyof typeof icons;
-	let displayIcon = icons[name];
+	import type { SVGAttributes } from 'svelte/elements';
+
+	interface Props extends SVGAttributes<SVGSVGElement> {
+		name: IconKey;
+	}
+
+	let { name, class: className, ...restProps }: Props = $props();
+	let displayIcon = $derived(icons[name]);
 </script>
 
 <svg
-	class={$$props.class}
+	class={className}
 	width="1em"
 	height="1em"
 	viewBox="0 0 {displayIcon.box} {displayIcon.box}"
-	{...$$restProps}
+	{...restProps}
 >
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 	{@html displayIcon.svg}

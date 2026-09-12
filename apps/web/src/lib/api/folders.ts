@@ -1,40 +1,39 @@
+import { UNTITLED_NAME } from '@/constants';
 import { db } from '@/database/client';
 import { entry as entryTable } from '@/database/schema';
-import { collection } from '@/store';
+import { appState } from '@/store.svelte';
 import { getNextUntitledName } from '@/utils';
 import { and, eq } from 'drizzle-orm';
-import { get } from 'svelte/store';
 import { moveNote } from './notes';
 
 // Create a new folder
 export const createFolder = async (dirPath: string) => {
+	const collectionPath = appState.collection!;
+
 	// Get the entry matching the path
 	const entry = await db.select().from(entryTable).where(eq(entryTable.path, dirPath));
 
 	let files;
 	if (entry.length === 0) {
-		files = await db
-			.select()
-			.from(entryTable)
-			.where(eq(entryTable.collectionPath, get(collection)));
+		files = await db.select().from(entryTable).where(eq(entryTable.collectionPath, collectionPath));
 	} else {
 		files = await db
 			.select()
 			.from(entryTable)
 			.where(
-				and(eq(entryTable.parentPath, dirPath), eq(entryTable.collectionPath, get(collection)))
+				and(eq(entryTable.parentPath, dirPath), eq(entryTable.collectionPath, collectionPath))
 			);
 	}
 
 	// Generate a new name (Untitled, if there are any exiting Untitled folders, increment the number by 1)
-	const name = getNextUntitledName(files, 'Untitled');
+	const name = getNextUntitledName(files, UNTITLED_NAME);
 
 	// Save the new folder
 	await db.insert(entryTable).values({
 		name,
 		path: `${dirPath}/${name}`.replace('//', '/'),
 		parentPath: dirPath,
-		collectionPath: get(collection),
+		collectionPath,
 		isFolder: true
 	});
 

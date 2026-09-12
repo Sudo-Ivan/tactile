@@ -12,23 +12,19 @@
 		"format": "prettier --write ."
 	},
 	"devDependencies": {
-		"@tactile/eslint-config": "workspace:*",
-		"@tactile/tailwind-config": "workspace:*",
 		"@sveltejs/adapter-auto": "catalog:",
 		"@sveltejs/kit": "catalog:",
 		"@sveltejs/vite-plugin-svelte": "catalog:",
+		"@tactile/eslint-config": "workspace:*",
+		"@tactile/tailwind-config": "workspace:*",
 		"@tailwindcss/vite": "catalog:",
 		"eslint": "catalog:",
-		"eslint-config-prettier": "catalog:",
-		"eslint-plugin-svelte": "catalog:",
-		"globals": "catalog:",
 		"prettier": "catalog:",
 		"prettier-plugin-svelte": "catalog:",
 		"svelte": "catalog:",
 		"svelte-check": "catalog:",
 		"tailwindcss": "catalog:",
 		"typescript": "catalog:",
-		"typescript-eslint": "catalog:",
 		"vite": "catalog:"
 	},
 	"dependencies": {

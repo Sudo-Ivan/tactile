@@ -1,42 +1,45 @@
 <script lang="ts">
 	import { renameNote } from '@/api/notes';
-	import { editor, activeFile, collectionSettings, editorMode } from '@/store';
+	import { INLINE_TITLE_INPUT_ID } from '@/constants';
+	import { appState } from '@/store.svelte';
 	import { cn } from '@/utils';
 
-	export let preCheckRegex: RegExp | undefined = undefined;
+	let { preCheckRegex }: { preCheckRegex?: RegExp } = $props();
 
-	let value = '';
+	let value = $state('');
 
 	// Handle keydown for enter key
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Enter') {
-			$editor.chain().focus().run();
+			appState.editor.instance.chain().focus().run();
 		}
+	}
+
+	// Current file name without the extension
+	function fileName() {
+		return appState.activeFile!.split('/').pop()!.split('.').slice(0, -1).join('.');
 	}
 
 	// Rename handler on input blur
 	async function handleBlur() {
-		if (!$activeFile) return;
+		if (!appState.activeFile) return;
 
 		// Make sure file name is in date format year-month-day, else return
 		if (preCheckRegex && !preCheckRegex.test(value)) {
-			value = $activeFile.split('/').pop()!.split('.').slice(0, -1).join('.');
+			value = fileName();
 		}
 
-		if (
-			value !== $activeFile.split('/').pop()!.split('.').slice(0, -1).join('.') &&
-			value.trim() !== ''
-		) {
+		if (value !== fileName() && value.trim() !== '') {
 			// Rename note
 			try {
-				await renameNote($activeFile, value);
+				await renameNote(appState.activeFile, value);
 			} catch {
-				value = $activeFile.split('/').pop()!.split('.').slice(0, -1).join('.');
+				value = fileName();
 			}
 		}
 
 		if (value.trim() === '') {
-			value = $activeFile.split('/').pop()!.split('.').slice(0, -1).join('.');
+			value = fileName();
 		}
 
 		// Remove last extension
@@ -48,8 +51,9 @@
 		value = value.replace(/[/\\?%*:|"<>]/g, '');
 	}
 
-	activeFile.subscribe((notePath) => {
-		// Set file name as value, remove extension
+	// Set file name as value when the active file changes, remove extension
+	$effect(() => {
+		const notePath = appState.activeFile;
 		value = notePath ? notePath.split('/').pop()!.split('.').slice(0, -1).join('.') : '';
 	});
 </script>
@@ -57,19 +61,19 @@
 <div
 	class={cn(
 		'flex items-center w-full h-fit px-8 pb-2.5',
-		!$collectionSettings.editor.show_toolbar && 'mt-5'
+		!appState.collectionSettings.editor.show_toolbar && 'mt-5'
 	)}
 >
-	{#if $collectionSettings.editor.show_inline_title}
+	{#if appState.collectionSettings.editor.show_inline_title}
 		<input
-			id="inline-title-input"
+			id={INLINE_TITLE_INPUT_ID}
 			type="text"
 			autocomplete="off"
 			autocorrect="off"
-			disabled={$editorMode !== 'edit'}
+			disabled={appState.editorMode !== 'edit'}
 			class="w-[635px] prose font-bold text-4xl text-foreground mx-auto bg-transparent focus:outline-none"
-			on:keydown={handleKeydown}
-			on:blur={handleBlur}
+			onkeydown={handleKeydown}
+			onblur={handleBlur}
 			bind:value
 		/>
 	{/if}

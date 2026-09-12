@@ -2,7 +2,8 @@
 
 ## Roadmap (carried over from haptic)
 
-- [ ] Tactile Sync - sync notes across devices
+- [ ] Tactile Sync - sync notes across devices (relay v1 in `relay/`: blind E2EE blob relay, WS live events, WebRTC signaling)
+- [ ] CRDT-based merge + live collaboration for sync (Automerge/yrs; revisit after relay v1 ships)
 - [ ] Note sharing - share single notes or collections via link
 - [ ] Mobile support for the web app - depends on PGlite mobile support
 - [ ] Native mobile apps for iOS and Android
@@ -10,15 +11,17 @@
 
 ## Migration follow-ups
 
-- [ ] Finish Svelte 5 runes port in apps (desktop, web, homepage still use some legacy syntax)
-- [ ] Fix svelte/no-navigation-without-resolve eslint errors (use $app/paths resolve())
+- [ ] Fix svelte/no-navigation-without-resolve eslint warnings (use $app/paths resolve())
+- [ ] Replace plain reactive Date usage with SvelteDate (prefer-svelte-reactivity warnings)
+- [ ] Re-add transition props where the Svelte 5 port dropped them (tooltip, popover, dialog animations)
+- [ ] Rewire editor auto_correct setting to the DOM (autocorrect attr is not valid on div, needs setAttribute)
 - [ ] Verify bits-ui 2 component API surface matches what the apps expect
 - [ ] Verify Tauri v2 migration end to end (tauri dev/build on macOS and Linux)
 - [ ] Re-check macOS window theming after objc2 port in src-tauri
 - [ ] Test the updater flow against GitHub releases latest.json
 - [ ] Confirm tiptap-markdown 0.9 works with TipTap v3 or vendor/replace it
-- [ ] Evaluate replacing remaining cmdk-style Command usage with bits-ui Command in apps
-- [ ] Replace radix-icons-svelte remnants if any remain
+- [ ] Dedupe SearchAndReplace extension double export (named + default)
+- [ ] Wire knip into CI once remaining findings are cleaned
 
 ## Infrastructure
 

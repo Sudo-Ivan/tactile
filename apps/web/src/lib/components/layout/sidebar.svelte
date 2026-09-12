@@ -1,17 +1,18 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import { Button } from '@tactile/ui/components/button';
 	import { cn } from '@tactile/ui/lib/utils';
 	import Icon from '$lib/components/shared/icon.svelte';
 	import Tooltip from '$lib/components/shared/tooltip.svelte';
-	import { page } from '$app/stores';
+	import { ROUTES, SHORTCUTS } from '@/constants';
 	import SettingsModal from '../settings/settings-modal.svelte';
-	import { SHORTCUTS } from '@/constants';
 
-	let selected: 'notes' | 'daily' | 'tasks' = 'notes';
+	let selected = $state<'notes' | 'daily' | 'tasks'>('notes');
 
-	page.subscribe((value) => {
-		const path = value.url.pathname;
-		if (path === '/notes' || path === '/daily' || path === '/tasks') {
+	$effect(() => {
+		const path = page.url.pathname;
+		if (path === ROUTES.notes || path === ROUTES.daily || path === ROUTES.tasks) {
 			selected = path.slice(1) as 'notes' | 'daily' | 'tasks';
 		}
 	});
@@ -22,7 +23,7 @@
 >
 	<div class="flex flex-col items-center gap-2">
 		<Tooltip text="Notes" side="right">
-			<a href="/notes">
+			<a href={resolve(ROUTES.notes)}>
 				<Button
 					size="icon"
 					variant="ghost"
@@ -38,7 +39,7 @@
 			</a>
 		</Tooltip>
 		<Tooltip text="Daily desk" side="right">
-			<a href="/daily">
+			<a href={resolve(ROUTES.daily)}>
 				<Button
 					size="icon"
 					variant="ghost"
@@ -54,7 +55,7 @@
 			</a>
 		</Tooltip>
 		<Tooltip text="Tasks" side="right">
-			<a href="tasks">
+			<a href={resolve(ROUTES.tasks)}>
 				<Button
 					size="icon"
 					variant="ghost"

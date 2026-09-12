@@ -5,23 +5,23 @@
 	import { createNote } from '@/api/notes';
 	import Editor from '@/components/shared/editor/editor.svelte';
 	import Shortcut from '@/components/shared/shortcut.svelte';
-	import { SHORTCUTS } from '@/constants';
-	import { activeFile, collection, collectionSettings } from '@/store';
-	import { shortcutToString } from '@/utils';
+	import { DAILY_DIR, MARKDOWN_EXTENSION, SHORTCUTS } from '@/constants';
+	import { appState } from '@/store.svelte';
+	import { dispatchShortcut, shortcutToString } from '@/utils/keyboard';
 	import { cn } from '@tactile/ui/lib/utils';
 </script>
 
 <div
 	class="relative flex flex-col w-full h-full min-h-[calc(100vh-4.5rem)] items-start bg-secondary-background overflow-y-auto"
 >
-	{#if $collectionSettings.editor.show_toolbar}
+	{#if appState.collectionSettings.editor.show_toolbar}
 		<EditorToolbar hideHistory hideParentDirectories />
 	{/if}
 
 	<div
 		class={cn(
 			'flex flex-col items-center justify-center w-full h-full -mt-10',
-			$activeFile !== null && 'hidden'
+			appState.activeFile !== null && 'hidden'
 		)}
 	>
 		<div class="flex flex-col items-center justify-center w-full h-full -mt-10">
@@ -30,8 +30,8 @@
 				<div class="flex gap-5">
 					<button
 						class="text-sm gap-1.5 flex text-muted-foreground hover:text-secondary-foreground transition-colors items-center justify-center"
-						on:click={() => {
-							document.dispatchEvent(new KeyboardEvent('keydown', { key: 'o', metaKey: true }));
+						onclick={() => {
+							dispatchShortcut('o');
 						}}
 					>
 						<span
@@ -43,10 +43,10 @@
 					>
 					<button
 						class="text-sm gap-1.5 flex text-muted-foreground hover:text-secondary-foreground transition-colors items-center justify-center"
-						on:click={() => {
+						onclick={() => {
 							createNote(
-								$collection + '/.tactile/daily',
-								new Date().toISOString().split('T')[0] + '.md'
+								`${appState.collection}/${DAILY_DIR}`,
+								new Date().toISOString().split('T')[0] + MARKDOWN_EXTENSION
 							);
 						}}
 					>
@@ -62,7 +62,7 @@
 			</div>
 		</div>
 	</div>
-	<div class={cn('w-full h-full', $activeFile === null && 'hidden')}>
+	<div class={cn('w-full h-full', appState.activeFile === null && 'hidden')}>
 		<EditorSearch />
 		<EditorInlineTitle preCheckRegex={/^\d{4}-\d{2}-\d{2}$/} />
 		<Editor />

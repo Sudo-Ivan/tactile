@@ -13,11 +13,6 @@ export interface FileEntry {
 // Local replacement for the removed tauri-plugin-fs-extra-api Metadata type.
 // The v2 plugin-fs stat call returns FileInfo with birthtime and mtime fields
 // which get mapped onto these names in getNoteMetadataParams.
-export interface FileMetadataParams {
-	createdAt: Date;
-	modifiedAt: Date;
-	size: number;
-}
 
 export interface ShortcutParams {
 	alt?: boolean;
@@ -56,6 +51,12 @@ export interface CollectionParams {
 	path: string;
 	name: string;
 	lastOpened: string;
+}
+
+interface FileMetadataParams {
+	createdAt: Date;
+	modifiedAt: Date;
+	size: number;
 }
 
 export interface NoteMetadataParams {

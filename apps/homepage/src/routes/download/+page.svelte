@@ -4,7 +4,6 @@
 	import { Globe, Smartphone } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import { cubicInOut } from 'svelte/easing';
-	import { writable } from 'svelte/store';
 	import { browser } from '$app/environment';
 
 	type PlatformId = 'mac' | 'windows' | 'web' | 'mobile';
@@ -16,16 +15,14 @@
 		{ id: 'mobile', name: 'Mobile' }
 	];
 
-	const selected = writable<PlatformId>('mac');
-	const direction = writable<'left' | 'right'>('right');
+	let selected = $state<PlatformId>('mac');
+	let direction = $state<'left' | 'right'>('right');
 
 	function updateSelected(newSelected: PlatformId) {
-		selected.update((current) => {
-			const currentIndex = platforms.findIndex((p) => p.id === current);
-			const newIndex = platforms.findIndex((p) => p.id === newSelected);
-			direction.set(newIndex > currentIndex ? 'right' : 'left');
-			return newSelected;
-		});
+		const currentIndex = platforms.findIndex((p) => p.id === selected);
+		const newIndex = platforms.findIndex((p) => p.id === newSelected);
+		direction = newIndex > currentIndex ? 'right' : 'left';
+		selected = newSelected;
 	}
 
 	function smoothTransition(node: Element, { direction: dir }: { direction: 'left' | 'right' }) {
@@ -63,7 +60,7 @@
 
 		// Scroll to the selected platform (they all got the id = pb-{platform.name})
 		setTimeout(() => {
-			const platform = platforms.find((p) => p.id === $selected);
+			const platform = platforms.find((p) => p.id === selected);
 			const selectedPlatform = document.getElementById(`pb-${platform?.name}`);
 			if (selectedPlatform) {
 				selectedPlatform.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -121,8 +118,8 @@
 	>
 		<PlatformButton
 			name={platforms[0].name}
-			on:click={() => updateSelected('mac')}
-			active={$selected === 'mac'}
+			onclick={() => updateSelected('mac')}
+			active={selected === 'mac'}
 		>
 			<svg xmlns="http://www.w3.org/2000/svg" fill="#F8F8F8" viewBox="0 0 24 24" class="h-6 w-6">
 				<path
@@ -132,8 +129,8 @@
 		</PlatformButton>
 		<PlatformButton
 			name={platforms[1].name}
-			on:click={() => updateSelected('windows')}
-			active={$selected === 'windows'}
+			onclick={() => updateSelected('windows')}
+			active={selected === 'windows'}
 		>
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#F8F8F8" class="h-6 w-6">
 				<path
@@ -143,15 +140,15 @@
 		</PlatformButton>
 		<PlatformButton
 			name={platforms[2].name}
-			on:click={() => updateSelected('web')}
-			active={$selected === 'web'}
+			onclick={() => updateSelected('web')}
+			active={selected === 'web'}
 		>
 			<Globe class="h-6 w-6 text-[#F8F8F8]" />
 		</PlatformButton>
 		<PlatformButton
 			name={platforms[3].name}
-			on:click={() => updateSelected('mobile')}
-			active={$selected === 'mobile'}
+			onclick={() => updateSelected('mobile')}
+			active={selected === 'mobile'}
 		>
 			<Smartphone class="h-6 w-6 text-[#F8F8F8]" />
 		</PlatformButton>
@@ -159,17 +156,16 @@
 
 	<!-- Download Buttons -->
 	<div class="relative h-full min-h-40 w-full max-w-[600px] sm:mb-40">
-		{#key $selected}
+		{#key selected}
 			<div
 				class="absolute top-0 inset-0 gap-4 flex flex-col sm:flex-row sm:items-start items-center justify-start sm:justify-center"
-				in:smoothTransition={{ direction: $direction }}
-				out:smoothTransition={{ direction: $direction === 'left' ? 'right' : 'left' }}
+				in:smoothTransition={{ direction: direction }}
+				out:smoothTransition={{ direction: direction === 'left' ? 'right' : 'left' }}
 			>
-				{#if $selected === 'mac'}
+				{#if selected === 'mac'}
 					<Button
 						class="flex items-center gap-2 rounded-[0.55rem] w-full sm:w-[210px]"
 						scale="sm"
-						data-sln-event="download: mac-aarch64"
 						onclick={() => downloadForMac('aarch64')}
 					>
 						Download for Apple Silicon
@@ -177,12 +173,11 @@
 					<Button
 						class="flex items-center gap-2 rounded-[0.55rem] w-full sm:w-[210px]"
 						scale="sm"
-						data-sln-event="download: mac-x86_64"
 						onclick={() => downloadForMac('x86_64')}
 					>
 						Download for Intel Chip
 					</Button>
-				{:else if $selected === 'windows'}
+				{:else if selected === 'windows'}
 					<div class="flex flex-col items-center gap-4">
 						<Button
 							class="flex items-center gap-2 rounded-[0.55rem] w-full sm:w-fit"
@@ -193,15 +188,13 @@
 							>Support for Windows is coming soon. In the meantime, you can use the web app.</span
 						>
 					</div>
-				{:else if $selected === 'web'}
+				{:else if selected === 'web'}
 					<a href="/app" rel="noopener noreferrer" target="_blank">
-						<Button
-							class="flex items-center gap-2 rounded-[0.55rem] w-full sm:w-fit"
-							scale="sm"
-							data-sln-event="download: web">Open Web App</Button
+						<Button class="flex items-center gap-2 rounded-[0.55rem] w-full sm:w-fit" scale="sm"
+							>Open Web App</Button
 						>
 					</a>
-				{:else if $selected === 'mobile'}
+				{:else if selected === 'mobile'}
 					<div class="flex flex-col items-center gap-4">
 						<div class="flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
 							<Button

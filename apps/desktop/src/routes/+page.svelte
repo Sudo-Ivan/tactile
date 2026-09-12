@@ -1,24 +1,20 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { shortcutToString } from '@/utils';
-	import { SHORTCUTS } from '@/constants';
-	import Shortcut from '@/components/shared/shortcut.svelte';
+	import { resolve } from '$app/paths';
 	import { getCollections } from '$lib/api/collection';
+	import Shortcut from '@/components/shared/shortcut.svelte';
+	import { GITHUB_REPO_URL, GITHUB_SPONSOR_URL, ROUTES, SHORTCUTS } from '@/constants';
+	import { dispatchShortcut, shortcutToString } from '@/utils/keyboard';
 	import { open as browserOpen } from '@tauri-apps/plugin-shell';
 	import { onMount } from 'svelte';
 
-	let githubShortcut = { command: true, key: 'g' };
-	let sponsorShortcut = { command: true, key: 's' };
-
-	async function fetchCollections() {
-		const collections = await getCollections();
-		return collections;
-	}
+	const githubShortcut = { command: true, key: 'g' };
+	const sponsorShortcut = { command: true, key: 's' };
 
 	onMount(async () => {
-		const hasCollections = (await fetchCollections()).length > 0;
+		const hasCollections = (await getCollections()).length > 0;
 		if (hasCollections) {
-			goto('/notes');
+			goto(resolve(ROUTES.notes));
 		}
 	});
 </script>
@@ -31,8 +27,8 @@
 		<div class="flex gap-5">
 			<button
 				class="text-sm gap-1.5 flex text-muted-foreground hover:text-secondary-foreground transition-colors items-center justify-center"
-				on:click={() => {
-					document.dispatchEvent(new KeyboardEvent('keydown', { key: 'o', metaKey: true }));
+				onclick={() => {
+					dispatchShortcut('o');
 				}}
 			>
 				<span
@@ -44,8 +40,8 @@
 			>
 			<button
 				class="text-sm gap-1.5 flex text-muted-foreground hover:text-secondary-foreground transition-colors items-center justify-center"
-				on:click={() => {
-					browserOpen('https://github.com/Sudo-Ivan/tactile');
+				onclick={() => {
+					browserOpen(GITHUB_REPO_URL);
 				}}
 			>
 				<Shortcut options={githubShortcut} />
@@ -59,8 +55,8 @@
 
 			<button
 				class="text-sm gap-1.5 flex text-muted-foreground hover:text-secondary-foreground transition-colors items-center justify-center"
-				on:click={() => {
-					browserOpen('https://github.com/sponsors/Sudo-Ivan');
+				onclick={() => {
+					browserOpen(GITHUB_SPONSOR_URL);
 				}}
 			>
 				<Shortcut options={sponsorShortcut} />

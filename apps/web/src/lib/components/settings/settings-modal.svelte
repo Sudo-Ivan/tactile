@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Icon, { type IconKey } from '$lib/components/shared/icon.svelte';
 	import { SHORTCUTS } from '@/constants';
-	import { settingsStore } from '@/store';
+	import { appState } from '@/store.svelte';
 	import { Button } from '@tactile/ui/components/button';
 	import * as Dialog from '@tactile/ui/components/dialog';
 	import { Label } from '@tactile/ui/components/label';
@@ -13,8 +13,6 @@
 	import Editor from './editor.svelte';
 	import General from './general.svelte';
 	import TactileSync from './tactile-sync.svelte';
-
-	$: ({ isOpen, activePage } = $settingsStore);
 
 	const settings: Record<string, { name: string; icon: IconKey; content: Component }[]> = {
 		App: [
@@ -45,9 +43,9 @@
 </script>
 
 <Dialog.Root
-	open={isOpen}
+	open={appState.settingsStore.isOpen}
 	onOpenChange={(value) => {
-		settingsStore.set({ isOpen: value, activePage: 'general' });
+		appState.settingsStore = { isOpen: value, activePage: 'general' };
 	}}
 >
 	<Dialog.Trigger>
@@ -65,12 +63,9 @@
 		class="flex items-center justify-center !w-[90%] !h-[90%] !top-[5%] !right-[5%] !bottom-[5%] !left-[5%] pt-16"
 	>
 		<Tabs.Root
-			value={activePage}
+			value={appState.settingsStore.activePage}
 			onValueChange={(value) => {
-				settingsStore.update((store) => {
-					store.activePage = value ?? 'general';
-					return store;
-				});
+				appState.settingsStore.activePage = value ?? 'general';
 			}}
 			class="flex items-center justify-center h-full w-full gap-10"
 		>
@@ -109,7 +104,7 @@
 						>
 							<div class="flex flex-col items-start justify-start h-full w-full gap-3 px-1">
 								<h1 class="text-lg font-medium">{tab.name}</h1>
-								<svelte:component this={tab.content} />
+								<tab.content />
 							</div>
 						</Tabs.Content>
 					{/each}
