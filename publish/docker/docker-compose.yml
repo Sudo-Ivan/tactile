@@ -27,7 +27,9 @@ services:
       TACTILE_PUBLISH_ADDR: :8472
       TACTILE_PUBLISH_ADMIN_ADDR: :8473
       TACTILE_PUBLISH_DATA: /data
-      TACTILE_PUBLISH_BASE_DOMAIN: ${SITE_DOMAIN:-}
+      # BASE_DOMAIN empty (explicitly, via .env) = subpath mode: sites at
+      # /s/{slug}/ on SITE_DOMAIN; unset = subdomain mode on SITE_DOMAIN.
+      TACTILE_PUBLISH_BASE_DOMAIN: ${BASE_DOMAIN-${SITE_DOMAIN:-}}
       TACTILE_PUBLISH_POW_BITS: ${POW_BITS:-16}
       TACTILE_PUBLISH_MAX_STORAGE: ${MAX_STORAGE:-34359738368}
       # Paid tiers: set to enable; mint tokens with `publish -mint <tier>`.
@@ -47,10 +49,10 @@ services:
     volumes:
       - publish-data:/data
     expose:
-      - "8472" # public site content, consumed by caddy
+      - '8472' # public site content, consumed by caddy
     ports:
       # Admin API bound to localhost only for publishctl access.
-      - "127.0.0.1:${ADMIN_PORT:-8473}:8473"
+      - '127.0.0.1:${ADMIN_PORT:-8473}:8473'
     networks: [edge]
 
   caddy:
@@ -67,8 +69,8 @@ services:
     restart: unless-stopped
     environment:
       SITE_DOMAIN: ${SITE_DOMAIN:-tactile.localhost}
-      HTTP_PORT: "8080"
-      HTTPS_PORT: "8443"
+      HTTP_PORT: '8080'
+      HTTPS_PORT: '8443'
       TLS_CONFIG: ${TLS_CONFIG:-internal}
       ACME_EMAIL: ${ACME_EMAIL:-}
       DNS_PROVIDER: ${DNS_PROVIDER:-cloudflare}
@@ -78,12 +80,12 @@ services:
       - caddy-config:/config
       - caddy-data:/data
     ports:
-      - "${HTTP_PORT:-8080}:8080"   # -> host 80 in real deployments
-      - "${HTTPS_PORT:-8443}:8443"  # -> host 443 in real deployments
+      - '${HTTP_PORT:-8080}:8080' # -> host 80 in real deployments
+      - '${HTTPS_PORT:-8443}:8443' # -> host 443 in real deployments
     depends_on: [publish]
     networks: [edge]
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://publish:8472/v1/health"]
+      test: ['CMD', 'wget', '-qO-', 'http://publish:8472/v1/health']
       interval: 30s
       timeout: 5s
       retries: 3

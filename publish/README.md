@@ -21,22 +21,22 @@ Writes are authorized by Ed25519 signatures over domain-separated
 messages with a 2-minute timestamp window; reads of site content are
 unauthenticated by design.
 
-| Endpoint | Auth | Purpose |
-|---|---|---|
-| `GET /v1/info` | open | node info, limits, load, stats |
-| `GET /v1/health` | open | LB probe, 503 when storage full |
-| `GET /v1/challenge` | open | stateless PoW challenge for site claims |
-| `PUT /v1/sites/{slug}` | sig+PoW | claim or update a site |
-| `GET /v1/sites` | sig | list your sites |
-| `GET /v1/sites/{slug}` | sig | site meta (owner only) |
-| `DELETE /v1/sites/{slug}` | sig | remove site, deploys, domains |
-| `POST /v1/sites/{slug}/deploys` | sig | upload tar/tar.gz bundle |
-| `GET /v1/sites/{slug}/deploys` | sig | retained deploys |
-| `POST /v1/sites/{slug}/rollback` | sig | flip current to an old deploy |
-| `POST /v1/sites/{slug}/domains` | sig | attach domain, returns TXT proof |
-| `POST /v1/sites/{slug}/domains/verify` | sig | check TXT, activate domain |
-| `DELETE /v1/sites/{slug}/domains/{domain}` | sig | detach domain |
-| `GET /v1/usage` | sig | deduplicated usage vs limits |
+| Endpoint                                   | Auth    | Purpose                                 |
+| ------------------------------------------ | ------- | --------------------------------------- |
+| `GET /v1/info`                             | open    | node info, limits, load, stats          |
+| `GET /v1/health`                           | open    | LB probe, 503 when storage full         |
+| `GET /v1/challenge`                        | open    | stateless PoW challenge for site claims |
+| `PUT /v1/sites/{slug}`                     | sig+PoW | claim or update a site                  |
+| `GET /v1/sites`                            | sig     | list your sites                         |
+| `GET /v1/sites/{slug}`                     | sig     | site meta (owner only)                  |
+| `DELETE /v1/sites/{slug}`                  | sig     | remove site, deploys, domains           |
+| `POST /v1/sites/{slug}/deploys`            | sig     | upload tar/tar.gz bundle                |
+| `GET /v1/sites/{slug}/deploys`             | sig     | retained deploys                        |
+| `POST /v1/sites/{slug}/rollback`           | sig     | flip current to an old deploy           |
+| `POST /v1/sites/{slug}/domains`            | sig     | attach domain, returns TXT proof        |
+| `POST /v1/sites/{slug}/domains/verify`     | sig     | check TXT, activate domain              |
+| `DELETE /v1/sites/{slug}/domains/{domain}` | sig     | detach domain                           |
+| `GET /v1/usage`                            | sig     | deduplicated usage vs limits            |
 
 Site content: `GET/HEAD` on `{slug}.<base-domain>`, a verified custom
 domain, or `/s/{slug}/...` on any host. Clean URLs (`/about` ->
@@ -85,6 +85,12 @@ distroless `publish` image and a `caddy` edge image compiled with DNS-01
 plugins, plus a compose stack and an `.env.example`. Ports default to
 8080/8443 so it runs unprivileged; use `Caddyfile.dns` for wildcard certs
 with no inbound ports.
+
+Subpath mode is the alternate to subdomains: leave `-base-domain` empty
+(or `BASE_DOMAIN=` in `.env`) and serve one domain with
+`Caddyfile.path`, so sites live at `<domain>/s/{slug}/`. For Coolify,
+`docker-compose.coolify.yml` deploys the node alone behind Coolify's
+proxy in this mode.
 
 ## License
 

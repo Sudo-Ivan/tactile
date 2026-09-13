@@ -29,6 +29,13 @@ flag has a `TACTILE_RELAY_*` env override.
 - Optional User-Agent whitelist (`-ua-whitelist`) and trusted-proxy
   support (`-trusted-proxies`) for deployments behind a load balancer.
 
+## Docker
+
+See `docker/`: a multi-stage, fully pinned, rootless Dockerfile builds a
+distroless `relay` image. `docker-compose.coolify.yml` deploys the relay
+on Coolify behind its own TLS proxy; set the service domain with the
+internal port suffix (e.g. `https://relay.example.com:8471`).
+
 ## Develop
 
 ```bash

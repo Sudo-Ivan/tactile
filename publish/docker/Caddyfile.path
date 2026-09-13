@@ -1,0 +1,24 @@
+# tactile-publish edge: single-domain subpath mode. Sites are served at
+# {$SITE_DOMAIN}/s/{slug}/ instead of {slug}.{$SITE_DOMAIN}, so no
+# wildcard DNS or certificate is needed. Plain ACME (HTTP-01/TLS-ALPN-01)
+# works with just inbound 80/443.
+#
+# Use with:
+#   CADDYFILE=./Caddyfile.path BASE_DOMAIN= docker compose -f docker/docker-compose.yml up -d
+# (see .env.example for the same settings via .env)
+
+{
+	http_port {$HTTP_PORT:8080}
+	https_port {$HTTPS_PORT:8443}
+}
+
+{$SITE_DOMAIN:tactile.localhost} {
+	tls {$TLS_CONFIG:internal}
+
+	reverse_proxy publish:8472
+
+	# The publish API is signature-gated and shares the listener, so it
+	# is reachable at /v1/*. To wall it off at the edge, uncomment:
+	# @api path /v1/*
+	# respond @api 404
+}

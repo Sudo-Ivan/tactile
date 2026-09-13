@@ -34,6 +34,12 @@ func (s *Server) serveHost(w http.ResponseWriter, r *http.Request) {
 		s.serveSite(w, r, slug, r.URL.Path)
 		return
 	}
+	if s.cfg.BaseDomain == "" {
+		// Path mode: no serving suffix, so the bare host gets the same
+		// landing response the apex gets in subdomain mode.
+		s.serveApex(w, r)
+		return
+	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusNotFound)
 	_, _ = w.Write([]byte("no such site\n"))

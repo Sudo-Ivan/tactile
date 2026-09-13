@@ -1,0 +1,65 @@
+# tactile-publish on Coolify, subpath mode: one domain, sites served at
+# https://<domain>/s/{slug}/ instead of {slug}.<domain>. Coolify assigns a
+# single domain per service and has no wildcard DNS, so subdomain serving
+# (docker-compose.yml + Caddy) is not an option here; the Caddy edge is
+# replaced by Coolify's own proxy.
+#
+# Deploy:
+#   New Resource > Docker Compose, point it at this file, then set the
+#   publish service domain with the internal port suffix, e.g.
+#   https://tactile.example.com:8472. The :8472 selects the container port
+#   Coolify routes to; visitors still connect on 443.
+#
+# No container healthcheck: the distroless image has no shell. Coolify
+# health-checks the configured domain itself; GET /v1/health returns 200.
+
+name: tactile-publish
+
+services:
+  publish:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: publish
+      args:
+        IMAGE_VERSION: ${IMAGE_VERSION:-dev}
+        IMAGE_REVISION: ${IMAGE_REVISION:-none}
+        IMAGE_CREATED: ${IMAGE_CREATED:-}
+    image: tactile-publish:${IMAGE_VERSION:-dev}
+    restart: unless-stopped
+    read_only: true
+    environment:
+      TACTILE_PUBLISH_ADDR: :8472
+      # Empty = the REST API shares the public listener so publishctl and
+      # the app can deploy through the Coolify domain. Writes are
+      # signature-gated and rate-limited.
+      TACTILE_PUBLISH_ADMIN_ADDR: ''
+      TACTILE_PUBLISH_DATA: /data
+      # Empty = subpath mode: sites at /s/{slug}/ on the assigned domain.
+      TACTILE_PUBLISH_BASE_DOMAIN: ''
+      TACTILE_PUBLISH_POW_BITS: ${POW_BITS:-16}
+      TACTILE_PUBLISH_MAX_STORAGE: ${MAX_STORAGE:-34359738368}
+      # Paid tiers: set to enable; mint tokens with `publish -mint <tier>`.
+      TACTILE_PUBLISH_TOKEN_SECRETS: ${TOKEN_SECRETS:-}
+      # HA mode: switch to the s3 backend and run N replicas.
+      TACTILE_PUBLISH_BACKEND: ${BACKEND:-fs}
+      TACTILE_PUBLISH_S3_ENDPOINT: ${S3_ENDPOINT:-}
+      TACTILE_PUBLISH_S3_REGION: ${S3_REGION:-}
+      TACTILE_PUBLISH_S3_BUCKET: ${S3_BUCKET:-}
+      TACTILE_PUBLISH_S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      TACTILE_PUBLISH_S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      TACTILE_PUBLISH_S3_PATH_STYLE: ${S3_PATH_STYLE:-true}
+      TACTILE_PUBLISH_S3_PREFIX: ${S3_PREFIX:-}
+      TACTILE_PUBLISH_CACHE_DIR: ${CACHE_DIR:-}
+      TACTILE_PUBLISH_DNS_RESOLVER: ${DNS_RESOLVER:-}
+      # All inbound traffic arrives via the Coolify proxy on docker bridge
+      # networks, so trust private ranges for X-Forwarded-For. Without this
+      # every client would share the proxy IP for rate limiting.
+      TACTILE_PUBLISH_TRUSTED_PROXIES: ${TRUSTED_PROXIES:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
+    volumes:
+      - publish-data:/data
+    expose:
+      - '8472'
+
+volumes:
+  publish-data:

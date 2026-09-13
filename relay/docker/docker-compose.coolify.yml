@@ -1,0 +1,55 @@
+# tactile-relay on Coolify: single service, Coolify's proxy terminates
+# TLS. WebSocket (/v1/ws) and REST (/v1/*) both pass through Traefik with
+# no extra config.
+#
+# Deploy:
+#   New Resource > Docker Compose, point it at this file, then set the
+#   relay service domain with the internal port suffix, e.g.
+#   https://relay.example.com:8471. The :8471 selects the container port
+#   Coolify routes to; visitors still connect on 443.
+#
+# No container healthcheck: the distroless image has no shell. Coolify
+# health-checks the configured domain itself; GET /v1/health returns 200.
+
+name: tactile-relay
+
+services:
+  relay:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: relay
+      args:
+        IMAGE_VERSION: ${IMAGE_VERSION:-dev}
+        IMAGE_REVISION: ${IMAGE_REVISION:-none}
+        IMAGE_CREATED: ${IMAGE_CREATED:-}
+    image: tactile-relay:${IMAGE_VERSION:-dev}
+    restart: unless-stopped
+    read_only: true
+    environment:
+      TACTILE_RELAY_ADDR: :8471
+      TACTILE_RELAY_DATA: /data
+      TACTILE_RELAY_POW_BITS: ${POW_BITS:-18}
+      TACTILE_RELAY_MAX_STORAGE: ${MAX_STORAGE:-1099511627776}
+      # Paid tiers: set to enable; mint tokens with `relay -mint <tier>`.
+      TACTILE_RELAY_TOKEN_SECRETS: ${TOKEN_SECRETS:-}
+      # HA mode: switch to the s3 backend and run N replicas.
+      TACTILE_RELAY_BACKEND: ${BACKEND:-fs}
+      TACTILE_RELAY_S3_ENDPOINT: ${S3_ENDPOINT:-}
+      TACTILE_RELAY_S3_REGION: ${S3_REGION:-}
+      TACTILE_RELAY_S3_BUCKET: ${S3_BUCKET:-}
+      TACTILE_RELAY_S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      TACTILE_RELAY_S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      TACTILE_RELAY_S3_PATH_STYLE: ${S3_PATH_STYLE:-true}
+      TACTILE_RELAY_S3_PREFIX: ${S3_PREFIX:-}
+      # All inbound traffic arrives via the Coolify proxy on docker bridge
+      # networks, so trust private ranges for X-Forwarded-For. Without this
+      # every client would share the proxy IP for rate limiting.
+      TACTILE_RELAY_TRUSTED_PROXIES: ${TRUSTED_PROXIES:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
+    volumes:
+      - relay-data:/data
+    expose:
+      - '8471'
+
+volumes:
+  relay-data:
