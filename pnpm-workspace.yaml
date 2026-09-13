@@ -13,7 +13,7 @@ autoInstallPeers: true
 overrides:
   chokidar: ^5.0.0
   # GHSA-pxg6-pf52-xh8x: cookie <0.7.0 via @sveltejs/kit and runed
-  cookie: '>=0.7.0'
+  cookie: ^0.7.0
 
 allowBuilds:
   esbuild: true
