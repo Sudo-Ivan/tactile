@@ -99,7 +99,7 @@ func New(cfg config.Config, st store.Backend) (*Server, error) {
 
 	s.http = &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           mux,
+		Handler:           cors(mux),
 		ReadHeaderTimeout: cfg.ReadHeaderTimeout,
 		ReadTimeout:       cfg.ReadTimeout,
 		// WriteTimeout must stay zero: WebSocket conns are long-lived.
@@ -111,6 +111,26 @@ func New(cfg config.Config, st store.Backend) (*Server, error) {
 
 // Handler exposes the HTTP handler, mainly for tests.
 func (s *Server) Handler() http.Handler { return s.http.Handler }
+
+// cors lets browser clients (the web app, the Tauri webview) call the REST
+// API. Access is authorized by per-request signatures, not cookies, so any
+// origin is safe to admit; the wildcard never pairs with credentials.
+func cors(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := w.Header()
+		h.Set("Access-Control-Allow-Origin", "*")
+		h.Set("Access-Control-Allow-Methods", "GET, PUT, DELETE, HEAD, OPTIONS")
+		h.Set("Access-Control-Allow-Headers", "Content-Type, "+
+			"X-Tactile-Identity, X-Tactile-Blob-Id, X-Tactile-Ttl, "+
+			"X-Tactile-Timestamp, X-Tactile-Signature")
+		h.Set("Access-Control-Max-Age", "86400")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
 
 // RelayID returns the stable relay identifier.
 func (s *Server) RelayID() string { return s.relayID }

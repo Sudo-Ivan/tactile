@@ -535,6 +535,41 @@ func TestHealthEndpoint(t *testing.T) {
 	}
 }
 
+// Browser clients depend on permissive CORS: requests carry signatures,
+// not cookies, so a wildcard origin is safe. Preflight must not reach the
+// mux (it would 405) and real requests must carry the allow headers.
+func TestCORS(t *testing.T) {
+	_, ts := newTestServer(t, testConfig(t))
+
+	req, _ := http.NewRequest(http.MethodOptions, ts.URL+"/v1/blobs", nil)
+	req.Header.Set("Origin", "https://app.example.com")
+	req.Header.Set("Access-Control-Request-Method", "PUT")
+	req.Header.Set("Access-Control-Request-Headers", "X-Tactile-Identity, X-Tactile-Signature")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res.Body.Close()
+	if res.StatusCode != http.StatusNoContent {
+		t.Fatalf("preflight status %d", res.StatusCode)
+	}
+	if res.Header.Get("Access-Control-Allow-Origin") != "*" {
+		t.Fatal("preflight missing allow-origin")
+	}
+	if !strings.Contains(res.Header.Get("Access-Control-Allow-Headers"), "X-Tactile-Signature") {
+		t.Fatal("preflight missing signature header")
+	}
+
+	res, err = http.Get(ts.URL + "/v1/info")
+	if err != nil {
+		t.Fatal(err)
+	}
+	res.Body.Close()
+	if res.Header.Get("Access-Control-Allow-Origin") != "*" {
+		t.Fatal("response missing allow-origin")
+	}
+}
+
 func TestDeleteFlow(t *testing.T) {
 	_, ts := newTestServer(t, testConfig(t))
 	c := dial(t, ts)

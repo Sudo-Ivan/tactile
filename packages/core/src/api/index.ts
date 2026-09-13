@@ -8,5 +8,8 @@ export * from './graph';
 export * from './identity';
 export * from './links';
 export * from './notes';
+export * from './relay';
 export * from './settings';
+export * from './sync';
+export * from './telemetry';
 export * from './trash';
