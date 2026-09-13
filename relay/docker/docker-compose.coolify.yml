@@ -1,12 +1,20 @@
 # tactile-relay on Coolify: single service, Coolify's proxy terminates
-# TLS. WebSocket (/v1/ws) and REST (/v1/*) both pass through Traefik with
-# no extra config.
+# TLS. WebSocket (/v1/ws) and REST (/v1/*) both pass through the proxy
+# with no extra config.
+#
+# The image is the signed GHCR build from .github/workflows/docker.yml;
+# verify with:
+#   cosign verify ghcr.io/sudo-ivan/tactile-relay:latest \
+#     --certificate-identity-regexp 'https://github.com/Sudo-Ivan/tactile/' \
+#     --certificate-oidc-issuer https://token.actions.githubusercontent.com
 #
 # Deploy:
-#   New Resource > Docker Compose, point it at this file, then set the
-#   relay service domain with the internal port suffix, e.g.
-#   https://relay.example.com:8471. The :8471 selects the container port
-#   Coolify routes to; visitors still connect on 443.
+#   New Resource > Docker Compose (from the repo) or Docker Compose Empty
+#   (paste this file). The SERVICE_URL_RELAY_8471 variable below makes
+#   Coolify generate/assign a domain to the relay service; you can also
+#   set a custom domain on the service's Domains field, with the internal
+#   port suffix: https://relay.example.com:8471. Visitors connect on 443;
+#   the suffix only selects the container port Coolify routes to.
 #
 # The image is distroless: the healthcheck runs the binary itself with
 # -healthcheck, which probes GET /v1/health on the configured address.
@@ -15,15 +23,7 @@ name: tactile-relay
 
 services:
   relay:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-      target: relay
-      args:
-        IMAGE_VERSION: ${IMAGE_VERSION:-dev}
-        IMAGE_REVISION: ${IMAGE_REVISION:-none}
-        IMAGE_CREATED: ${IMAGE_CREATED:-}
-    image: tactile-relay:${IMAGE_VERSION:-dev}
+    image: ghcr.io/sudo-ivan/tactile-relay:${IMAGE_TAG:-latest}
     restart: unless-stopped
     read_only: true
     security_opt:
@@ -37,6 +37,9 @@ services:
       retries: 3
       start_period: 10s
     environment:
+      # Tells Coolify which service and internal port get the domain.
+      # The value is the URL path the generated domain serves.
+      SERVICE_URL_RELAY_8471: /
       TACTILE_RELAY_ADDR: :8471
       TACTILE_RELAY_DATA: /data
       TACTILE_RELAY_POW_BITS: ${POW_BITS:-18}

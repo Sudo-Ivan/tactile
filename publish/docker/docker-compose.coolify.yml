@@ -4,11 +4,19 @@
 # (docker-compose.yml + Caddy) is not an option here; the Caddy edge is
 # replaced by Coolify's own proxy.
 #
+# The image is the signed GHCR build from .github/workflows/docker.yml;
+# verify with:
+#   cosign verify ghcr.io/sudo-ivan/tactile-publish:latest \
+#     --certificate-identity-regexp 'https://github.com/Sudo-Ivan/tactile/' \
+#     --certificate-oidc-issuer https://token.actions.githubusercontent.com
+#
 # Deploy:
-#   New Resource > Docker Compose, point it at this file, then set the
-#   publish service domain with the internal port suffix, e.g.
-#   https://tactile.example.com:8472. The :8472 selects the container port
-#   Coolify routes to; visitors still connect on 443.
+#   New Resource > Docker Compose (from the repo) or Docker Compose Empty
+#   (paste this file). The SERVICE_URL_PUBLISH_8472 variable below makes
+#   Coolify generate/assign a domain to the publish service; you can also
+#   set a custom domain on the service's Domains field, with the internal
+#   port suffix: https://tactile.example.com:8472. Visitors connect on
+#   443; the suffix only selects the container port Coolify routes to.
 #
 # The image is distroless: the healthcheck runs the binary itself with
 # -healthcheck, which probes GET /v1/health on the configured address.
@@ -17,15 +25,7 @@ name: tactile-publish
 
 services:
   publish:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-      target: publish
-      args:
-        IMAGE_VERSION: ${IMAGE_VERSION:-dev}
-        IMAGE_REVISION: ${IMAGE_REVISION:-none}
-        IMAGE_CREATED: ${IMAGE_CREATED:-}
-    image: tactile-publish:${IMAGE_VERSION:-dev}
+    image: ghcr.io/sudo-ivan/tactile-publish:${IMAGE_TAG:-latest}
     restart: unless-stopped
     read_only: true
     security_opt:
@@ -39,6 +39,9 @@ services:
       retries: 3
       start_period: 10s
     environment:
+      # Tells Coolify which service and internal port get the domain.
+      # The value is the URL path the generated domain serves.
+      SERVICE_URL_PUBLISH_8472: /
       TACTILE_PUBLISH_ADDR: :8472
       # Empty = the REST API shares the public listener so publishctl and
       # the app can deploy through the Coolify domain. Writes are

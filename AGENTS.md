@@ -87,8 +87,10 @@ Docker stacks live in `publish/docker/`: `docker-compose.yml` is the
 subdomain stack (`{slug}.<domain>`) with a Caddy edge; `Caddyfile.dns`
 adds DNS-01 wildcard certs; `Caddyfile.path` is the single-domain
 subpath edge (`<domain>/s/{slug}/`). `docker-compose.coolify.yml` deploys
-the node alone on Coolify in subpath mode. `relay/docker/` has the same
-Coolify layout for the relay.
+the node alone on Coolify in subpath mode, pulling the signed GHCR image
+(`ghcr.io/<owner>/tactile-publish`). `relay/docker/` has the same
+Coolify layout for the relay (`ghcr.io/<owner>/tactile-relay`). Images
+are built and cosign-signed by `.github/workflows/docker.yml`.
 
 ## Conventions
 
