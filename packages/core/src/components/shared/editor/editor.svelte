@@ -1,66 +1,63 @@
 <script lang="ts">
+	import { importAttachments } from '../../../api/attachments';
+	import { openWikilink } from '../../../api/links';
 	import { saveNote } from '../../../api/notes';
 	import { SHORTCUTS } from '../../../constants';
 	import { isMobile } from '../../../platform';
 	import { appState } from '../../../state/app.svelte';
 	import { Editor } from '@tiptap/core';
-	import CharacterCount from '@tiptap/extension-character-count';
-	import Document from '@tiptap/extension-document';
-	import { TaskItem } from '@tiptap/extension-task-item';
-	import { TaskList } from '@tiptap/extension-task-list';
-	import { Typography } from '@tiptap/extension-typography';
-	import StarterKit from '@tiptap/starter-kit';
+	import { FileHandler } from '@tiptap/extension-file-handler';
+	import 'katex/dist/katex.min.css';
 	import { onDestroy, onMount } from 'svelte';
-	import { Markdown } from 'tiptap-markdown';
 	import Shortcut from '../shortcut.svelte';
-	import SearchAndReplace from './extensions';
+	import { buildEditorExtensions } from './extensions';
 
 	let element: HTMLDivElement;
 	let tiptapEditor = $state<Editor>();
 	let timeout: ReturnType<typeof setTimeout>;
 
+	async function insertAttachments(editor: Editor, files: File[], pos?: number) {
+		if (!editor.isEditable) return;
+		const imported = await importAttachments(files);
+		if (imported.length === 0) return;
+		const content = imported.map((a) => ({
+			type: 'image',
+			attrs: { src: a.src, alt: a.name }
+		}));
+		const chain = editor.chain().focus();
+		if (pos !== undefined) {
+			chain.insertContentAt(pos, content);
+		} else {
+			chain.insertContent(content);
+		}
+		chain.run();
+	}
+
 	onMount(() => {
 		tiptapEditor = new Editor({
 			element: element,
 			extensions: [
-				StarterKit.configure({
-					document: false,
-					hardBreak: false,
-					link: {
-						HTMLAttributes: {
-							class:
-								'text-primary underline hover:text-primary/80 transition-all cursor-pointer text-base [&>*]:font-normal'
-						}
+				...buildEditorExtensions(),
+				FileHandler.configure({
+					consumePasteEvent: true,
+					onPaste: (editor, files) => {
+						void insertAttachments(editor, files);
 					},
-					paragraph: {
-						HTMLAttributes: {
-							class: 'min-w-[1px] my-1 leading-5'
-						}
+					onDrop: (editor, files, pos) => {
+						void insertAttachments(editor, files, pos);
 					}
-				}),
-				CharacterCount,
-				Document,
-				SearchAndReplace.configure({
-					searchResultClass: 'search-result',
-					disableRegex: false
-				}),
-				Typography,
-				TaskList,
-				TaskItem.configure({
-					HTMLAttributes: {
-						class:
-							'flex items-start pl-1.5 gap-2 [&>div]:mb-0 [&>label]:mt-0 [&>div]:w-full [&>div>p]:inline-block [&>label]:inline-flex [&>label]:items-center [&>label>input]:rounded-md'
-					},
-					nested: true
-				}),
-				Markdown.configure({
-					linkify: true,
-					transformPastedText: true
 				})
 			],
 			editorProps: {
 				attributes: {
 					class: 'prose prose-theme mx-auto focus:outline-none min-h-full pb-6 select-text'
+				},
+				handleClick: (_view, _pos, event) => {
+					const link = (event.target as HTMLElement).closest?.('[data-wikilink]');
+					if (!link) return false;
+					event.preventDefault();
+					void openWikilink(link.getAttribute('data-target') ?? '');
+					return true;
 				}
 			},
 			onCreate: ({ editor }) => {
@@ -187,5 +184,203 @@
 
 	div :global(.search-result-current) {
 		background-color: rgba(248, 160, 30, 0.5);
+	}
+
+	/* ---- code blocks: lowlight theme on app CSS vars ---- */
+
+	div :global(.tt-code-block) {
+		position: relative;
+	}
+
+	div :global(.tt-code-lang) {
+		position: absolute;
+		top: 0.35rem;
+		right: 0.6rem;
+		font-size: 0.7rem;
+		font-family: ui-monospace, monospace;
+		color: hsl(var(--muted-foreground) / 0.7);
+		user-select: none;
+		pointer-events: none;
+		z-index: 1;
+	}
+
+	div :global(.tt-code-block .hljs-comment),
+	div :global(.tt-code-block .hljs-quote) {
+		color: hsl(var(--muted-foreground) / 0.7);
+		font-style: italic;
+	}
+	div :global(.tt-code-block .hljs-keyword),
+	div :global(.tt-code-block .hljs-selector-tag),
+	div :global(.tt-code-block .hljs-tag) {
+		color: hsl(var(--primary));
+	}
+	div :global(.tt-code-block .hljs-string),
+	div :global(.tt-code-block .hljs-regexp),
+	div :global(.tt-code-block .hljs-addition) {
+		color: hsl(140 40% 45%);
+	}
+	div :global(.tt-code-block .hljs-number),
+	div :global(.tt-code-block .hljs-literal) {
+		color: hsl(35 80% 50%);
+	}
+	div :global(.tt-code-block .hljs-title),
+	div :global(.tt-code-block .hljs-title.function_),
+	div :global(.tt-code-block .hljs-title.class_) {
+		color: hsl(210 80% 60%);
+	}
+	div :global(.tt-code-block .hljs-attr),
+	div :global(.tt-code-block .hljs-attribute),
+	div :global(.tt-code-block .hljs-variable),
+	div :global(.tt-code-block .hljs-template-variable) {
+		color: hsl(280 60% 60%);
+	}
+	div :global(.tt-code-block .hljs-built_in),
+	div :global(.tt-code-block .hljs-type) {
+		color: hsl(190 70% 50%);
+	}
+	div :global(.tt-code-block .hljs-deletion) {
+		color: hsl(var(--destructive));
+	}
+	div :global(.tt-code-block .hljs-meta),
+	div :global(.tt-code-block .hljs-symbol) {
+		color: hsl(var(--muted-foreground));
+	}
+
+	/* ---- mermaid ---- */
+
+	div :global(.tt-mermaid-preview) {
+		display: flex;
+		justify-content: center;
+		padding: 0.75rem;
+		margin: 0 0 1rem;
+		border: 1px solid hsl(var(--border));
+		border-radius: 0.5rem;
+		background: hsl(var(--background));
+		overflow-x: auto;
+	}
+
+	div :global(.tt-mermaid-preview svg) {
+		max-width: 100%;
+		height: auto;
+	}
+
+	div :global(.tt-mermaid-error) {
+		color: hsl(var(--destructive));
+		font-family: ui-monospace, monospace;
+		font-size: 0.8rem;
+		white-space: pre-wrap;
+	}
+
+	/* ---- wikilinks ---- */
+
+	div :global(.tt-wikilink) {
+		color: hsl(var(--primary));
+		text-decoration: none;
+		border-bottom: 1px dashed hsl(var(--primary) / 0.5);
+		cursor: pointer;
+		transition: all 120ms ease-in-out;
+	}
+
+	div :global(.tt-wikilink:hover) {
+		border-bottom-style: solid;
+		color: hsl(var(--primary) / 0.8);
+	}
+
+	/* ---- attachments ---- */
+
+	div :global(.tt-attachment) {
+		margin: 0.5rem 0;
+		user-select: none;
+	}
+
+	div :global(.tt-attachment img) {
+		display: block;
+		max-width: 100%;
+		border-radius: 0.5rem;
+		border: 1px solid hsl(var(--border));
+	}
+
+	div :global(.tt-media-frame) {
+		border: 1px solid hsl(var(--border));
+		border-radius: 0.5rem;
+		background: hsl(var(--secondary));
+		overflow: hidden;
+	}
+
+	div :global(.tt-media-head) {
+		padding: 0.3rem 0.6rem;
+		font-size: 0.72rem;
+		font-family: ui-monospace, monospace;
+		color: hsl(var(--muted-foreground));
+		border-bottom: 1px solid hsl(var(--border));
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	div :global(.tt-media-frame video) {
+		display: block;
+		width: 100%;
+		max-height: 480px;
+		background: black;
+	}
+
+	div :global(.tt-media-frame audio) {
+		display: block;
+		width: 100%;
+		height: 2.5rem;
+	}
+
+	div :global(.tt-file-card) {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem 0.9rem;
+		border: 1px solid hsl(var(--border));
+		border-radius: 0.5rem;
+		background: hsl(var(--secondary));
+		color: hsl(var(--foreground));
+		font-size: 0.85rem;
+		text-decoration: none;
+		transition: all 120ms ease-in-out;
+	}
+
+	div :global(.tt-file-card:hover) {
+		background: hsl(var(--accent));
+	}
+
+	div :global(.tt-file-icon) {
+		display: inline-flex;
+		color: hsl(var(--muted-foreground));
+	}
+
+	div :global(.tt-attachment-missing) {
+		display: inline-block;
+		padding: 0.35rem 0.7rem;
+		border: 1px dashed hsl(var(--destructive) / 0.6);
+		border-radius: 0.5rem;
+		color: hsl(var(--destructive));
+		font-size: 0.8rem;
+		font-family: ui-monospace, monospace;
+	}
+
+	/* ---- math ---- */
+
+	div :global([data-type='block-math']) {
+		padding: 0.75rem;
+		margin: 0.5rem 0;
+		border: 1px solid hsl(var(--border));
+		border-radius: 0.5rem;
+		background: hsl(var(--background));
+		overflow-x: auto;
+		text-align: center;
+	}
+
+	div :global([data-type='inline-math']) {
+		padding: 0 0.15em;
+	}
+
+	div :global(.katex) {
+		color: hsl(var(--foreground));
 	}
 </style>
