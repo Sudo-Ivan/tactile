@@ -12,13 +12,14 @@ Guidance for agents and contributors working in this repository.
 - `packages/config-eslint` - shared ESLint config (`@tactile/eslint-config`)
 - `packages/config-tailwind` - shared Tailwind v4 theme (`@tactile/tailwind-config`)
 - `relay` - Go websocket relay server (own Go module, not part of the pnpm workspace)
-- `publish` - self-hosting stack (docker-compose, Caddy)
+- `publish` - Go static publish node plus self-hosting stack
+  (docker-compose, Caddy, Coolify), own Go module
 
 ## Toolchain
 
 - Node >= 22, pnpm 11.24 (pinned via `packageManager`), turbo 2.x
 - Install deps with `pnpm install` (frozen lockfile in CI)
-- Go version comes from `relay/go.mod`
+- Go version comes from `relay/go.mod` / `publish/go.mod`
 
 ## Commands
 
@@ -61,6 +62,28 @@ Run from `relay/`:
 
 Config: every flag has a `TACTILE_RELAY_*` env equivalent, see
 `relay/internal/config/config.go` and `relay/.env.example`.
+
+## Publish (Go)
+
+Run from `publish/`:
+
+- `make build` - build `bin/publish` and `bin/publishctl`
+- `make test` - `go test ./...`
+- `make vet` - `go vet ./...`
+- `make lint` - `golangci-lint run ./...`
+- `make fmt` - gofumpt + gofmt
+- `make docker` - build the publish and caddy images
+- `make race`, `make gosec` - extras
+
+Config: every flag has a `TACTILE_PUBLISH_*` env equivalent, see
+`publish/internal/config/config.go` and `publish/docker/.env.example`.
+
+Docker stacks live in `publish/docker/`: `docker-compose.yml` is the
+subdomain stack (`{slug}.<domain>`) with a Caddy edge; `Caddyfile.dns`
+adds DNS-01 wildcard certs; `Caddyfile.path` is the single-domain
+subpath edge (`<domain>/s/{slug}/`). `docker-compose.coolify.yml` deploys
+the node alone on Coolify in subpath mode. `relay/docker/` has the same
+Coolify layout for the relay.
 
 ## Conventions
 
