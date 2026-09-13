@@ -1,4 +1,8 @@
-import { BASE_APP_SETTINGS, COLLECTION_SETTINGS_PATH } from '../constants';
+import {
+	BASE_APP_SETTINGS,
+	BASE_COLLECTION_SETTINGS,
+	COLLECTION_SETTINGS_PATH
+} from '../constants';
 import { platform } from '../platform';
 import { appState } from '../state/app.svelte';
 import { getStorage } from '../storage';
@@ -25,7 +29,14 @@ export const loadSettings = async (loadApp: boolean, loadCollection: boolean) =>
 		if (!collectionSettingsText) {
 			setSettings('collection');
 		} else {
-			appState.collectionSettings = JSON.parse(collectionSettingsText);
+			// Merge over defaults so keys added in later versions exist.
+			const parsed = JSON.parse(collectionSettingsText);
+			appState.collectionSettings = {
+				...BASE_COLLECTION_SETTINGS,
+				...parsed,
+				editor: { ...BASE_COLLECTION_SETTINGS.editor, ...parsed?.editor },
+				notes: { ...BASE_COLLECTION_SETTINGS.notes, ...parsed?.notes }
+			};
 		}
 	}
 };

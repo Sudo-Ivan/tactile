@@ -117,6 +117,12 @@
 	class="w-full h-[calc(100%-97px)]"
 	class:px-5={isMobile()}
 	class:px-8={!isMobile()}
+	class:tt-nowrap={!appState.collectionSettings.editor.word_wrap}
+	style:--tt-line-max={appState.collectionSettings.editor.line_length === 'full'
+		? 'none'
+		: appState.collectionSettings.editor.line_length === 'wide'
+			? '90ch'
+			: '65ch'}
 >
 	<Shortcut options={SHORTCUTS['note:save']} callback={() => saveNote(appState.activeFile ?? '')} />
 	<Shortcut
@@ -126,6 +132,17 @@
 </div>
 
 <style>
+	/* Line length cap (the prose class pins 65ch by default) and optional
+	 * word wrap; both driven by editor settings. */
+	div :global(.ProseMirror) {
+		max-width: var(--tt-line-max, 65ch);
+	}
+
+	div.tt-nowrap :global(.ProseMirror) {
+		white-space: pre;
+		overflow-x: auto;
+	}
+
 	div :global(ul[data-type='taskList']) {
 		list-style: none;
 		padding: 0;

@@ -42,6 +42,8 @@ export interface CollectionSettingsParams {
 		show_inline_title: boolean;
 		show_line_numbers: boolean;
 		show_toolbar: boolean;
+		word_wrap: boolean;
+		line_length: 'full' | 'wide' | 'readable';
 	};
 	notes: {
 		trash_dir: 'system' | 'tactile' | 'delete';

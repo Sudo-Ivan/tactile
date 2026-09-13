@@ -98,6 +98,36 @@
 	</div>
 
 	<div class="space-y-1">
+		<Label class="text-sm">Text width</Label>
+		<p class="text-muted-foreground text-xs">
+			How wide lines run before wrapping. Full width follows the window.
+		</p>
+		<div class="flex items-center gap-2 pt-2">
+			<Select.Root
+				type="single"
+				value={settings.editor.line_length}
+				onValueChange={(value) =>
+					setSettings('collection', {
+						...settings,
+						editor: {
+							...settings.editor,
+							line_length: value as 'full' | 'wide' | 'readable'
+						}
+					})}
+			>
+				<Select.Trigger>
+					<Select.Value class="text-sm text-foreground/85" />
+				</Select.Trigger>
+				<Select.Content>
+					<Select.Item value="full" label="Full width">Full width</Select.Item>
+					<Select.Item value="wide" label="Wide (90ch)">Wide (90ch)</Select.Item>
+					<Select.Item value="readable" label="Readable (65ch)">Readable (65ch)</Select.Item>
+				</Select.Content>
+			</Select.Root>
+		</div>
+	</div>
+
+	<div class="space-y-1">
 		<Label class="text-sm">Additional settings</Label>
 		<p class="text-muted-foreground text-xs">Additional settings for the editor.</p>
 		<div class="flex flex-col items-start gap-2.5 pt-2">
@@ -138,6 +168,24 @@
 					)}
 				>
 					Show line numbers in source mode
+				</Label>
+			</div>
+			<div class="flex items-center gap-2">
+				<Switch
+					checked={settings.editor.word_wrap}
+					onCheckedChange={(value) =>
+						setSettings('collection', {
+							...settings,
+							editor: { ...settings.editor, word_wrap: value }
+						})}
+				/>
+				<Label
+					class={cn(
+						'text-sm font-normal transition-colors',
+						settings.editor.word_wrap ? 'text-foreground/90' : 'text-foreground/60'
+					)}
+				>
+					Word wrap
 				</Label>
 			</div>
 			<div class="flex items-center gap-2">

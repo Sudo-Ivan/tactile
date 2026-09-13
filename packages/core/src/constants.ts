@@ -49,7 +49,9 @@ export const BASE_COLLECTION_SETTINGS: CollectionSettingsParams = {
 		spell_check: false,
 		show_inline_title: true,
 		show_line_numbers: false,
-		show_toolbar: true
+		show_toolbar: true,
+		word_wrap: true,
+		line_length: 'full'
 	},
 	notes: {
 		trash_dir: 'system',
