@@ -3,6 +3,7 @@ export * from './daily';
 export * from './editor';
 export * from './export';
 export * from './folders';
+export * from './identity';
 export * from './notes';
 export * from './settings';
 export * from './trash';

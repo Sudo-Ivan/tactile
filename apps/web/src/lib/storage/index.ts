@@ -26,6 +26,10 @@ registerStorageProvider(getStorage);
 registerPlatform({
 	readAppSettings: () => window.localStorage.getItem(STORAGE_KEYS.appSettings),
 	writeAppSettings: (json) => window.localStorage.setItem(STORAGE_KEYS.appSettings, json),
+	// The Ed25519 seed persists in localStorage so the same identity signs
+	// sync and publish requests across sessions.
+	readIdentity: () => window.localStorage.getItem(STORAGE_KEYS.identity),
+	writeIdentity: (seedHex) => window.localStorage.setItem(STORAGE_KEYS.identity, seedHex),
 	readCollections: async () => {
 		const storage = await getStorage();
 		return storage.readTextFile(COLLECTIONS_PATH).catch(() => null);

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { getIdentity } from '../../api/identity';
 	import { setSettings } from '../../api/settings';
 	import { SYNC_SERVER_PLACEHOLDER } from '../../constants';
 	import { appState } from '../../state/app.svelte';
@@ -9,7 +10,8 @@
 	import * as Select from '@tactile/ui/components/select';
 	import Switch from '@tactile/ui/components/switch/switch.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
-	import { ChevronRight } from 'lucide-svelte';
+	import { Check, ChevronRight, Copy } from 'lucide-svelte';
+	import { onMount } from 'svelte';
 	import Tooltip from '../shared/tooltip.svelte';
 
 	let autoSync = $state(false);
@@ -24,9 +26,57 @@
 	function setSyncServer(value: string) {
 		setSettings('app', { ...appState.appSettings, sync_server: value.trim() });
 	}
+
+	let publicKey = $state('');
+	let copied = $state(false);
+
+	onMount(async () => {
+		publicKey = (await getIdentity()).publicKeyHex;
+	});
+
+	function copyPublicKey() {
+		if (!publicKey) return;
+		navigator.clipboard.writeText(publicKey);
+		copied = true;
+		setTimeout(() => (copied = false), 1500);
+	}
 </script>
 
 <div class="space-y-5">
+	<div class="space-y-1">
+		<Label class="text-sm">Your identity</Label>
+		<p class="text-muted-foreground text-xs">
+			The public key that identifies this install to sync relays and publish nodes. Private nodes
+			require it on their allowlist. Generated once and stored on this device.
+		</p>
+		<div class="flex items-center gap-2 pt-2">
+			<Input
+				value={publicKey}
+				readonly
+				spellcheck="false"
+				autocomplete="off"
+				class="h-8 text-sm font-mono flex-1"
+				placeholder="Generating identity..."
+			/>
+			<Button
+				variant="secondary"
+				size="sm"
+				class="h-8 text-sm font-normal gap-1.5"
+				scale="sm"
+				disabled={publicKey === ''}
+				onclick={copyPublicKey}
+			>
+				{#if copied}
+					<Check class="h-3.5 w-3.5" />
+					Copied
+				{:else}
+					<Copy class="h-3.5 w-3.5" />
+					Copy
+				{/if}
+			</Button>
+		</div>
+	</div>
+
 	<div class="space-y-1">
 		<Label class="text-sm">Auto sync</Label>
 		<p class="text-muted-foreground text-xs">Automatically sync your notes.</p>

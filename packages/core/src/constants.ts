@@ -72,6 +72,8 @@ export const COLLECTIONS_PATH = `/${TACTILE_DIR}/collections.json`;
 export const DAILY_DIR = `${TACTILE_DIR}/daily`;
 export const COLLECTIONS_FILENAME = 'collections.json';
 export const APP_SETTINGS_FILENAME = 'settings.json';
+// Desktop stores the Ed25519 identity seed in the app data dir.
+export const IDENTITY_FILENAME = 'identity.key';
 
 export const UNTITLED_NAME = 'Untitled';
 export const MARKDOWN_EXTENSION = '.md';
@@ -95,7 +97,8 @@ export type AppRoutePath = (typeof ROUTES)[keyof typeof ROUTES];
 
 // localStorage keys
 export const STORAGE_KEYS = {
-	appSettings: 'appSettings'
+	appSettings: 'appSettings',
+	identity: 'tactile.identity'
 } as const;
 
 // Shared timing values in milliseconds. The flat *_MS exports are the

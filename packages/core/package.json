@@ -38,6 +38,7 @@
 		"@tiptap/extension-typography": "catalog:",
 		"@tiptap/pm": "catalog:",
 		"@tiptap/starter-kit": "catalog:",
+		"@noble/ed25519": "catalog:",
 		"lucide-svelte": "catalog:",
 		"markdown-it": "catalog:",
 		"tiptap-markdown": "catalog:"

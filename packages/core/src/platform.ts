@@ -27,6 +27,14 @@ export interface PlatformHooks {
 	readCollections: () => Promise<string | null>;
 	writeCollections: (json: string) => Promise<void>;
 
+	// Tactile identity persistence: the hex-encoded 32-byte Ed25519 seed
+	// the app signs sync and publish requests with. Web uses localStorage,
+	// desktop a file in the app data dir. Return null when no identity has
+	// been generated yet; when the hooks are absent the identity is not
+	// persisted.
+	readIdentity?: () => Promise<string | null> | string | null;
+	writeIdentity?: (seedHex: string) => Promise<void> | void;
+
 	// Deliver an exported file to the user. Web triggers a browser download;
 	// desktop asks for a location with a native save dialog.
 	saveExport: (name: string, data: string | Uint8Array, mime: string) => void | Promise<void>;

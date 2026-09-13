@@ -12,6 +12,9 @@ catalogs:
     '@internationalized/date':
       specifier: ^3.12.4
       version: 3.12.4
+    '@noble/ed25519':
+      specifier: ^3.2.0
+      version: 3.2.0
     '@sveltejs/adapter-static':
       specifier: ^3.0.10
       version: 3.0.10
@@ -431,6 +434,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@noble/ed25519':
+        specifier: 'catalog:'
+        version: 3.2.0
       '@tactile/storage':
         specifier: workspace:*
         version: link:../storage
@@ -892,6 +898,9 @@ packages:
     peerDependencies:
       '@emnapi/core': ^1.7.1 || ^2.0.0-alpha.4
       '@emnapi/runtime': ^1.7.1 || ^2.0.0-alpha.4
+
+  '@noble/ed25519@3.2.0':
+    resolution: {integrity: sha512-criDgRlnUA09hchYrTy/JUWPIEap5rZxQe6wDWzRx51oWWpDRcUpuNzlgPxDJaOK6AsW9c0wKcj3rKRv6t+bPQ==}
 
   '@oxc-parser/binding-android-arm-eabi@0.148.0':
     resolution: {integrity: sha512-pHASv9g5pASxb7akHERZNSkrEqPhFaUix98o7d9hbTpolnnFWl7UiRrcMhCsV1+iVO4/cJwKsbKRJTFNs2tdBQ==}
@@ -3273,6 +3282,8 @@ snapshots:
       '@emnapi/runtime': 1.11.2
       '@tybys/wasm-util': 0.10.3
     optional: true
+
+  '@noble/ed25519@3.2.0': {}
 
   '@oxc-parser/binding-android-arm-eabi@0.148.0':
     optional: true

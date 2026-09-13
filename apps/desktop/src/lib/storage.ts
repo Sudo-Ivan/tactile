@@ -1,7 +1,12 @@
 import { exportNoteHtml } from '@tactile/core/api/export';
 import { registerPlatform } from '@tactile/core/platform';
 import { registerStorageProvider } from '@tactile/core/storage';
-import { APP_SETTINGS_FILENAME, COLLECTIONS_FILENAME, OS_TRASH_DIR } from '@/constants';
+import {
+	APP_SETTINGS_FILENAME,
+	COLLECTIONS_FILENAME,
+	IDENTITY_FILENAME,
+	OS_TRASH_DIR
+} from '@/constants';
 import { isMobile } from '@/platform.svelte';
 import { appState, setAppTheme } from '@tactile/core/state';
 import { fileManagerLabel, showInFolder } from '@/utils/fs';
@@ -73,6 +78,11 @@ registerPlatform({
 			.catch(() => null),
 	writeCollections: (json) =>
 		storage.writeTextFile(COLLECTIONS_FILENAME, json, { baseDir: BaseDirectory.AppData }),
+	// The Ed25519 seed persists next to the app settings in the app data dir.
+	readIdentity: () =>
+		storage.readTextFile(IDENTITY_FILENAME, { baseDir: BaseDirectory.AppData }).catch(() => null),
+	writeIdentity: (seedHex) =>
+		storage.writeTextFile(IDENTITY_FILENAME, seedHex, { baseDir: BaseDirectory.AppData }),
 	// Ask where to save, then write. A cancelled dialog just skips the write.
 	saveExport: async (name, data) => {
 		const target = await save({ defaultPath: name });
