@@ -10,7 +10,7 @@
 	import * as Collapsible from '@tactile/ui/components/collapsible';
 	import { Input } from '@tactile/ui/components/input';
 	import { cn } from '@tactile/ui/lib/utils';
-	import { ALargeSmall, Replace, ReplaceAll, WholeWord } from 'lucide-svelte';
+	import { ALargeSmall, Replace, ReplaceAll, WholeWord } from '@lucide/svelte';
 	import { untrack } from 'svelte';
 
 	let replaceValue = $state('');

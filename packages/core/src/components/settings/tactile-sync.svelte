@@ -10,7 +10,7 @@
 	import * as Select from '@tactile/ui/components/select';
 	import Switch from '@tactile/ui/components/switch/switch.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
-	import { Check, ChevronRight, Copy } from 'lucide-svelte';
+	import { Check, ChevronRight, Copy } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 	import Tooltip from '../shared/tooltip.svelte';
 

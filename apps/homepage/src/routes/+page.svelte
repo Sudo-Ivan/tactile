@@ -7,7 +7,7 @@
 	import { APP_URL, REPO_URL } from '$lib/site';
 	import { resolve } from '$app/paths';
 
-	import { ArrowUpRight, FileText, Lock, RefreshCw, Code } from 'lucide-svelte';
+	import { ArrowUpRight, FileText, Lock, RefreshCw, Code } from '@lucide/svelte';
 
 	const features = [
 		{

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import PlatformButton from '$lib/components/platform-button.svelte';
 	import Button from '@tactile/ui/components/button/button.svelte';
-	import { Globe, Smartphone } from 'lucide-svelte';
+	import { Globe, Smartphone } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 	import { cubicInOut } from 'svelte/easing';
 	import { browser } from '$app/environment';

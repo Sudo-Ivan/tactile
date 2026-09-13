@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
 	import { cn } from '../../lib/utils';
-	import { Check } from 'lucide-svelte';
+	import { Check } from '@lucide/svelte';
 
 	let {
 		ref = $bindable(null),

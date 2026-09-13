@@ -4,7 +4,7 @@
 	import { GITHUB_REPO_URL } from '../../../../constants';
 	import { openExternal } from '../../../../platform';
 	import * as Command from '@tactile/ui/components/command';
-	import { Share2 } from 'lucide-svelte';
+	import { Share2 } from '@lucide/svelte';
 
 	let { onPageChange }: { onPageChange: (page: string | undefined) => void } = $props();
 </script>

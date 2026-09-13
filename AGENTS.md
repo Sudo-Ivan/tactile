@@ -18,6 +18,11 @@ Guidance for agents and contributors working in this repository.
 ## Toolchain
 
 - Node >= 22, pnpm 11.24 (pinned via `packageManager`), turbo 2.x
+- TypeScript: `tsc` is the native TypeScript 7 binary via the
+  `@typescript/native` catalog alias; the `typescript` package resolves to
+  `@typescript/typescript6` so tools using the JS API (typescript-eslint,
+  svelte-check internals) keep working. `svelte-check` runs with
+  `--tsgo-experimental-api` for native checking.
 - Install deps with `pnpm install` (frozen lockfile in CI)
 - Go version comes from `relay/go.mod` / `publish/go.mod`
 

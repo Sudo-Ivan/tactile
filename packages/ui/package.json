@@ -15,12 +15,13 @@
 	},
 	"scripts": {
 		"lint": "eslint .",
-		"check": "svelte-check --tsconfig ./tsconfig.json",
+		"check": "svelte-check --tsgo-experimental-api --tsconfig ./tsconfig.json",
 		"test": "vitest run"
 	},
 	"devDependencies": {
 		"@sveltejs/vite-plugin-svelte": "catalog:",
 		"@tactile/eslint-config": "workspace:*",
+		"@typescript/native": "catalog:",
 		"svelte": "catalog:",
 		"svelte-check": "catalog:",
 		"tailwindcss": "catalog:",
@@ -31,7 +32,7 @@
 		"@internationalized/date": "catalog:",
 		"bits-ui": "catalog:",
 		"clsx": "catalog:",
-		"lucide-svelte": "catalog:",
+		"@lucide/svelte": "catalog:",
 		"tailwind-merge": "catalog:",
 		"tailwind-variants": "catalog:"
 	}

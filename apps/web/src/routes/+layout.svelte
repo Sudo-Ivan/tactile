@@ -10,7 +10,7 @@
 	import { createDeviceDetector } from '@/utils';
 	import '@tactile/ui/app.web.css';
 	import { ModeWatcher } from 'mode-watcher';
-	import { Loader } from 'lucide-svelte';
+	import { Loader } from '@lucide/svelte';
 	import { onMount, type Snippet } from 'svelte';
 
 	interface Props {

@@ -1,19 +1,20 @@
 {
-  "name": "@tactile/storage",
-  "version": "0.0.0",
-  "private": true,
-  "type": "module",
-  "exports": {
-    ".": "./src/index.ts"
-  },
-  "scripts": {
-    "lint": "eslint .",
-    "test": "vitest run",
-    "check": "tsc --noEmit"
-  },
-  "devDependencies": {
-    "@tactile/eslint-config": "workspace:*",
-    "typescript": "catalog:",
-    "vitest": "^5.0.0"
-  }
+	"name": "@tactile/storage",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"lint": "eslint .",
+		"test": "vitest run",
+		"check": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@tactile/eslint-config": "workspace:*",
+		"@typescript/native": "catalog:",
+		"typescript": "catalog:",
+		"vitest": "^5.0.0"
+	}
 }

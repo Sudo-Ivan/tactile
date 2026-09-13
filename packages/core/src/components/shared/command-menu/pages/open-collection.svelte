@@ -10,7 +10,7 @@
 	import { getStorage } from '../../../../storage';
 	import { formatTimeAgo } from '../../../../utils/format';
 	import * as Command from '@tactile/ui/components/command';
-	import { Loader } from 'lucide-svelte';
+	import { Loader } from '@lucide/svelte';
 
 	interface Props {
 		// Bindable so the parent dialog can hide its empty-state while an

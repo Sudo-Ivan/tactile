@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Dialog as SheetPrimitive } from 'bits-ui';
-	import { X } from 'lucide-svelte';
+	import { X } from '@lucide/svelte';
 	import { SheetOverlay, SheetPortal, type Side, sheetVariants } from './index.js';
 	import { cn } from '../../lib/utils';
 

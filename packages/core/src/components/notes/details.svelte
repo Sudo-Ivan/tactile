@@ -9,7 +9,7 @@
 	import { Button } from '@tactile/ui/components/button';
 	import { cn } from '@tactile/ui/lib/utils';
 	import type { NodePos } from '@tiptap/core';
-	import { Waypoints } from 'lucide-svelte';
+	import { Waypoints } from '@lucide/svelte';
 	import GraphPanel from './graph-panel.svelte';
 	import HistoryPanel from './history-panel.svelte';
 	import MetadataPanel from './metadata-panel.svelte';

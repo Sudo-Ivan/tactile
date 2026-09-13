@@ -10,7 +10,7 @@
 	import * as Collapsible from '@tactile/ui/components/collapsible';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
-	import { ChevronDown, Loader } from 'lucide-svelte';
+	import { ChevronDown, Loader } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
 	// searchTasks performs the platform-specific task search: searchEntries

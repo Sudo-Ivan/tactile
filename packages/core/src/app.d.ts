@@ -29,3 +29,5 @@ declare module '$app/state' {
 		[key: string]: unknown;
 	};
 }
+
+declare module '*.css';

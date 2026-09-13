@@ -7,8 +7,8 @@
 		"prepare": "svelte-kit sync",
 		"build": "vite build",
 		"preview": "vite preview",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"check": "svelte-kit sync && svelte-check --tsgo-experimental-api --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsgo-experimental-api --tsconfig ./tsconfig.json --watch",
 		"test": "vitest run",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write ."
@@ -23,6 +23,7 @@
 		"@tailwindcss/vite": "catalog:",
 		"@testing-library/svelte": "^5.4.2",
 		"@types/node": "catalog:",
+		"@typescript/native": "catalog:",
 		"eslint": "catalog:",
 		"jsdom": "^30.0.1",
 		"prettier": "catalog:",
@@ -44,7 +45,7 @@
 		"@tiptap/core": "catalog:",
 		"@tiptap/pm": "catalog:",
 		"@tiptap/starter-kit": "catalog:",
-		"lucide-svelte": "catalog:",
+		"@lucide/svelte": "catalog:",
 		"mode-watcher": "catalog:"
 	}
 }

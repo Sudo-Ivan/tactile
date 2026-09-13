@@ -3,7 +3,7 @@
 	import * as Tooltip from '@tactile/ui/components/tooltip';
 	import GithubLogo from './icons/github-logo.svelte';
 	import RustLogo from './icons/rust-logo.svelte';
-	import { Monitor, Smartphone, Tablet, Zap } from 'lucide-svelte';
+	import { Monitor, Smartphone, Tablet, Zap } from '@lucide/svelte';
 	import { onMount, type Snippet } from 'svelte';
 
 	type TooltipType = 'github' | 'privacy' | 'rust' | 'lightweight' | 'shortcuts';

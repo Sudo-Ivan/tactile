@@ -56,6 +56,7 @@ export default [
     ignores: [
       '**/build/',
       '**/.svelte-kit/',
+      '**/.svelte-check/',
       '**/dist/',
       '**/node_modules/',
       '**/src-tauri/target/',

@@ -9,7 +9,7 @@
 	import { setEditorMode } from '@tactile/core/api/editor';
 	import Button from '@tactile/ui/components/button/button.svelte';
 	import { cn } from '@tactile/ui/lib/utils';
-	import { FileCode2 } from 'lucide-svelte';
+	import { FileCode2 } from '@lucide/svelte';
 
 	let {
 		hideHistory = false,

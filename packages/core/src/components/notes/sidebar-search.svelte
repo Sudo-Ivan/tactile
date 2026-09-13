@@ -20,7 +20,7 @@
 	import { appState } from '../../state/app.svelte';
 	import { Button } from '@tactile/ui/components/button';
 	import { cn } from '@tactile/ui/lib/utils';
-	import { ALargeSmall, WholeWord } from 'lucide-svelte';
+	import { ALargeSmall, WholeWord } from '@lucide/svelte';
 	import Icon from '../shared/icon.svelte';
 	import Tooltip from '../shared/tooltip.svelte';
 

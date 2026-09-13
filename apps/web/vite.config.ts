@@ -17,7 +17,7 @@ export default defineConfig({
 				// Packages shipping .svelte sources must be processed by the
 				// svelte plugin rather than loaded as raw node modules.
 				// Patterns match against resolved file paths, not specifiers.
-				inline: [/node_modules\/(bits-ui|@tactile|lucide-svelte|mode-watcher|@internationalized)/]
+				inline: [/node_modules\/(bits-ui|@tactile|@lucide\/svelte|mode-watcher|@internationalized)/]
 			}
 		}
 	}

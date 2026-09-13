@@ -10,6 +10,7 @@ coverage
 
 # svelte
 .svelte-kit
+.svelte-check
 
 # misc
 .DS_Store

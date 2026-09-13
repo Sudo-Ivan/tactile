@@ -8,7 +8,7 @@
 	import { Input } from '@tactile/ui/components/input';
 	import * as Sheet from '@tactile/ui/components/sheet';
 	import { cn } from '@tactile/ui/lib/utils';
-	import { ChevronDown } from 'lucide-svelte';
+	import { ChevronDown } from '@lucide/svelte';
 	import Icon from '../shared/icon.svelte';
 	import { createNoteCommands, mainCommands } from '../../commands';
 	import Shortcut from '../shared/shortcut.svelte';

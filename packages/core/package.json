@@ -24,7 +24,7 @@
 	},
 	"scripts": {
 		"lint": "eslint .",
-		"check": "svelte-check --tsconfig ./tsconfig.json",
+		"check": "svelte-check --tsgo-experimental-api --tsconfig ./tsconfig.json",
 		"test": "vitest run"
 	},
 	"dependencies": {
@@ -47,7 +47,7 @@
 		"d3-quadtree": "catalog:",
 		"katex": "catalog:",
 		"lowlight": "catalog:",
-		"lucide-svelte": "catalog:",
+		"@lucide/svelte": "catalog:",
 		"markdown-it": "catalog:",
 		"mermaid": "catalog:",
 		"tiptap-markdown": "catalog:"
@@ -57,6 +57,7 @@
 		"@tactile/eslint-config": "workspace:*",
 		"@types/d3-force": "catalog:",
 		"@types/d3-quadtree": "catalog:",
+		"@typescript/native": "catalog:",
 		"happy-dom": "20.12.2",
 		"svelte": "catalog:",
 		"svelte-check": "catalog:",
