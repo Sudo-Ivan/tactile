@@ -87,12 +87,14 @@ export async function openWikilink(target: string) {
 // standard [text](other.md) links. Returns raw targets.
 export function extractNoteLinks(content: string): string[] {
 	const out: string[] = [];
-	const wiki = /\[\[([^\][|\n]+?)(?:\|[^\]\n]*)?\]\]/g;
+	// Character classes exclude the opening brackets so the regexes scan
+	// linearly: no repetition of '[' or ']]' can force backtracking.
+	const wiki = /\[\[([^[\]|\n]+)(?:\|[^[\]\n]*)?\]\]/g;
 	let m: RegExpExecArray | null;
 	while ((m = wiki.exec(content))) {
 		out.push(m[1].trim());
 	}
-	const md = /\[[^\]\n]*\]\(([^)\s]+)\)/g;
+	const md = /\[[^[\]\n]*\]\(([^)\s]+)\)/g;
 	while ((m = md.exec(content))) {
 		const href = m[1].replace(/^<|>$/g, '').split('#')[0].split('?')[0];
 		if (href.toLowerCase().endsWith(MARKDOWN_EXTENSION) && !/^https?:/i.test(href)) {

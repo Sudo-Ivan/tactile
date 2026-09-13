@@ -174,6 +174,7 @@ catalogs:
 
 overrides:
   chokidar: ^5.0.0
+  cookie: '>=0.7.0'
 
 importers:
 
@@ -2261,9 +2262,9 @@ packages:
     resolution: {integrity: sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==}
     engines: {node: '>= 12'}
 
-  cookie@0.6.0:
-    resolution: {integrity: sha512-U71cyTamuh1CRNCfpGY6to28lxvNwPG4Guz/EVjgf3Jmzv0vlDp1atT9eS5dDjMYHucpHbWns6Lwf3BKz6svdw==}
-    engines: {node: '>= 0.6'}
+  cookie@2.0.1:
+    resolution: {integrity: sha512-yuToqVvRrj6pfDXREyQAAv8SkAEk/8GS3jQRTiUMm66TVtBYmqQeoEjL2Lmq8Rpo6271vH76InTChTitEAm65w==}
+    engines: {node: '>=22'}
 
   cose-base@1.0.3:
     resolution: {integrity: sha512-s9whTXInMSgAp/NVXVNuVxVKzGH2qck3aQlVHxDCdAEPgtMKwc4Wq6/QKhgdEdgbLSi9rBTAcPoRa6JpiG4ksg==}
@@ -4188,7 +4189,7 @@ snapshots:
       '@sveltejs/vite-plugin-svelte': 7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
       '@types/cookie': 0.6.0
       acorn: 8.18.0
-      cookie: 0.6.0
+      cookie: 2.0.1
       devalue: 5.9.2
       esm-env: 1.2.2
       kleur: 4.1.5
@@ -5011,7 +5012,7 @@ snapshots:
 
   commander@8.3.0: {}
 
-  cookie@0.6.0: {}
+  cookie@2.0.1: {}
 
   cose-base@1.0.3:
     dependencies:
