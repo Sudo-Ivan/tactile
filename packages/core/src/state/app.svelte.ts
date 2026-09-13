@@ -26,7 +26,7 @@ export const appState = $state({
 	editor: new EditorStore(),
 	editorMode: 'edit' as 'edit' | 'view' | 'source',
 	sourceContent: '',
-	noteDetailTab: 'metadata' as 'metadata' | 'toc' | 'history',
+	noteDetailTab: 'metadata' as 'metadata' | 'toc' | 'history' | 'graph',
 	editorSearchValue: '',
 	editorSearchActive: false,
 	collection: undefined as string | undefined,

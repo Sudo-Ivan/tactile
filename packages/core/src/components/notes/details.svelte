@@ -9,13 +9,15 @@
 	import { Button } from '@tactile/ui/components/button';
 	import { cn } from '@tactile/ui/lib/utils';
 	import type { NodePos } from '@tiptap/core';
+	import { Waypoints } from 'lucide-svelte';
+	import GraphPanel from './graph-panel.svelte';
 	import HistoryPanel from './history-panel.svelte';
 	import MetadataPanel from './metadata-panel.svelte';
 	import TocPanel from './toc-panel.svelte';
 
 	let tab = $derived(appState.noteDetailTab);
 
-	const setTab = (value: 'metadata' | 'toc' | 'history') => {
+	const setTab = (value: 'metadata' | 'toc' | 'history' | 'graph') => {
 		appState.noteDetailTab = value;
 	};
 	let nodeHeadings = $state<NodePos[] | null>(null);
@@ -114,6 +116,22 @@
 				<Icon name="reload" class="w-[16px] h-[16px]" />
 			</Button>
 		</Tooltip>
+		<Tooltip text="Note graph" side="bottom">
+			<Button
+				size="icon"
+				variant="ghost"
+				scale="md"
+				class={cn(
+					'h-7 w-7 text-muted-foreground hover:text-foreground transition-all',
+					tab === 'graph' && 'text-foreground bg-accent'
+				)}
+				onclick={() => {
+					setTab('graph');
+				}}
+			>
+				<Waypoints class="w-[16px] h-[16px]" />
+			</Button>
+		</Tooltip>
 	</div>
 
 	<!-- Metadata -->
@@ -123,6 +141,8 @@
 		<TocPanel headings={nodeHeadings} />
 	{:else if tab === 'history'}
 		<HistoryPanel />
+	{:else if tab === 'graph'}
+		<GraphPanel />
 	{:else}
 		<div class="flex flex-col items-center justify-center w-full h-full">
 			<p class="text-[13px] text-muted-foreground">
