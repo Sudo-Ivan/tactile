@@ -58,7 +58,7 @@
 		"@types/d3-force": "catalog:",
 		"@types/d3-quadtree": "catalog:",
 		"@typescript/native": "catalog:",
-		"happy-dom": "20.12.2",
+		"happy-dom": "20.14.3",
 		"svelte": "catalog:",
 		"svelte-check": "catalog:",
 		"typescript": "catalog:",
