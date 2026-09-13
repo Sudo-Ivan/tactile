@@ -17,8 +17,14 @@ function flatten(entries: FileEntry[], out: FileEntry[] = []): FileEntry[] {
 	return out;
 }
 
+export interface NoteIndexEntry {
+	path: string;
+	rel: string;
+	name: string;
+}
+
 // All markdown notes in the open collection as {path, rel, name}.
-export function noteIndex(): { path: string; rel: string; name: string }[] {
+export function noteIndex(): NoteIndexEntry[] {
 	const root = appState.collection;
 	if (!root) return [];
 	const prefix = root.endsWith('/') ? root : root + '/';
@@ -31,11 +37,13 @@ export function noteIndex(): { path: string; rel: string; name: string }[] {
 }
 
 // Resolve a wikilink target (Note, dir/Note, Note.md) to an existing
-// note path, or null when no note matches.
-export function resolveNoteTarget(target: string): string | null {
+// note path, or null when no note matches. Callers resolving many
+// links (the graph builder) should pass a shared index to avoid
+// rebuilding it per link.
+export function resolveNoteTarget(target: string, index?: NoteIndexEntry[]): string | null {
 	const clean = stripMd(target.trim().replace(/^\/+/, ''));
 	if (!clean) return null;
-	const notes = noteIndex();
+	const notes = index ?? noteIndex();
 	const lower = clean.toLowerCase();
 
 	// Exact relative-path match.

@@ -9,6 +9,11 @@ vi.mock('../storage', () => ({
 	getStorage: async () => ({
 		mkdir: async () => {},
 		exists: async (path: string) => written.has(path),
+		readFile: async (path: string) => {
+			const bytes = written.get(path);
+			if (bytes === undefined) throw new Error('not found');
+			return bytes;
+		},
 		writeFile: async (path: string, bytes: Uint8Array) => {
 			written.set(path, bytes);
 		}
@@ -64,5 +69,40 @@ describe('importAttachments', () => {
 		expect(out[0].src).not.toContain('..');
 		expect(out[0].src).not.toContain('<');
 		expect(out[1].src).toBe('attachments/attachment');
+	});
+});
+
+describe('blob url cache', () => {
+	it('refcounts acquire/release and revokes when free', async () => {
+		const { acquireAttachmentUrl, releaseAttachmentUrl, clearAttachmentCache } =
+			await import('./attachments');
+		const revoked: string[] = [];
+		const created: string[] = [];
+		vi.stubGlobal('URL', {
+			...URL,
+			createObjectURL: () => {
+				const u = `blob:mock-${created.length}`;
+				created.push(u);
+				return u;
+			},
+			revokeObjectURL: (u: string) => {
+				revoked.push(u);
+			}
+		});
+		written.set('/vault/attachments/x.png', new Uint8Array([1]));
+
+		const p1 = acquireAttachmentUrl('attachments/x.png');
+		const p2 = acquireAttachmentUrl('attachments/x.png');
+		expect(await p1).toBe(await p2); // shared
+		expect(created).toHaveLength(1);
+
+		releaseAttachmentUrl('attachments/x.png');
+		expect(revoked).toHaveLength(0); // still referenced
+		releaseAttachmentUrl('attachments/x.png');
+		await Promise.resolve();
+		expect(revoked).toEqual([created[0]]);
+
+		clearAttachmentCache();
+		vi.unstubAllGlobals();
 	});
 });

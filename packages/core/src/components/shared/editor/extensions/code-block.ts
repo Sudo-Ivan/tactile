@@ -72,11 +72,15 @@ class CodeBlockView implements NodeView {
 
 	update(node: Node) {
 		if (node.type !== this.node.type) return false;
-		const langChanged = node.attrs.language !== this.node.attrs.language;
+		const lang = (node.attrs.language as string | null) ?? '';
+		const prevLang = (this.node.attrs.language as string | null) ?? '';
+		const isMermaid = lang === MERMAID_LANG;
 		const textChanged = node.textContent !== this.node.textContent;
 		this.node = node;
-		if (langChanged || textChanged || this.preview.style.display === 'none') {
+		if (lang !== prevLang) {
 			this.sync(node);
+		} else if (isMermaid && textChanged) {
+			this.scheduleRender(node);
 		}
 		return true;
 	}

@@ -1,7 +1,12 @@
 import { Image } from '@tiptap/extension-image';
 import type { NodeView } from '@tiptap/pm/view';
 import type { Node } from '@tiptap/pm/model';
-import { attachmentKind, isExternalSrc, resolveAttachmentUrl } from '../../../../api/attachments';
+import {
+	acquireAttachmentUrl,
+	attachmentKind,
+	isExternalSrc,
+	releaseAttachmentUrl
+} from '../../../../api/attachments';
 
 // Attachment rendering. The node stays the standard `image` node so
 // markdown serialization remains ![alt](src); the nodeview swaps in a
@@ -15,6 +20,7 @@ function basename(src: string): string {
 class AttachmentView implements NodeView {
 	dom: HTMLElement;
 	private media: HTMLMediaElement | HTMLImageElement | HTMLAnchorElement | null = null;
+	private loadedSrc: string | null = null;
 
 	constructor(private node: Node) {
 		this.dom = document.createElement('div');
@@ -22,6 +28,11 @@ class AttachmentView implements NodeView {
 	}
 
 	private build(node: Node) {
+		// Release the previous blob URL before rendering a different src.
+		if (this.loadedSrc) {
+			releaseAttachmentUrl(this.loadedSrc);
+			this.loadedSrc = null;
+		}
 		const src: string = node.attrs.src ?? '';
 		const alt: string = node.attrs.alt ?? '';
 		const kind = attachmentKind(src);
@@ -92,8 +103,9 @@ class AttachmentView implements NodeView {
 			else el.src = src;
 			return;
 		}
+		this.loadedSrc = src;
 		try {
-			const url = await resolveAttachmentUrl(src);
+			const url = await acquireAttachmentUrl(src);
 			if (!this.dom.isConnected) return;
 			if (el instanceof HTMLAnchorElement) el.href = url;
 			else el.src = url;
@@ -116,6 +128,10 @@ class AttachmentView implements NodeView {
 	}
 
 	destroy() {
+		if (this.loadedSrc) {
+			releaseAttachmentUrl(this.loadedSrc);
+			this.loadedSrc = null;
+		}
 		if (this.media instanceof HTMLMediaElement) {
 			this.media.pause();
 			this.media.removeAttribute('src');

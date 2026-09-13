@@ -1,6 +1,7 @@
 import { platform } from '../platform';
 import { appState } from '../state/app.svelte';
 import { clearAttachmentCache } from './attachments';
+import { clearGraphCache } from './graph';
 import { getStorage } from '../storage';
 import type { CollectionParams, FileEntry } from '../types';
 import { hideDotFiles, sortFileEntry, validateTactileFolder } from '../utils/files';
@@ -93,6 +94,7 @@ export const loadCollection = async (path?: string | undefined) => {
 	appState.noteHistory = [];
 	appState.activeFile = null;
 	clearAttachmentCache();
+	clearGraphCache();
 
 	// Validate .tactile folder
 	await validateTactileFolder(path);
@@ -140,6 +142,7 @@ export const restoreLatestCollection = async (): Promise<string | undefined> => 
 
 	if (appState.collection !== latest.path) {
 		clearAttachmentCache();
+		clearGraphCache();
 	}
 	appState.collection = latest.path;
 	return latest.path;

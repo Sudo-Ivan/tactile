@@ -25,13 +25,20 @@
 	let wrap = $state<HTMLDivElement>();
 	let empty = $state(false);
 	let loading = $state(true);
+	let stats = $state({ nodes: 0, links: 0 });
 
 	let sim: ReturnType<typeof forceSimulation<SimNode>> | null = null;
+	// Keep simulation data outside $state: d3 mutates x/y/vx/vy every tick
+	// and Svelte proxies would tax each write.
 	let tree: Quadtree<SimNode> | null = null;
-	let nodes = $state<SimNode[]>([]);
-	let links = $state<SimLink[]>([]);
+	let treeDirty = true;
+	let nodes: SimNode[] = [];
+	let links: SimLink[] = [];
 	let resizeObs: ResizeObserver | null = null;
+	let themeObs: MutationObserver | null = null;
 	let unsubscribeSaves: (() => void) | null = null;
+	let rebuildTimer: ReturnType<typeof setTimeout> | null = null;
+	let drawQueued = false;
 
 	// View transform: screen = world * scale + offset
 	let view = { x: 0, y: 0, k: 1 };
@@ -41,20 +48,44 @@
 	let downPos = { x: 0, y: 0 };
 	let hoverNode: SimNode | null = null;
 
-	function css(name: string, alpha = 1): string {
-		const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-		return alpha === 1 ? `hsl(${v})` : `hsl(${v} / ${alpha})`;
+	interface Palette {
+		node: string;
+		active: string;
+		dangling: string;
+		link: string;
+		label: string;
+		activeLabel: string;
 	}
 
-	function colors() {
-		return {
-			node: css('--foreground', 0.75),
-			active: css('--primary'),
-			dangling: css('--muted-foreground', 0.55),
-			link: css('--border'),
-			label: css('--muted-foreground'),
-			activeLabel: css('--foreground')
-		};
+	// Theme colors are read once and refreshed when the theme class flips;
+	// getComputedStyle per frame is too expensive.
+	let palette: Palette | null = null;
+
+	function colors(): Palette {
+		if (!palette) {
+			const css = (name: string, alpha = 1) => {
+				const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+				return alpha === 1 ? `hsl(${v})` : `hsl(${v} / ${alpha})`;
+			};
+			palette = {
+				node: css('--foreground', 0.75),
+				active: css('--primary'),
+				dangling: css('--muted-foreground', 0.55),
+				link: css('--border'),
+				label: css('--muted-foreground'),
+				activeLabel: css('--foreground')
+			};
+		}
+		return palette;
+	}
+
+	function scheduleDraw() {
+		if (drawQueued) return;
+		drawQueued = true;
+		requestAnimationFrame(() => {
+			drawQueued = false;
+			draw();
+		});
 	}
 
 	function draw() {
@@ -73,18 +104,19 @@
 		const c = colors();
 		const sx = (x: number) => x * view.k + view.x;
 		const sy = (y: number) => y * view.k + view.y;
+		const showLabels = view.k > 1.6;
 
 		ctx.strokeStyle = c.link;
 		ctx.lineWidth = 1;
+		ctx.beginPath();
 		for (const l of links) {
 			const s = l.source as SimNode;
 			const t = l.target as SimNode;
 			if (s.x == null || s.y == null || t.x == null || t.y == null) continue;
-			ctx.beginPath();
 			ctx.moveTo(sx(s.x), sy(s.y));
 			ctx.lineTo(sx(t.x), sy(t.y));
-			ctx.stroke();
 		}
+		ctx.stroke();
 
 		for (const n of nodes) {
 			if (n.x == null || n.y == null) continue;
@@ -104,7 +136,7 @@
 				ctx.fillStyle = isActive ? c.active : c.node;
 				ctx.fill();
 			}
-			if (isActive || n === hoverNode || view.k > 1.6) {
+			if (isActive || n === hoverNode || showLabels) {
 				ctx.fillStyle = isActive ? c.activeLabel : c.label;
 				ctx.font = '11px system-ui, sans-serif';
 				ctx.textAlign = 'center';
@@ -113,19 +145,18 @@
 		}
 	}
 
-	function rebuildTree() {
-		tree = quadtree<SimNode>()
-			.x((d) => d.x ?? 0)
-			.y((d) => d.y ?? 0)
-			.addAll(nodes);
-	}
-
+	// Rebuilt lazily on pointer queries, not on every sim tick.
 	function nodeAt(px: number, py: number): SimNode | null {
-		if (!tree) return null;
+		if (treeDirty) {
+			tree = quadtree<SimNode>()
+				.x((d) => d.x ?? 0)
+				.y((d) => d.y ?? 0)
+				.addAll(nodes);
+			treeDirty = false;
+		}
 		const wx = (px - view.x) / view.k;
 		const wy = (py - view.y) / view.k;
-		const hit = tree.find(wx, wy, 12 / view.k + 6);
-		return hit ?? null;
+		return tree?.find(wx, wy, 12 / view.k + 6) ?? null;
 	}
 
 	function toWorld(px: number, py: number) {
@@ -161,11 +192,14 @@
 		} else if (panning) {
 			view.x += p.x - lastPointer.x;
 			view.y += p.y - lastPointer.y;
-			draw();
+			scheduleDraw();
 		} else {
-			hoverNode = nodeAt(p.x, p.y);
-			canvas!.style.cursor = hoverNode ? 'pointer' : 'grab';
-			draw();
+			const hit = nodeAt(p.x, p.y);
+			if (hit !== hoverNode) {
+				hoverNode = hit;
+				canvas!.style.cursor = hit ? 'pointer' : 'grab';
+				scheduleDraw();
+			}
 		}
 		lastPointer = p;
 	}
@@ -196,7 +230,7 @@
 		view.x = p.x - ((p.x - view.x) / view.k) * k;
 		view.y = p.y - ((p.y - view.y) / view.k) * k;
 		view.k = k;
-		draw();
+		scheduleDraw();
 	}
 
 	async function load() {
@@ -204,12 +238,14 @@
 		const graph = await buildNoteGraph();
 		loading = false;
 		empty = graph.nodes.length === 0;
+		stats = { nodes: graph.nodes.length, links: graph.links.length };
 		if (empty) return;
 
 		// Keep positions across rebuilds so the graph does not jump.
 		const prev = new Map(nodes.map((n) => [n.id, n]));
 		nodes = graph.nodes.map((n) => ({ ...prev.get(n.id), ...n }));
 		links = graph.links.map((l) => ({ ...l }));
+		treeDirty = true;
 
 		const w = wrap?.clientWidth || 280;
 		const h = wrap?.clientHeight || 300;
@@ -232,26 +268,48 @@
 			.force('center', forceCenter(w / 2, h / 2))
 			.force('collide', forceCollide(14))
 			.on('tick', () => {
-				rebuildTree();
-				draw();
+				treeDirty = true;
+				scheduleDraw();
 			});
 	}
 
+	// The active note highlight follows file switches without a rebuild.
+	$effect(() => {
+		void appState.activeFile;
+		scheduleDraw();
+	});
+
 	onMount(() => {
 		void load();
-		resizeObs = new ResizeObserver(() => draw());
+		resizeObs = new ResizeObserver(() => scheduleDraw());
 		if (wrap) resizeObs.observe(wrap);
+		// Repaint with fresh colors when the theme flips.
+		themeObs = new MutationObserver(() => {
+			palette = null;
+			scheduleDraw();
+		});
+		themeObs.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ['class', 'style', 'data-theme']
+		});
 		canvas?.addEventListener('pointerdown', onPointerDown);
 		canvas?.addEventListener('pointermove', onPointerMove);
 		canvas?.addEventListener('pointerup', onPointerUp);
 		canvas?.addEventListener('wheel', onWheel, { passive: false });
-		unsubscribeSaves = appState.editor.subscribeToSaveEvents(() => void load());
+		// Saves are debounced upstream; still batch them here since a
+		// rebuild reads every note in the collection.
+		unsubscribeSaves = appState.editor.subscribeToSaveEvents(() => {
+			if (rebuildTimer) clearTimeout(rebuildTimer);
+			rebuildTimer = setTimeout(() => void load(), 600);
+		});
 	});
 
 	onDestroy(() => {
 		sim?.stop();
 		resizeObs?.disconnect();
+		themeObs?.disconnect();
 		unsubscribeSaves?.();
+		if (rebuildTimer) clearTimeout(rebuildTimer);
 	});
 </script>
 
@@ -267,7 +325,7 @@
 	{:else}
 		<canvas bind:this={canvas} class="w-full h-full block" aria-label="Note graph"></canvas>
 		<p class="absolute bottom-2 left-3 text-[11px] text-muted-foreground pointer-events-none">
-			{nodes.length} notes, {links.length} links
+			{stats.nodes} notes, {stats.links} links
 		</p>
 	{/if}
 </div>

@@ -83,31 +83,48 @@ export async function importAttachments(files: File[]): Promise<ImportedAttachme
 
 // ---------------------------------------------------------------------------
 // Blob URL cache: nodeviews render attachments through object URLs built
-// from storage bytes. Cached by absolute path for the session and cleared
+// from storage bytes. Reference counted so the underlying bytes are
+// released when the last view using them is destroyed; cleared entirely
 // when the collection changes.
 
-const urlCache = new Map<string, Promise<string>>();
+interface CacheEntry {
+	url: Promise<string>;
+	refs: number;
+}
 
-export function resolveAttachmentUrl(src: string): Promise<string> {
+const urlCache = new Map<string, CacheEntry>();
+
+export function acquireAttachmentUrl(src: string): Promise<string> {
 	if (isExternalSrc(src)) return Promise.resolve(src);
 	const path = `${appState.collection}/${src}`;
-	let pending = urlCache.get(path);
-	if (!pending) {
-		pending = (async () => {
+	let entry = urlCache.get(path);
+	if (!entry) {
+		const url = (async () => {
 			const storage = await getStorage();
 			const bytes = await storage.readFile(path);
 			return URL.createObjectURL(new Blob([bytes as BlobPart]));
 		})();
-		urlCache.set(path, pending);
+		entry = { url, refs: 0 };
+		urlCache.set(path, entry);
 		// Failed lookups (missing file) must not poison the cache.
-		pending.catch(() => urlCache.delete(path));
+		url.catch(() => urlCache.delete(path));
 	}
-	return pending;
+	entry.refs++;
+	return entry.url;
+}
+
+export function releaseAttachmentUrl(src: string) {
+	if (isExternalSrc(src)) return;
+	const path = `${appState.collection}/${src}`;
+	const entry = urlCache.get(path);
+	if (!entry || --entry.refs > 0) return;
+	entry.url.then((url) => URL.revokeObjectURL(url)).catch(() => {});
+	urlCache.delete(path);
 }
 
 export function clearAttachmentCache() {
-	for (const pending of urlCache.values()) {
-		pending.then((url) => URL.revokeObjectURL(url)).catch(() => {});
+	for (const entry of urlCache.values()) {
+		entry.url.then((url) => URL.revokeObjectURL(url)).catch(() => {});
 	}
 	urlCache.clear();
 }

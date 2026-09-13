@@ -25,6 +25,10 @@ async function loadMermaid() {
 	return mermaidPromise;
 }
 
+// Diagrams larger than this get a plain error instead of a potentially
+// pathological layout pass.
+const MAX_SOURCE = 50_000;
+
 // Render a diagram definition into the container. Errors are shown
 // inline so a broken diagram never wedges the editor.
 export async function renderMermaid(source: string, container: HTMLElement): Promise<void> {
@@ -33,6 +37,15 @@ export async function renderMermaid(source: string, container: HTMLElement): Pro
 		container.replaceChildren();
 		return;
 	}
+	if (text.length > MAX_SOURCE) {
+		container.replaceChildren();
+		const err = document.createElement('div');
+		err.className = 'tt-mermaid-error';
+		err.textContent = 'Diagram too large to render';
+		container.appendChild(err);
+		return;
+	}
+	const id = `tt-mermaid-${renderId++}`;
 	try {
 		const mermaid = await loadMermaid();
 		// Re-initialize with the right theme: mermaid caches config, and the
@@ -43,12 +56,14 @@ export async function renderMermaid(source: string, container: HTMLElement): Pro
 			theme: isDarkMode() ? 'dark' : 'neutral',
 			fontFamily: 'inherit'
 		});
-		const { svg } = await mermaid.render(`tt-mermaid-${renderId++}`, text);
+		const { svg } = await mermaid.render(id, text);
 		container.replaceChildren();
 		const tpl = document.createElement('template');
 		tpl.innerHTML = svg;
 		container.appendChild(tpl.content);
 	} catch (error) {
+		// Mermaid leaves its scratch div behind on render errors.
+		document.getElementById(`d${id}`)?.remove();
 		container.replaceChildren();
 		const err = document.createElement('div');
 		err.className = 'tt-mermaid-error';

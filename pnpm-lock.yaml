@@ -6,48 +6,12 @@ settings:
 
 catalogs:
   default:
-    '@electric-sql/pglite':
-      specifier: ^0.5.8
-      version: 0.5.8
-    '@internationalized/date':
-      specifier: ^3.12.4
-      version: 3.12.4
     '@noble/ed25519':
       specifier: ^3.2.0
       version: 3.2.0
-    '@sveltejs/adapter-static':
-      specifier: ^3.0.10
-      version: 3.0.10
-    '@sveltejs/kit':
-      specifier: ^2.70.3
-      version: 2.70.3
     '@sveltejs/vite-plugin-svelte':
       specifier: ^7.3.0
       version: 7.3.0
-    '@tailwindcss/typography':
-      specifier: ^0.5.20
-      version: 0.5.20
-    '@tailwindcss/vite':
-      specifier: ^4.3.3
-      version: 4.3.3
-    '@tauri-apps/api':
-      specifier: ^2.11.1
-      version: 2.11.1
-    '@tauri-apps/cli':
-      specifier: ^2.11.4
-      version: 2.11.4
-    '@tauri-apps/plugin-dialog':
-      specifier: ^2.7.3
-      version: 2.7.3
-    '@tauri-apps/plugin-fs':
-      specifier: ^2.5.2
-      version: 2.5.2
-    '@tauri-apps/plugin-os':
-      specifier: ^2.3.2
-      version: 2.3.2
-    '@tauri-apps/plugin-shell':
-      specifier: ^2.3.6
-      version: 2.3.6
     '@tiptap/core':
       specifier: ^3.31.3
       version: 3.31.3
@@ -90,33 +54,12 @@ catalogs:
     '@types/d3-quadtree':
       specifier: ^3.0.6
       version: 3.0.6
-    '@types/node':
-      specifier: ^26.5.1
-      version: 26.5.1
-    bits-ui:
-      specifier: ^2.19.2
-      version: 2.19.2
-    clsx:
-      specifier: ^2.1.1
-      version: 2.1.1
     d3-force:
       specifier: ^3.0.0
       version: 3.0.0
     d3-quadtree:
       specifier: ^3.0.1
       version: 3.0.1
-    eslint:
-      specifier: ^10.10.0
-      version: 10.10.0
-    eslint-config-prettier:
-      specifier: ^10.1.8
-      version: 10.1.8
-    eslint-plugin-svelte:
-      specifier: ^3.23.0
-      version: 3.23.0
-    globals:
-      specifier: ^17.12.0
-      version: 17.12.0
     katex:
       specifier: 0.18.5
       version: 0.18.5
@@ -132,42 +75,18 @@ catalogs:
     mermaid:
       specifier: ^11.17.2
       version: 11.17.2
-    mode-watcher:
-      specifier: ^1.1.0
-      version: 1.1.0
-    prettier:
-      specifier: ^3.9.6
-      version: 3.9.6
-    prettier-plugin-svelte:
-      specifier: ^4.1.1
-      version: 4.1.1
     svelte:
       specifier: ^5.57.0
       version: 5.57.0
     svelte-check:
       specifier: ^4.7.6
       version: 4.7.6
-    tailwind-merge:
-      specifier: ^3.6.0
-      version: 3.6.0
-    tailwind-variants:
-      specifier: ^3.3.1
-      version: 3.3.1
-    tailwindcss:
-      specifier: ^4.3.3
-      version: 4.3.3
     tiptap-markdown:
       specifier: ^0.9.0
       version: 0.9.0
     typescript:
       specifier: ~5.9.3
       version: 5.9.3
-    typescript-eslint:
-      specifier: ^8.70.0
-      version: 8.70.0
-    vite:
-      specifier: ^8.3.0
-      version: 8.3.0
 
 overrides:
   chokidar: ^5.0.0
