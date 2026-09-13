@@ -132,13 +132,7 @@
 		Sync, on your terms
 	</h2>
 	<p class="text-secondary-foreground/70 text-sm sm:text-base leading-relaxed mt-2">
-		Tactile syncs through blind relays that store only signed ciphertext. Use the free hosted relay,
-		pay for more capacity with a simple code, or run your own relay on anything with a disk or an S3
-		bucket. No email, no account, no lock-in.
+		Tactile syncs through blind relays that store only signed ciphertext. Use the hosted relay, or
+		run your own relay on anything with a disk or an S3 bucket. No email, no account, no lock-in.
 	</p>
-	<div class="mt-4">
-		<a href={resolve('/plans')}>
-			<Button scale="sm" variant="secondary" class="rounded-full select-none">See plans</Button>
-		</a>
-	</div>
 </div>

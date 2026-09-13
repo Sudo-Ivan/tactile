@@ -3,7 +3,7 @@ import type { RequestHandler } from './$types';
 
 export const prerender = true;
 
-const PATHS = ['/', '/download', '/plans'];
+const PATHS = ['/', '/download'];
 
 export const GET: RequestHandler = () => {
 	const urls = PATHS.map((p) => `  <url><loc>${SITE_URL}${p}</loc></url>`).join('\n');

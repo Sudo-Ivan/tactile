@@ -28,11 +28,6 @@
 
 		<!-- CTA's -->
 		<div class="flex items-center gap-2">
-			<a
-				href={resolve('/plans')}
-				class="hidden sm:inline text-sm text-secondary-foreground/70 hover:text-foreground transition-all mr-2"
-				>Plans</a
-			>
 			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 			<a href={APP_URL} target="_blank" rel="noopener noreferrer">
 				<Button size="sm" scale="sm" class="rounded-full">Open App</Button>
@@ -55,10 +50,6 @@
 			<a
 				href={resolve('/download')}
 				class="text-secondary-foreground/70 hover:text-foreground transition-all">Download</a
-			>
-			<a
-				href={resolve('/plans')}
-				class="text-secondary-foreground/70 hover:text-foreground transition-all">Plans</a
 			>
 			<!-- eslint-disable svelte/no-navigation-without-resolve -->
 			<a
