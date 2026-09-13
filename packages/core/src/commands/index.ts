@@ -1,19 +1,38 @@
+import { goto } from '$app/navigation';
+import { dailyDir, ensureTodayDailyNote } from '../api/daily';
 import { exportCollection, exportNote, exportSelection } from '../api/export';
 import { createFolder } from '../api/folders';
 import { fetchCollectionEntries } from '../api/collection';
-import { createNote, deleteNote, duplicateNote, openNoteHistory, saveNote } from '../api/notes';
+import {
+	createNote,
+	deleteNote,
+	duplicateNote,
+	openNote,
+	openNoteHistory,
+	saveNote
+} from '../api/notes';
+import { syncNow } from '../api/sync';
 import type { IconKey } from '../components/shared/icon.svelte';
-import { INLINE_TITLE_INPUT_ID, RENAME_INPUT_FOCUS_DELAY_MS, SHORTCUTS } from '../constants';
+import {
+	INLINE_TITLE_INPUT_ID,
+	RENAME_INPUT_FOCUS_DELAY_MS,
+	ROUTES,
+	SHORTCUTS
+} from '../constants';
 import { platform, platformHooks } from '../platform';
 import { appState } from '../state/app.svelte';
 import type { FileEntry, ShortcutParams } from '../types';
 import { setEditorMode } from '../api/editor';
+import { toast } from '../utils/toast';
 
 type Command = {
 	title: string;
 	icon: IconKey | null;
 	shortcut?: ShortcutParams;
 	onSelect?: () => string | void;
+	// Hidden from the palette while no collection is open; the command
+	// would only fail or produce an error page without one.
+	needsCollection?: boolean;
 };
 
 export type CommandGroup = {
@@ -61,6 +80,16 @@ export const getAllItems = async (
 	return items;
 };
 
+// Drop commands that need an open collection when there is none, so the
+// palette never offers actions that can only fail.
+export const filterCommandsForCollection = (groups: CommandGroup[]): CommandGroup[] =>
+	groups
+		.map((group) => ({
+			...group,
+			commands: group.commands.filter((c) => appState.collection || !c.needsCollection)
+		}))
+		.filter((group) => group.commands.length > 0);
+
 export const mainCommands: CommandGroup[] = [
 	{
 		name: 'Notes',
@@ -69,6 +98,7 @@ export const mainCommands: CommandGroup[] = [
 				title: 'New note',
 				icon: 'notePlus',
 				shortcut: SHORTCUTS['notes:create'],
+				needsCollection: true,
 				onSelect: () => {
 					createNote(appState.collection!);
 				}
@@ -77,6 +107,7 @@ export const mainCommands: CommandGroup[] = [
 				title: 'New folder',
 				icon: 'folderPlus',
 				shortcut: SHORTCUTS['notes:create-folder'],
+				needsCollection: true,
 				onSelect: () => {
 					createFolder(appState.collection!);
 				}
@@ -85,21 +116,36 @@ export const mainCommands: CommandGroup[] = [
 				title: 'Open note',
 				icon: 'note',
 				shortcut: SHORTCUTS['command:open-note'],
+				needsCollection: true,
 				onSelect: () => {
 					return 'open_note';
+				}
+			},
+			{
+				title: "Open today's daily note",
+				icon: 'calendarEdit',
+				needsCollection: true,
+				onSelect: () => {
+					void (async () => {
+						const dir = dailyDir(appState.collection!);
+						const entries = await fetchCollectionEntries(dir);
+						const name = await ensureTodayDailyNote(dir, entries);
+						openNote(`${dir}/${name}`, true);
+					})();
 				}
 			},
 			{
 				title: 'Search collection',
 				icon: 'searchDocument',
 				shortcut: SHORTCUTS['notes:search'],
+				needsCollection: true,
 				onSelect: () => {
 					appState.collectionSearchActive = true;
 				}
 			},
 			{
 				title: 'Toggle editor mode',
-				icon: 'cursorI',
+				icon: 'eye',
 				shortcut: SHORTCUTS['editor:toggle-mode'],
 				onSelect: () => {
 					setEditorMode(appState.editorMode === 'edit' ? 'view' : 'edit');
@@ -116,6 +162,7 @@ export const mainCommands: CommandGroup[] = [
 			{
 				title: 'Open trash',
 				icon: 'bin',
+				needsCollection: true,
 				onSelect: () => {
 					return 'trash';
 				}
@@ -123,6 +170,7 @@ export const mainCommands: CommandGroup[] = [
 			{
 				title: 'Export collection (.zip)',
 				icon: 'folderOpen',
+				needsCollection: true,
 				onSelect: () => {
 					exportCollection();
 				}
@@ -138,8 +186,49 @@ export const mainCommands: CommandGroup[] = [
 		]
 	},
 	{
+		name: 'Sync',
+		commands: [
+			{
+				title: 'Sync now',
+				icon: 'cloudSolid',
+				needsCollection: true,
+				onSelect: () => {
+					void syncNow();
+				}
+			},
+			{
+				title: 'Sync settings',
+				icon: 'cloudX',
+				onSelect: () => {
+					appState.settingsStore = { isOpen: true, activePage: 'tactile sync' };
+				}
+			}
+		]
+	},
+	{
 		name: 'Navigation',
 		commands: [
+			{
+				title: 'Go to notes',
+				icon: 'note',
+				onSelect: () => {
+					void goto(ROUTES.notes);
+				}
+			},
+			{
+				title: 'Go to daily notes',
+				icon: 'calendarEdit',
+				onSelect: () => {
+					void goto(ROUTES.daily);
+				}
+			},
+			{
+				title: 'Go to tasks',
+				icon: 'checkSquare',
+				onSelect: () => {
+					void goto(ROUTES.tasks);
+				}
+			},
 			{
 				title: 'Go to previous note',
 				icon: 'arrowLeft',
@@ -187,7 +276,10 @@ export const mainCommands: CommandGroup[] = [
 			{
 				title: 'View shortcuts',
 				icon: 'bolt',
-				shortcut: SHORTCUTS['app:shortcuts']
+				shortcut: SHORTCUTS['app:shortcuts'],
+				onSelect: () => {
+					appState.shortcutsOpen = true;
+				}
 			},
 			{
 				title: 'Send feedback',
@@ -237,6 +329,15 @@ export const mainCommands: CommandGroup[] = [
 				shortcut: SHORTCUTS['notes:toggle-details'],
 				onSelect: () => {
 					appState.isNoteDetailSidebarOpen = !appState.isNoteDetailSidebarOpen;
+				}
+			},
+			{
+				title: 'Open note graph',
+				icon: 'motionCirclesLines',
+				needsCollection: true,
+				onSelect: () => {
+					appState.noteDetailTab = 'graph';
+					appState.isNoteDetailSidebarOpen = true;
 				}
 			}
 		]
@@ -333,7 +434,10 @@ export const createNoteCommands = (notePath: string): CommandGroup => {
 				icon: 'copy',
 				shortcut: SHORTCUTS['note:copy-path'],
 				onSelect: () => {
-					navigator.clipboard.writeText(notePath);
+					void navigator.clipboard
+						.writeText(notePath)
+						.then(() => toast.success('Note path copied'))
+						.catch((e) => toast.error('Could not copy', e));
 				}
 			},
 			...reveal,

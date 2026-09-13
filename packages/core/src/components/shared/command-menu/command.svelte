@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { appState } from '../../../state/app.svelte';
-	import { createNoteCommands, mainCommands } from '../../../commands';
+	import { createNoteCommands, filterCommandsForCollection, mainCommands } from '../../../commands';
 	import * as Command from '@tactile/ui/components/command';
 	import { onMount } from 'svelte';
 	import ChangeThemePage from './pages/change-theme.svelte';
@@ -29,9 +29,14 @@
 		'cmd+shift+l': 'share'
 	};
 
-	// Note specific commands are prepended to the list while a note is active
+	// Note specific commands are prepended to the list while a note is
+	// active; collection-scoped commands are hidden with no collection.
 	const commandGroups = $derived(
-		appState.activeFile ? [createNoteCommands(appState.activeFile), ...mainCommands] : mainCommands
+		filterCommandsForCollection(
+			appState.activeFile
+				? [createNoteCommands(appState.activeFile), ...mainCommands]
+				: mainCommands
+		)
 	);
 
 	// If a page is provided, it opens that page, otherwise it closes the menu

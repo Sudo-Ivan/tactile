@@ -10,6 +10,19 @@ export interface ShortcutParams extends BaseShortcutParams {
 // Registry for shortcuts
 const shortcuts: ShortcutParams[] = [];
 
+// Hover shortcuts are unmodified keys meant for the hovered sidebar entry
+// (d to duplicate, r to rename, ...). They must not fire while the user is
+// typing anywhere, or the keypress is swallowed and the action runs.
+function isEditableTarget(target: EventTarget | null): boolean {
+	if (!(target instanceof HTMLElement)) return false;
+	return (
+		target.isContentEditable ||
+		target.tagName === 'INPUT' ||
+		target.tagName === 'TEXTAREA' ||
+		target.tagName === 'SELECT'
+	);
+}
+
 // Global event listener
 if (typeof window !== 'undefined') {
 	window.addEventListener('keydown', (e: KeyboardEvent) => {
@@ -20,7 +33,8 @@ if (typeof window !== 'undefined') {
 				!!shortcut.command !== (e.ctrlKey || e.metaKey) ||
 				(shortcut.key.toLowerCase() !== e.key.toLowerCase() &&
 					!(shortcut.code && shortcut.code === e.code)) ||
-				(shortcut.hover && !(shortcut.node?.parentNode as Element)?.matches(':hover'))
+				(shortcut.hover && !(shortcut.node?.parentNode as Element)?.matches(':hover')) ||
+				(shortcut.hover && isEditableTarget(e.target))
 			)
 				continue;
 

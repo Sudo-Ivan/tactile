@@ -8,10 +8,34 @@
 	import * as Select from '@tactile/ui/components/select';
 	import { Switch } from '@tactile/ui/components/switch';
 
-	let selectedFont = $state('inter');
-	let selectedFontSize = $state('normal');
-
 	const settings = $derived(appState.collectionSettings);
+
+	// Select values are the stored CSS font-family stacks; uninstalled fonts
+	// fall back to the next family in the stack.
+	const fontOptions = [
+		{ value: 'system-ui, sans-serif', label: 'System UI' },
+		{ value: "Georgia, 'Times New Roman', serif", label: 'Serif' },
+		{ value: "ui-monospace, 'SF Mono', Menlo, monospace", label: 'Monospace' },
+		{ value: "'Inter', system-ui, sans-serif", label: 'Inter' },
+		{ value: "'Roboto', system-ui, sans-serif", label: 'Roboto' },
+		{ value: "'Open Sans', system-ui, sans-serif", label: 'Open Sans' }
+	];
+
+	const fontSizeOptions = [
+		{ value: '12', label: 'Smaller (12px)' },
+		{ value: '13', label: 'Small (13px)' },
+		{ value: '14', label: 'Normal (14px)' },
+		{ value: '16', label: 'Large (16px)' },
+		{ value: '18', label: 'Larger (18px)' }
+	];
+
+	// Stored values from before the select existed (for example bare
+	// 'system-ui') fall back to the first option.
+	const selectedFont = $derived(
+		fontOptions.some((option) => option.value === settings.editor.font)
+			? settings.editor.font
+			: fontOptions[0].value
+	);
 </script>
 
 <div class="space-y-5">
@@ -19,17 +43,22 @@
 		<Label class="text-sm">Font</Label>
 		<p class="text-muted-foreground text-xs">Change the editor font.</p>
 		<div class="flex items-center gap-2 pt-2">
-			<Select.Root type="single" bind:value={selectedFont} disabled>
+			<Select.Root
+				type="single"
+				value={selectedFont}
+				onValueChange={(value) =>
+					setSettings('collection', {
+						...settings,
+						editor: { ...settings.editor, font: value }
+					})}
+			>
 				<Select.Trigger>
 					<Select.Value class="text-sm text-foreground/85" />
 				</Select.Trigger>
 				<Select.Content>
-					<Select.Item value="inter" label="Inter">Inter</Select.Item>
-					<Select.Item value="roboto" label="Roboto">Roboto</Select.Item>
-					<Select.Item value="lato" label="Lato">Lato</Select.Item>
-					<Select.Item value="poppins" label="Poppins">Poppins</Select.Item>
-					<Select.Item value="nunito" label="Nunito">Nunito</Select.Item>
-					<Select.Item value="openSans" label="Open Sans">Open Sans</Select.Item>
+					{#each fontOptions as option (option.value)}
+						<Select.Item value={option.value} label={option.label}>{option.label}</Select.Item>
+					{/each}
 				</Select.Content>
 			</Select.Root>
 		</div>
@@ -39,16 +68,22 @@
 		<Label class="text-sm">Font size</Label>
 		<p class="text-muted-foreground text-xs">Change the editor font size.</p>
 		<div class="flex items-center gap-2 pt-2">
-			<Select.Root type="single" bind:value={selectedFontSize} disabled>
+			<Select.Root
+				type="single"
+				value={String(settings.editor.size)}
+				onValueChange={(value) =>
+					setSettings('collection', {
+						...settings,
+						editor: { ...settings.editor, size: parseInt(value, 10) || 14 }
+					})}
+			>
 				<Select.Trigger>
 					<Select.Value class="text-sm text-foreground/85" />
 				</Select.Trigger>
 				<Select.Content>
-					<Select.Item value="smaller" label="Smaller">Smaller</Select.Item>
-					<Select.Item value="small" label="Small">Small</Select.Item>
-					<Select.Item value="normal" label="Normal">Normal</Select.Item>
-					<Select.Item value="large" label="Large">Large</Select.Item>
-					<Select.Item value="larger" label="Larger">Larger</Select.Item>
+					{#each fontSizeOptions as option (option.value)}
+						<Select.Item value={option.value} label={option.label}>{option.label}</Select.Item>
+					{/each}
 				</Select.Content>
 			</Select.Root>
 		</div>

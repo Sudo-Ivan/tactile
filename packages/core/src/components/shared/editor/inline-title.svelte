@@ -3,6 +3,7 @@
 	import { INLINE_TITLE_INPUT_ID } from '../../../constants';
 	import { isMobile } from '../../../platform';
 	import { appState } from '../../../state/app.svelte';
+	import { toast } from '../../../utils/toast';
 	import { cn } from '@tactile/ui/lib/utils';
 
 	let { preCheckRegex }: { preCheckRegex?: RegExp } = $props();
@@ -34,7 +35,8 @@
 			// Rename note
 			try {
 				await renameNote(appState.activeFile, value);
-			} catch {
+			} catch (error) {
+				toast.error('Could not rename note', error);
 				value = fileName();
 			}
 		}

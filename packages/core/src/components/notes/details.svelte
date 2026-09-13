@@ -80,6 +80,7 @@
 				onclick={() => {
 					setTab('metadata');
 				}}
+				aria-label="Metadata"
 			>
 				<Icon name="identityGhost" class="w-[18px] h-[18px]" />
 			</Button>
@@ -96,6 +97,7 @@
 				onclick={() => {
 					setTab('toc');
 				}}
+				aria-label="Table of contents"
 			>
 				<Icon name="layer" class="w-[16px] h-[16px]" />
 			</Button>
@@ -112,6 +114,7 @@
 				onclick={() => {
 					setTab('history');
 				}}
+				aria-label="Version history"
 			>
 				<Icon name="reload" class="w-[16px] h-[16px]" />
 			</Button>
@@ -128,6 +131,7 @@
 				onclick={() => {
 					setTab('graph');
 				}}
+				aria-label="Note graph"
 			>
 				<Waypoints class="w-[16px] h-[16px]" />
 			</Button>

@@ -41,6 +41,15 @@
 		openNote(appState.noteHistory[historyIndex], true);
 	}
 
+	// Scroll the sidebar to the folder segment that was clicked. The
+	// collection prefix is reattached because segments are relative.
+	function revealFolder(index: number) {
+		const target = (appState.collection ?? '') + activeFileSegments.slice(0, index + 1).join('/');
+		document
+			.querySelector(`[data-path="${CSS.escape(target)}"]`)
+			?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+	}
+
 	function historyForward() {
 		// Make sure the history index is not out of bounds / button is not disabled
 		if (
@@ -80,6 +89,7 @@
 					onclick={() => {
 						appState.isPageSidebarOpen = !appState.isPageSidebarOpen;
 					}}
+					aria-label="Toggle sidebar"
 				>
 					<Shortcut options={SHORTCUTS['notes:toggle-sidebar']} />
 					<Icon
@@ -103,6 +113,7 @@
 						appState.noteHistory.length === 1 ||
 						historyIndex === 0}
 					onclick={historyBack}
+					aria-label="Previous note"
 				>
 					<Shortcut options={SHORTCUTS['notes:history-back']} callback={historyBack} />
 					<Icon name="arrowLeft" class="w-4 h-4" />
@@ -118,6 +129,7 @@
 						appState.noteHistory.length === 1 ||
 						historyIndex === appState.noteHistory.length - 1}
 					onclick={historyForward}
+					aria-label="Next note"
 				>
 					<Shortcut options={SHORTCUTS['notes:history-forward']} callback={historyForward} />
 					<Icon name="arrowRight" class="w-4 h-4" />
@@ -133,31 +145,32 @@
 			{#if !hideParentDirectories}
 				{#each activeFileSegments as folder, i (i)}
 					{#if i !== 0}
-						<Button
-							size="sm"
-							variant="ghost"
-							scale="sm"
-							class={cn(
-								'h-6 text-[13px] w-fit px-1.5 fill-muted-foreground hover:fill-foreground transition-all font-normal',
-								i === activeFileSegments.length - 1 && 'text-foreground font-medium'
-							)}
-						>
-							{folder}
-						</Button>
-						{#if i !== activeFileSegments.length - 1}
+						{#if i === activeFileSegments.length - 1}
+							<!-- The current file is the terminus; not interactive. -->
+							<span
+								class="h-6 text-[13px] w-fit px-1.5 text-foreground font-medium flex items-center"
+							>
+								{folder}
+							</span>
+						{:else}
+							<Button
+								size="sm"
+								variant="ghost"
+								scale="sm"
+								class="h-6 text-[13px] w-fit px-1.5 fill-muted-foreground hover:fill-foreground transition-all font-normal"
+								title="Reveal in sidebar"
+								onclick={() => revealFolder(i)}
+							>
+								{folder}
+							</Button>
 							<Icon name="chevron" class="w-3.5 h-3.5 inline-block" />
 						{/if}
 					{/if}
 				{/each}
 			{:else}
-				<Button
-					size="sm"
-					variant="ghost"
-					scale="sm"
-					class="h-6 text-[13px] w-fit px-1.5 text-foreground transition-all font-medium"
-				>
+				<span class="h-6 text-[13px] w-fit px-1.5 text-foreground font-medium flex items-center">
 					{activeFileSegments.slice(-1)[0] ?? ''}
-				</Button>
+				</span>
 			{/if}
 		</p>
 	</div>
@@ -180,6 +193,7 @@
 						setEditorMode('edit');
 					}
 				}}
+				aria-label="Toggle edit/view mode"
 			>
 				<Shortcut options={SHORTCUTS['editor:toggle-mode']} />
 				<Icon name="editPencil" class={cn('w-4 h-4', appState.editorMode === 'edit' && 'hidden')} />
@@ -198,6 +212,7 @@
 				onclick={() => {
 					setEditorMode(appState.editorMode === 'source' ? 'edit' : 'source');
 				}}
+				aria-label="Source mode"
 			>
 				<Shortcut options={SHORTCUTS['editor:source-mode']} />
 				<FileCode2 class="w-4 h-4" />
@@ -213,6 +228,7 @@
 				onclick={() => {
 					appState.editorSearchActive = !appState.editorSearchActive;
 				}}
+				aria-label="Search in note"
 			>
 				<Icon name="searchDocument" class={cn('w-4 h-4')} />
 			</Button>
@@ -227,6 +243,7 @@
 					onclick={() => {
 						appState.isNoteDetailSidebarOpen = !appState.isNoteDetailSidebarOpen;
 					}}
+					aria-label="Toggle note details"
 				>
 					<Shortcut options={SHORTCUTS['notes:toggle-details']} />
 					<Icon

@@ -25,7 +25,7 @@
 			},
 			{
 				name: 'Appearance',
-				icon: 'opactiySolid',
+				icon: 'opacitySolid',
 				content: Appearance
 			},
 			{
@@ -34,7 +34,7 @@
 				content: Editor
 			}
 		],
-		Syncronization: [
+		Synchronization: [
 			{
 				name: 'Tactile Sync',
 				icon: 'cloudSolid',
@@ -47,7 +47,13 @@
 <Dialog.Root
 	open={appState.settingsStore.isOpen}
 	onOpenChange={(value) => {
-		appState.settingsStore = { isOpen: value, activePage: 'general' };
+		// Reset to the general page on close; on open keep any deep-linked
+		// page set before isOpen was flipped.
+		if (value) {
+			appState.settingsStore.isOpen = true;
+		} else {
+			appState.settingsStore = { isOpen: false, activePage: 'general' };
+		}
 	}}
 >
 	<Dialog.Trigger>
@@ -56,6 +62,7 @@
 			variant="ghost"
 			class="h-7 w-7 fill-muted-foreground hover:fill-foreground"
 			scale="md"
+			aria-label="Settings"
 		>
 			<Shortcut options={SHORTCUTS['app:settings']} />
 			<Icon name="settings" class="w-[18px] h-[18px]" />

@@ -120,6 +120,7 @@
 					scale="md"
 					class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
 					onclick={back}
+					aria-label="Back to versions"
 				>
 					<Icon name="arrowLeft" class="w-4 h-4" />
 				</Button>

@@ -5,6 +5,7 @@
 	import { SHORTCUTS } from '../../../constants';
 	import { isMobile } from '../../../platform';
 	import { appState } from '../../../state/app.svelte';
+	import { toast } from '../../../utils/toast';
 	import { Editor } from '@tiptap/core';
 	import { FileHandler } from '@tiptap/extension-file-handler';
 	import 'katex/dist/katex.min.css';
@@ -123,19 +124,29 @@
 		: appState.collectionSettings.editor.line_length === 'wide'
 			? '90ch'
 			: '65ch'}
+	style:--tt-font={appState.collectionSettings.editor.font}
+	style:--tt-font-size="{appState.collectionSettings.editor.size}px"
 >
 	<Shortcut options={SHORTCUTS['note:save']} callback={() => saveNote(appState.activeFile ?? '')} />
 	<Shortcut
 		options={SHORTCUTS['note:copy-path']}
-		callback={() => navigator.clipboard.writeText(appState.activeFile ?? '')}
+		callback={() => {
+			const path = appState.activeFile ?? '';
+			void navigator.clipboard
+				.writeText(path)
+				.then(() => toast.success('Note path copied'))
+				.catch((e) => toast.error('Could not copy', e));
+		}}
 	/>
 </div>
 
 <style>
-	/* Line length cap (the prose class pins 65ch by default) and optional
-	 * word wrap; both driven by editor settings. */
+	/* Line length cap (the prose class pins 65ch by default), font family
+	 * and font size; all driven by editor settings. */
 	div :global(.ProseMirror) {
 		max-width: var(--tt-line-max, 65ch);
+		font-family: var(--tt-font, inherit);
+		font-size: var(--tt-font-size, inherit);
 	}
 
 	div.tt-nowrap :global(.ProseMirror) {

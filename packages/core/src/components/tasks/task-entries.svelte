@@ -120,8 +120,11 @@
 {/if}
 
 {#if tasks.length === 0 && !loading}
-	<div class="w-full h-full flex flex-col gap-1 items-center justify-center">
+	<div class="w-full h-full flex flex-col gap-1 items-center justify-center pt-6">
 		<Label class="text-muted-foreground text-xs">No tasks found</Label>
+		<p class="text-muted-foreground/70 text-xs text-center leading-relaxed">
+			Add a <span class="font-mono">{TASK_MARKER} task</span> line in any note to see it here.
+		</p>
 	</div>
 {/if}
 

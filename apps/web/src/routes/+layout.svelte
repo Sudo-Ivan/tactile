@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { restoreLatestCollection } from '@tactile/core/api/collection';
 	import { loadSettings } from '@tactile/core/api/settings';
+	import { applySyncSettings } from '@tactile/core/api/sync';
+	import { initTelemetry } from '@tactile/core/api/telemetry';
+	import { appState } from '@tactile/core/state';
+	import { env } from '$env/dynamic/public';
 	import Footer from '@tactile/core/components/layout/footer.svelte';
 	import Header from '@/components/layout/header.svelte';
 	import Sidebar from '@tactile/core/components/layout/sidebar.svelte';
@@ -9,7 +13,8 @@
 	import { initStorage } from '@/storage';
 	import { createDeviceDetector } from '@/utils';
 	import '@tactile/ui/app.web.css';
-	import { ModeWatcher } from 'mode-watcher';
+	import { ModeWatcher, mode } from 'mode-watcher';
+	import { Toaster } from 'svelte-sonner';
 	import { Loader } from '@lucide/svelte';
 	import { onMount, type Snippet } from 'svelte';
 
@@ -43,7 +48,16 @@
 		await restoreLatestCollection();
 
 		// Load app & collection settings
-		loadSettings(true, true);
+		await loadSettings(true, true);
+
+		// Crash reports (honors the crash_reports setting) and the sync timer.
+		initTelemetry(env.PUBLIC_SENTRY_DSN || undefined);
+		applySyncSettings();
+	});
+
+	// Apply the interface font setting app-wide.
+	$effect(() => {
+		document.body.style.fontFamily = appState.appSettings.interface_font;
 	});
 </script>
 
@@ -113,6 +127,7 @@
 {:else if device.isDesktop}
 	<Command />
 	<ModeWatcher />
+	<Toaster theme={mode.current} position="bottom-right" richColors closeButton />
 	<Header />
 	<Sidebar />
 	<main class="flex min-h-screen w-full items-center justify-center">

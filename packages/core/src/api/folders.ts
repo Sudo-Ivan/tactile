@@ -3,6 +3,7 @@ import { platform } from '../platform';
 import { appState } from '../state/app.svelte';
 import { getStorage } from '../storage';
 import { getNextUntitledName } from '../utils/files';
+import { toast } from '../utils/toast';
 import { StorageError } from '@tactile/storage';
 import type { DirEntry } from '@tactile/storage';
 import { moveToTrash } from './trash';
@@ -56,31 +57,46 @@ export const deleteFolder = async (path: string, recursive = false) => {
 		children = children.filter((child) => child.name !== '.DS_Store');
 
 		if (children.length > 0) {
-			throw new Error('Folder is not empty');
+			toast.error('Could not delete folder', new Error('Folder is not empty'));
+			return;
 		}
 	}
 
-	switch (appState.collectionSettings.notes.trash_dir) {
-		case 'system':
-			if (platform().moveToSystemTrash) {
-				await platform().moveToSystemTrash!(path);
-			} else {
+	try {
+		switch (appState.collectionSettings.notes.trash_dir) {
+			case 'system':
+				if (platform().moveToSystemTrash) {
+					await platform().moveToSystemTrash!(path);
+				} else {
+					await moveToTrash(path, true);
+				}
+				break;
+			case 'tactile':
 				await moveToTrash(path, true);
-			}
-			break;
-		case 'tactile':
-			await moveToTrash(path, true);
-			break;
-		case 'delete':
-			await storage.remove(path, { recursive: true });
-			break;
+				break;
+			case 'delete':
+				await storage.remove(path, { recursive: true });
+				break;
+		}
+	} catch (error) {
+		toast.error('Could not delete folder', error);
+		return;
 	}
+	toast.success(
+		appState.collectionSettings.notes.trash_dir === 'delete'
+			? 'Folder deleted'
+			: 'Folder moved to trash'
+	);
 };
 
 // Rename a folder
 export const renameFolder = async (path: string, name: string) => {
 	const storage = await getStorage();
-	await storage.rename(path, `${path.split('/').slice(0, -1).join('/')}/${name}`);
+	try {
+		await storage.rename(path, `${path.split('/').slice(0, -1).join('/')}/${name}`);
+	} catch (error) {
+		toast.error('Could not rename folder', error);
+	}
 };
 
 // Move a folder
@@ -94,8 +110,13 @@ export const moveFolder = async (source: string, target: string) => {
 	const folderName = source.split('/').pop()!;
 
 	if (files.some((file) => file.name === folderName && file.isDirectory)) {
-		throw new Error('Name conflict');
+		toast.error('Could not move folder', new Error(`"${folderName}" already exists there`));
+		return;
 	}
 
-	await storage.rename(source, `${target}/${folderName}`);
+	try {
+		await storage.rename(source, `${target}/${folderName}`);
+	} catch (error) {
+		toast.error('Could not move folder', error);
+	}
 };

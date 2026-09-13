@@ -8,9 +8,20 @@ import {
 import { appState } from '../state/app.svelte';
 import type { FileEntry } from '../types';
 
+// Focus and select the inline title input of the open note. Used by rename
+// entry points that first open a note (daily notes, command menu).
+export const focusInlineTitle = () => {
+	const inlineTitleInput = document.getElementById(
+		INLINE_TITLE_INPUT_ID
+	) as HTMLInputElement | null;
+	window.setTimeout(() => {
+		inlineTitleInput?.focus();
+		inlineTitleInput?.select();
+	}, RENAME_INPUT_FOCUS_DELAY_MS);
+};
+
 // Inline rename handling for sidebar entries. Notes are renamed through the
 // editor inline title input, folders through a contenteditable span.
-// BUG: Currently shortcuts prevent from typing when ur on hover fix that
 export function createEntryRename() {
 	let isRenaming = $state(false);
 
@@ -27,10 +38,7 @@ export function createEntryRename() {
 		) as HTMLInputElement | null;
 
 		// Focus the input and select all text
-		window.setTimeout(() => {
-			inlineTitleInput?.focus();
-			inlineTitleInput?.select();
-		}, RENAME_INPUT_FOCUS_DELAY_MS);
+		focusInlineTitle();
 
 		// Add blur event listener to the input
 		inlineTitleInput?.addEventListener('blur', async () => {

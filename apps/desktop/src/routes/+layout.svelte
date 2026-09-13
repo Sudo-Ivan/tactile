@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { restoreLatestCollection } from '@tactile/core/api/collection';
 	import { loadSettings } from '@tactile/core/api/settings';
+	import { applySyncSettings } from '@tactile/core/api/sync';
+	import { initTelemetry } from '@tactile/core/api/telemetry';
+	import { env } from '$env/dynamic/public';
 	import Footer from '@tactile/core/components/layout/footer.svelte';
 	import Header from '@/components/layout/header.svelte';
 	import MobileNav from '@/components/layout/mobile-nav.svelte';
@@ -14,6 +17,7 @@
 	import '@tactile/ui/app.desktop.css';
 	import { setTheme } from '@tauri-apps/api/app';
 	import { platform as osPlatform } from '@tauri-apps/plugin-os';
+	import { Toaster } from 'svelte-sonner';
 	import { onMount, type Snippet } from 'svelte';
 
 	let { children }: { children?: Snippet } = $props();
@@ -32,7 +36,11 @@
 		await validateTactileFolder(appState.collection!);
 
 		// Load app & collection settings
-		loadSettings(true, true);
+		await loadSettings(true, true);
+
+		// Crash reports (honors the crash_reports setting) and the sync timer.
+		initTelemetry(env.PUBLIC_SENTRY_DSN || undefined);
+		applySyncSettings();
 
 		// Set platform
 		setPlatform((await osPlatform()) as 'darwin' | 'linux' | 'windows');
@@ -51,9 +59,15 @@
 		// Update window theme
 		updateWindowTheme();
 	});
+
+	// Apply the interface font setting app-wide.
+	$effect(() => {
+		document.body.style.fontFamily = appState.appSettings.interface_font;
+	});
 </script>
 
 <Command />
+<Toaster theme={appState.appTheme} position="bottom-right" richColors closeButton />
 
 {#if isMobile}
 	<main

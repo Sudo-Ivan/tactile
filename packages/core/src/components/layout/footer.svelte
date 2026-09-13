@@ -2,6 +2,7 @@
 	import { SHORTCUTS } from '../../constants';
 	import { themeMode, toggleTheme } from '../../platform';
 	import { appState } from '../../state/app.svelte';
+	import { syncState, syncStatusText } from '../../state/sync.svelte';
 	import { shortcutToString } from '../../utils/keyboard';
 	import { Button } from '@tactile/ui/components/button';
 	import * as Collapsible from '@tactile/ui/components/collapsible';
@@ -10,17 +11,21 @@
 	import { cn } from '@tactile/ui/lib/utils';
 	import { ChevronDown } from '@lucide/svelte';
 	import Icon from '../shared/icon.svelte';
-	import { createNoteCommands, mainCommands } from '../../commands';
+	import { createNoteCommands, filterCommandsForCollection, mainCommands } from '../../commands';
 	import Shortcut from '../shared/shortcut.svelte';
 	import Tooltip from '../shared/tooltip.svelte';
 
-	let open = $state(false);
 	let searchValue = $state('');
 	let collapsedCategories = $state<string[]>([]);
 
-	// Note specific commands are prepended to the list while a note is active
+	// Note specific commands are prepended to the list while a note is
+	// active; collection-scoped commands are hidden with no collection.
 	const commandGroups = $derived(
-		appState.activeFile ? [createNoteCommands(appState.activeFile), ...mainCommands] : mainCommands
+		filterCommandsForCollection(
+			appState.activeFile
+				? [createNoteCommands(appState.activeFile), ...mainCommands]
+				: mainCommands
+		)
 	);
 
 	// Filter commands based on search value
@@ -47,6 +52,7 @@
 				variant="ghost"
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
 				scale="md"
+				aria-label="Toggle theme"
 			>
 				{#if themeMode() === 'dark'}
 					<Icon name="moon" class="w-4 h-4" />
@@ -58,17 +64,24 @@
 			</Button>
 		</Tooltip>
 
-		<Tooltip text="Tactile Sync">
+		<Tooltip text={`Tactile Sync - ${syncStatusText()}`}>
 			<Button
 				size="icon"
 				variant="ghost"
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
 				scale="md"
+				aria-label="Tactile Sync"
 				onclick={() => {
 					appState.settingsStore = { isOpen: true, activePage: 'tactile sync' };
 				}}
 			>
-				<Icon name="cloudX" class="w-4 h-4" />
+				{#if syncState.status === 'syncing'}
+					<Icon name="reload" class="w-4 h-4 animate-spin" />
+				{:else if syncState.status === 'error' || !appState.appSettings.sync_enabled}
+					<Icon name="cloudX" class="w-4 h-4" />
+				{:else}
+					<Icon name="cloudSolid" class="w-4 h-4" />
+				{/if}
 			</Button>
 		</Tooltip>
 	</div>
@@ -80,6 +93,7 @@
 				variant="ghost"
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
 				scale="md"
+				aria-label="Help and feedback"
 				onclick={() => {
 					document.dispatchEvent(
 						new KeyboardEvent('keydown', { key: 'h', metaKey: true, shiftKey: true })
@@ -89,7 +103,7 @@
 				<Icon name="lifebouy" class="w-4 h-4" />
 			</Button>
 		</Tooltip>
-		<Sheet.Root bind:open>
+		<Sheet.Root bind:open={appState.shortcutsOpen}>
 			<Sheet.Trigger
 				><Tooltip text="Shortcuts" shortcut={SHORTCUTS['app:shortcuts']}>
 					<Button
@@ -97,8 +111,12 @@
 						variant="ghost"
 						class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
 						scale="md"
+						aria-label="Shortcuts"
 					>
-						<Shortcut options={SHORTCUTS['app:shortcuts']} callback={() => (open = !open)} />
+						<Shortcut
+							options={SHORTCUTS['app:shortcuts']}
+							callback={() => (appState.shortcutsOpen = !appState.shortcutsOpen)}
+						/>
 						<Icon name="bolt" class="w-4 h-4" />
 					</Button>
 				</Tooltip>
@@ -177,6 +195,7 @@
 				variant="ghost"
 				class="h-6 w-6 fill-muted-foreground hover:fill-foreground transition-all"
 				scale="md"
+				aria-label="Share"
 				onclick={() => {
 					document.dispatchEvent(
 						new KeyboardEvent('keydown', { key: 'l', metaKey: true, shiftKey: true })

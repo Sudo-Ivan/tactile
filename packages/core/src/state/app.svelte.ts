@@ -40,6 +40,8 @@ export const appState = $state({
 	noteDetailSidebarWidth: SIDEBAR_MIN_WIDTH,
 	resizingNoteDetailSidebar: false,
 	settingsStore: { isOpen: false, activePage: 'general' } as SettingsStateParams,
+	// Shortcuts sheet in the footer; commands flip this to open it.
+	shortcutsOpen: false,
 	// Desktop theme preference ('system' follows the OS). Web uses
 	// mode-watcher instead and ignores this field.
 	appTheme: 'system' as ThemeMode,

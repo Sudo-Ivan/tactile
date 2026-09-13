@@ -127,18 +127,18 @@
 	{/if}
 
 	<div class="space-y-1">
-		<Label class="text-sm">Hidden files</Label>
-		<p class="text-muted-foreground text-xs">Exclude files or extensions from the notes view.</p>
+		<Label class="text-sm">Crash reports</Label>
+		<p class="text-muted-foreground text-xs">
+			Send anonymous error reports to help fix bugs. No note content is ever sent. Applies after
+			restart.
+		</p>
 		<div class="flex items-center gap-2 pt-2">
-			<Button
-				variant="default"
-				size="sm"
-				class="h-7 text-primary-foreground/85 hover:text-primary-foreground text-sm font-normal"
-				scale="sm"
-				disabled
-			>
-				Add
-			</Button>
+			<Switch
+				checked={appState.appSettings.crash_reports}
+				onCheckedChange={(value) => {
+					setSettings('app', { ...appState.appSettings, crash_reports: value });
+				}}
+			/>
 		</div>
 	</div>
 </div>

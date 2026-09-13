@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { focusInlineTitle } from '@tactile/core/actions/rename.svelte';
 	import { deleteNote, openNote } from '@tactile/core/api/notes';
 	import Icon from '@tactile/core/components/shared/icon.svelte';
 	import Shortcut from '@tactile/core/components/shared/shortcut.svelte';
@@ -57,7 +58,14 @@
 						</div>
 					</ContextMenu.Trigger>
 					<ContextMenu.Content class="w-44">
-						<ContextMenu.Item class="flex items-center gap-2 group">
+						<ContextMenu.Item
+							class="flex items-center gap-2 group"
+							onclick={async () => {
+								await openNote(entry.path, true);
+								appState.editor.instance?.commands.blur();
+								focusInlineTitle();
+							}}
+						>
 							<Icon
 								name="editPencil"
 								class="w-3.5 h-3.5 fill-foreground/70 group-hover:fill-foreground"

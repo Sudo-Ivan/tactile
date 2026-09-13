@@ -3,6 +3,7 @@ import { platform } from '../platform';
 import { appState } from '../state/app.svelte';
 import { getStorage } from '../storage';
 import { escapeHtml } from '../utils/fuzzy';
+import { toast } from '../utils/toast';
 import { createZip, type ZipEntry } from '../utils/zip';
 import { isInternalPath } from '@tactile/storage';
 import markdownit from 'markdown-it';
@@ -50,9 +51,14 @@ function noteStem(path: string): string {
 
 // Save a single note as a .md file.
 export async function exportNote(path: string): Promise<void> {
-	const storage = await getStorage();
-	const content = await storage.readTextFile(path);
-	await platform().saveExport(`${noteStem(path)}.md`, content, 'text/markdown');
+	try {
+		const storage = await getStorage();
+		const content = await storage.readTextFile(path);
+		await platform().saveExport(`${noteStem(path)}.md`, content, 'text/markdown');
+		toast.success('Note exported');
+	} catch (error) {
+		toast.error('Could not export note', error);
+	}
 }
 
 // Save the current editor selection as markdown. Falls back to plain text
@@ -106,27 +112,47 @@ async function zipPaths(
 // Zip a folder (or any directory subtree) keeping its structure under the
 // folder name.
 export async function exportFolder(path: string): Promise<void> {
-	const files = await collectFiles(path, false);
-	if (files.length === 0) return;
-	const parent = path.split('/').slice(0, -1).join('/');
-	const prefix = parent === '/' || parent === '' ? '' : `${parent}/`;
-	await zipPaths(
-		files,
-		(p) => (p.startsWith(prefix) ? p.slice(prefix.length) : p),
-		`${noteStem(path)}.zip`
-	);
+	try {
+		const files = await collectFiles(path, false);
+		if (files.length === 0) {
+			toast.info('Nothing to export in this folder');
+			return;
+		}
+		const parent = path.split('/').slice(0, -1).join('/');
+		const prefix = parent === '/' || parent === '' ? '' : `${parent}/`;
+		await zipPaths(
+			files,
+			(p) => (p.startsWith(prefix) ? p.slice(prefix.length) : p),
+			`${noteStem(path)}.zip`
+		);
+		toast.success('Folder exported');
+	} catch (error) {
+		toast.error('Could not export folder', error);
+	}
 }
 
 // Zip every file in the open collection. All files (not just markdown) are
 // included so attachments survive the round trip.
 export async function exportCollection(): Promise<void> {
-	const collection = appState.collection;
-	if (!collection) return;
-	const files = await collectFiles(collection, false);
-	if (files.length === 0) return;
-	const prefix = `${collection}/`;
-	const name = collection.split('/').pop() || 'collection';
-	await zipPaths(files, (p) => (p.startsWith(prefix) ? p.slice(prefix.length) : p), `${name}.zip`);
+	try {
+		const collection = appState.collection;
+		if (!collection) return;
+		const files = await collectFiles(collection, false);
+		if (files.length === 0) {
+			toast.info('Nothing to export in this collection');
+			return;
+		}
+		const prefix = `${collection}/`;
+		const name = collection.split('/').pop() || 'collection';
+		await zipPaths(
+			files,
+			(p) => (p.startsWith(prefix) ? p.slice(prefix.length) : p),
+			`${name}.zip`
+		);
+		toast.success('Collection exported');
+	} catch (error) {
+		toast.error('Could not export collection', error);
+	}
 }
 
 const PRINT_STYLES = `

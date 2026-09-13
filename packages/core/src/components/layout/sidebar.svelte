@@ -49,6 +49,7 @@
 				)}
 				scale="md"
 				onclick={() => navigateTo(ROUTES.notes)}
+				aria-label="Notes"
 			>
 				<Icon name="inboxFull" class="w-[18px] h-[18px]" />
 			</Button>
@@ -63,6 +64,7 @@
 				)}
 				scale="md"
 				onclick={() => navigateTo(ROUTES.daily)}
+				aria-label="Daily notes"
 			>
 				<Icon name="calendarEdit" class="w-[18px] h-[18px]" />
 			</Button>
@@ -77,6 +79,7 @@
 				)}
 				scale="md"
 				onclick={() => navigateTo(ROUTES.tasks)}
+				aria-label="Tasks"
 			>
 				<Icon name="checkSquare" class="w-[18px] h-[18px]" />
 			</Button>
@@ -94,6 +97,7 @@
 					// Simulate cmd+o key press
 					dispatchShortcut('o');
 				}}
+				aria-label="Open collection"
 			>
 				<Icon name="folder" class="w-[18px] h-[18px] group-hover:hidden" />
 				<Icon name="folderOpen" class="w-[18px] h-[18px] hidden group-hover:block" />

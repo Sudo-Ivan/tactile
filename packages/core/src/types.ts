@@ -29,6 +29,11 @@ export interface AppSettingsParams {
 	interface_font: string;
 	// Custom Tactile Sync relay URL. Empty uses the default hosted relay.
 	sync_server: string;
+	// Periodic background sync through the relay.
+	sync_enabled: boolean;
+	sync_interval_minutes: number;
+	// Anonymous crash reports to the Sentry-compatible endpoint.
+	crash_reports: boolean;
 }
 
 export interface CollectionSettingsParams {

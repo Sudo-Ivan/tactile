@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { setSettings } from '../../api/settings';
 	import { setThemeMode, themeMode } from '../../platform';
+	import { appState } from '../../state/app.svelte';
 	import { Button } from '@tactile/ui/components/button';
 	import Label from '@tactile/ui/components/label/label.svelte';
 	import * as Select from '@tactile/ui/components/select';
@@ -7,8 +9,22 @@
 	import Icon from '../shared/icon.svelte';
 	import Tooltip from '../shared/tooltip.svelte';
 
-	let selectedTheme = $state('tactile');
-	let selectedFont = $state('inter');
+	// Select values are the stored CSS font-family stacks; uninstalled fonts
+	// fall back to the next family in the stack.
+	const fontOptions = [
+		{ value: 'system-ui, sans-serif', label: 'System UI' },
+		{ value: "'Inter', system-ui, sans-serif", label: 'Inter' },
+		{ value: "'Roboto', system-ui, sans-serif", label: 'Roboto' },
+		{ value: "'Open Sans', system-ui, sans-serif", label: 'Open Sans' },
+		{ value: "Georgia, 'Times New Roman', serif", label: 'Serif' },
+		{ value: "ui-monospace, 'SF Mono', Menlo, monospace", label: 'Monospace' }
+	];
+
+	const selectedFont = $derived(
+		fontOptions.some((option) => option.value === appState.appSettings.interface_font)
+			? appState.appSettings.interface_font
+			: fontOptions[0].value
+	);
 </script>
 
 <div class="space-y-5">
@@ -26,6 +42,7 @@
 					)}
 					scale="md"
 					onclick={() => setThemeMode('system')}
+					aria-label="System color scheme"
 				>
 					<Icon name="monitor" class="w-4 h-4" />
 				</Button>
@@ -40,6 +57,7 @@
 					)}
 					scale="md"
 					onclick={() => setThemeMode('light')}
+					aria-label="Light color scheme"
 				>
 					<Icon name="sun" class="w-4 h-4" />
 				</Button>
@@ -54,6 +72,7 @@
 					)}
 					scale="md"
 					onclick={() => setThemeMode('dark')}
+					aria-label="Dark color scheme"
 				>
 					<Icon name="moon" class="w-4 h-4" />
 				</Button>
@@ -62,44 +81,22 @@
 	</div>
 
 	<div class="space-y-1">
-		<Label class="text-sm">Theme</Label>
-		<p class="text-muted-foreground text-xs">Change the theme of the app.</p>
-		<div class="flex items-center gap-2 pt-2">
-			<Select.Root type="single" bind:value={selectedTheme}>
-				<Select.Trigger>
-					<Select.Value class="text-sm text-foreground/85" />
-				</Select.Trigger>
-				<Select.Content>
-					<Select.Item value="tactile" label="Tactile">Tactile</Select.Item>
-				</Select.Content>
-			</Select.Root>
-			<Button
-				variant="default"
-				size="sm"
-				class="h-7 text-primary-foreground/85 hover:text-primary-foreground text-sm font-normal"
-				scale="sm"
-				disabled
-			>
-				Browse
-			</Button>
-		</div>
-	</div>
-
-	<div class="space-y-1">
 		<Label class="text-sm">Fonts</Label>
 		<p class="text-muted-foreground text-xs">Change the interface font.</p>
 		<div class="flex items-center gap-2 pt-2">
-			<Select.Root type="single" bind:value={selectedFont} disabled>
+			<Select.Root
+				type="single"
+				value={selectedFont}
+				onValueChange={(value) =>
+					setSettings('app', { ...appState.appSettings, interface_font: value })}
+			>
 				<Select.Trigger>
 					<Select.Value class="text-sm text-foreground/85" />
 				</Select.Trigger>
 				<Select.Content>
-					<Select.Item value="inter" label="Inter">Inter</Select.Item>
-					<Select.Item value="roboto" label="Roboto">Roboto</Select.Item>
-					<Select.Item value="lato" label="Lato">Lato</Select.Item>
-					<Select.Item value="poppins" label="Poppins">Poppins</Select.Item>
-					<Select.Item value="nunito" label="Nunito">Nunito</Select.Item>
-					<Select.Item value="openSans" label="Open Sans">Open Sans</Select.Item>
+					{#each fontOptions as option (option.value)}
+						<Select.Item value={option.value} label={option.label}>{option.label}</Select.Item>
+					{/each}
 				</Select.Content>
 			</Select.Root>
 		</div>

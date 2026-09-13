@@ -46,6 +46,7 @@
 		"@tiptap/pm": "catalog:",
 		"@tiptap/starter-kit": "catalog:",
 		"@lucide/svelte": "catalog:",
-		"mode-watcher": "catalog:"
+		"mode-watcher": "catalog:",
+		"svelte-sonner": "catalog:"
 	}
 }

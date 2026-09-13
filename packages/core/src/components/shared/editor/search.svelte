@@ -174,6 +174,7 @@
 						onclick={() => {
 							caseSensitive = !caseSensitive;
 						}}
+						aria-label="Case sensitive"
 					>
 						<ALargeSmall
 							class={cn(
@@ -192,6 +193,7 @@
 						onclick={() => {
 							wholeWord = !wholeWord;
 						}}
+						aria-label="Whole word"
 					>
 						<WholeWord
 							class={cn(
@@ -213,6 +215,7 @@
 								goToSearchResult(ed);
 							});
 						}}
+						aria-label="Previous result"
 					>
 						<Icon name="arrowUp" class="w-4 h-4" />
 					</Button>
@@ -229,6 +232,7 @@
 								goToSearchResult(ed);
 							});
 						}}
+						aria-label="Next result"
 					>
 						<Icon name="arrowDown" class="w-4 h-4" />
 					</Button>
@@ -242,6 +246,7 @@
 						onclick={() => {
 							close();
 						}}
+						aria-label="Close search"
 					>
 						<Icon name="x" class="w-4 h-4" />
 					</Button>
@@ -269,6 +274,7 @@
 									goToSearchResult(ed);
 								});
 							}}
+							aria-label="Replace"
 						>
 							<Replace
 								class="w-4 h-4 stroke-muted-foreground group-hover:stroke-foreground transition-all stroke-[1.5px]"
@@ -287,6 +293,7 @@
 									goToSearchResult(ed);
 								});
 							}}
+							aria-label="Replace all"
 						>
 							<ReplaceAll
 								class="w-4 h-4 stroke-muted-foreground group-hover:stroke-foreground transition-all stroke-[1.5px]"

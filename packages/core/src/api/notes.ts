@@ -6,6 +6,7 @@ import type { FileVersion, NoteMetadataParams } from '../types';
 import { setEditorContent } from './editor';
 import { getNextUntitledName } from '../utils/files';
 import { calculateReadingTime } from '../utils/format';
+import { toast } from '../utils/toast';
 import { isVersioned, normalizePath, StorageError } from '@tactile/storage';
 import type { DirEntry } from '@tactile/storage';
 import { moveToTrash } from './trash';
@@ -89,26 +90,33 @@ export async function openNote(path: string, skipHistory = false) {
 // .tactile/trash so the entry stays recoverable.
 export const deleteNote = async (path: string) => {
 	const storage = await getStorage();
-	switch (appState.collectionSettings.notes.trash_dir) {
-		case 'delete':
-			await storage.remove(path);
-			break;
-		case 'system':
-			if (platform().moveToSystemTrash) {
-				await platform().moveToSystemTrash!(path);
-			} else {
+	const permanent = appState.collectionSettings.notes.trash_dir === 'delete';
+	try {
+		switch (appState.collectionSettings.notes.trash_dir) {
+			case 'delete':
+				await storage.remove(path);
+				break;
+			case 'system':
+				if (platform().moveToSystemTrash) {
+					await platform().moveToSystemTrash!(path);
+				} else {
+					await moveToTrash(path, false);
+				}
+				break;
+			case 'tactile':
+			default:
 				await moveToTrash(path, false);
-			}
-			break;
-		case 'tactile':
-		default:
-			await moveToTrash(path, false);
-			break;
+				break;
+		}
+	} catch (error) {
+		toast.error('Could not delete note', error);
+		return;
 	}
 	if (appState.editor.dirtyPath === path) {
 		appState.editor.clearDirty();
 	}
 	appState.activeFile = null;
+	toast.success(permanent ? 'Note deleted' : 'Note moved to trash');
 };
 
 // Close the active note (deselect; leaves history intact). Used by mobile
@@ -203,10 +211,16 @@ export const moveNote = async (source: string, target: string) => {
 	const noteName = source.split('/').pop()!;
 
 	if (targetFiles.some((file) => file.name === noteName)) {
-		throw new Error('Name conflict');
+		toast.error('Could not move note', new Error(`"${noteName}" already exists there`));
+		return;
 	}
 
-	await storage.rename(source, `${target}/${noteName}`.replace('//', '/'));
+	try {
+		await storage.rename(source, `${target}/${noteName}`.replace('//', '/'));
+	} catch (error) {
+		toast.error('Could not move note', error);
+		return;
+	}
 
 	// The file moved, so pending edits must flush to the new path instead of
 	// recreating the file at the source path.

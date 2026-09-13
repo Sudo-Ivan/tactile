@@ -70,7 +70,11 @@ catalog:
   '@internationalized/date': ^3.12.4
   mode-watcher: ^1.1.0
   '@electric-sql/pglite': ^0.5.8
+  '@noble/ciphers': ^2.4.0
   '@noble/ed25519': ^3.2.0
+  '@noble/hashes': ^2.4.0
+  '@sentry/svelte': 10.73.0
+  svelte-sonner: ^1.2.1
   markdown-it: ^15.0.1
   '@tauri-apps/api': ^2.11.1
   '@tauri-apps/cli': ^2.11.4

@@ -2,7 +2,7 @@
 
 ## Roadmap (carried over from haptic)
 
-- [ ] Tactile Sync - sync notes across devices (relay v1 in `relay/`: blind E2EE blob relay, WS live events, WebRTC signaling)
+- [x] Tactile Sync - sync notes across devices (relay v1 in `relay/`: blind E2EE blob relay, WS live events, WebRTC signaling; app-side client, pairing and settings UI in `packages/core/src/api/sync.ts`)
 - [ ] CRDT-based merge + live collaboration for sync (Automerge/yrs; revisit after relay v1 ships)
 - [ ] Note sharing - share single notes or collections via link (publish node in `publish/`: signed tar deploys, {slug}.base-domain + custom domains, s3 HA backend, paid tiers; client-side render + upload still needed app-side)
 - [ ] Mobile support for the web app - storage now uses OPFS which works on mobile browsers
@@ -25,7 +25,7 @@
 
 ## Infrastructure
 
-- [ ] Set up GHCR publishing for the web Docker image
+- [x] Set up GHCR publishing for the Docker images (web in `release.yml`; relay, publish and publish-caddy with cosign keyless signing in `docker.yml`)
 - [ ] Rotate signing secrets for this fork: TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD, APPLE_* secrets (release.yml expects these names)
 - [ ] Verify the v2 updater pubkey in tauri.conf.json matches the new TAURI_SIGNING_PRIVATE_KEY
 - [ ] Pick a real domain/host for the homepage and update og:url, redirects.ts, updater endpoint

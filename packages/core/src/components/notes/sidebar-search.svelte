@@ -130,6 +130,7 @@
 					search.caseSensitive = !search.caseSensitive;
 					searchCollection();
 				}}
+				aria-label="Case sensitive"
 			>
 				<ALargeSmall
 					class={cn(
@@ -149,6 +150,7 @@
 					search.wholeWord = !search.wholeWord;
 					searchCollection();
 				}}
+				aria-label="Whole word"
 			>
 				<WholeWord
 					class={cn(
@@ -167,6 +169,7 @@
 				onclick={() => {
 					closeSearch();
 				}}
+				aria-label="Close search"
 			>
 				<Icon name="x" class="w-4 h-4" />
 			</Button>

@@ -10,6 +10,7 @@
 		"./platform": "./src/platform.ts",
 		"./state": "./src/state/app.svelte.ts",
 		"./state/editor": "./src/state/editor.svelte.ts",
+		"./state/sync": "./src/state/sync.svelte.ts",
 		"./storage": "./src/storage/index.ts",
 		"./api": "./src/api/index.ts",
 		"./api/*": "./src/api/*.ts",
@@ -28,7 +29,11 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
+		"@noble/ciphers": "catalog:",
 		"@noble/ed25519": "catalog:",
+		"@noble/hashes": "catalog:",
+		"@sentry/svelte": "catalog:",
+		"svelte-sonner": "catalog:",
 		"@tactile/storage": "workspace:*",
 		"@tactile/ui": "workspace:*",
 		"@tiptap/core": "catalog:",

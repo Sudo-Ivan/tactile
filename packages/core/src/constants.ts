@@ -35,13 +35,16 @@ export const SHORTCUTS: Record<string, ShortcutParams> = {
 export const BASE_APP_SETTINGS = {
 	theme: 'dark',
 	theme_mode: 'system',
-	interface_font: 'system-ui',
-	sync_server: ''
+	interface_font: 'system-ui, sans-serif',
+	sync_server: '',
+	sync_enabled: false,
+	sync_interval_minutes: 5,
+	crash_reports: true
 };
 
 export const BASE_COLLECTION_SETTINGS: CollectionSettingsParams = {
 	editor: {
-		font: 'system-ui',
+		font: 'system-ui, sans-serif',
 		size: 14,
 		auto_save: true,
 		auto_save_debounce: 750,
@@ -122,8 +125,17 @@ export const DAILY_NOTE_RENDER_DELAY_MS = 150;
 // Choices offered in settings for the editor auto-save debounce.
 export const AUTO_SAVE_DEBOUNCE_OPTIONS = [250, 500, 750, 1000, 1500, 2000, 3000] as const;
 
-// Placeholder shown in the Tactile Sync server input.
+// Default Tactile Sync relay, also the placeholder in the server input.
 export const SYNC_SERVER_PLACEHOLDER = 'https://sync.tactile.app';
+
+// Requested blob retention for synced files and manifests. Relays clamp to
+// their configured min/max (default range: 1 hour to 365 days).
+export const SYNC_BLOB_TTL_SECONDS = 90 * 24 * 3600;
+
+// Default crash-reporting DSN (self-hosted Sentry/GlitchTip). Apps may
+// override it with PUBLIC_SENTRY_DSN at build time; users can turn it off
+// under Settings > General.
+export const DEFAULT_SENTRY_DSN = 'https://970fd36484c549cea40bb43541d63f99@bugs.quad4.io/2';
 
 export const TIMING = {
 	searchDebounce: SEARCH_DEBOUNCE_MS,

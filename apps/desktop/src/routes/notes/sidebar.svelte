@@ -59,6 +59,13 @@
 	}
 
 	async function onCollectionChange(collectionPath: string | undefined) {
+		// No collection open (first run): nothing to list or watch.
+		if (!collectionPath) {
+			entries = [];
+			closeNote();
+			return;
+		}
+
 		entries = await fetchCollectionEntries(collectionPath);
 
 		// Find first item that is a note (entry.children === undefined)
@@ -73,10 +80,8 @@
 			closeNote();
 		}
 
-		if (collectionPath) {
-			if (stopWatching) stopWatching();
-			stopWatching = await watchCollection(collectionPath);
-		}
+		if (stopWatching) stopWatching();
+		stopWatching = await watchCollection(collectionPath);
 	}
 
 	$effect(() => {
@@ -136,6 +141,7 @@
 						isMobile ? 'h-10 w-10' : 'h-7 w-7'
 					)}
 					onclick={async () => createNote(appState.collection!)}
+					aria-label="New note"
 				>
 					<Shortcut options={SHORTCUTS['notes:create']} />
 					<Icon name="notePlus" class="w-[18px] h-[18px]" />
@@ -151,6 +157,7 @@
 						isMobile ? 'h-10 w-10' : 'h-7 w-7'
 					)}
 					onclick={async () => createFolder(appState.collection!)}
+					aria-label="New folder"
 				>
 					<Shortcut options={SHORTCUTS['notes:create-folder']} />
 					<Icon name="folderPlus" class="w-[18px] h-[18px]" />
@@ -171,6 +178,7 @@
 					onclick={async () => {
 						toggleFolderStates();
 					}}
+					aria-label="Toggle folders"
 				>
 					<Icon
 						name="collapseCircle"
@@ -200,6 +208,7 @@
 					onclick={() => {
 						appState.collectionSearchActive = !appState.collectionSearchActive;
 					}}
+					aria-label="Search collection"
 				>
 					<Shortcut options={SHORTCUTS['notes:search']} />
 					<Icon name="searchBars" class="w-[18px] h-[18px]" />
@@ -221,8 +230,18 @@
 			<SearchResults results={search.results} query={search.value} loading={search.loading} />
 		{:else}
 			{#if entries.length === 0}
-				<div class="w-full h-full flex flex-col gap-1 items-center justify-center">
-					<Label class="text-muted-foreground text-xs text-center">No notes found</Label>
+				<div class="w-full h-full flex flex-col gap-2 items-center justify-center">
+					<Label class="text-muted-foreground text-xs text-center">
+						{appState.collection ? 'No notes found' : 'No collection open'}
+					</Label>
+					{#if appState.collection}
+						<button
+							class="text-muted-foreground hover:text-foreground text-xs transition-colors"
+							onclick={() => createNote(appState.collection!)}
+						>
+							Create your first note
+						</button>
+					{/if}
 				</div>
 			{/if}
 			<Entries {entries} bind:toggleFolderStates bind:toggleState={folderToggleState} />
