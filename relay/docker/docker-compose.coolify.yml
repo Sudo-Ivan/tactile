@@ -8,8 +8,8 @@
 #   https://relay.example.com:8471. The :8471 selects the container port
 #   Coolify routes to; visitors still connect on 443.
 #
-# No container healthcheck: the distroless image has no shell. Coolify
-# health-checks the configured domain itself; GET /v1/health returns 200.
+# The image is distroless: the healthcheck runs the binary itself with
+# -healthcheck, which probes GET /v1/health on the configured address.
 
 name: tactile-relay
 
@@ -26,13 +26,25 @@ services:
     image: tactile-relay:${IMAGE_VERSION:-dev}
     restart: unless-stopped
     read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ['CMD', '/usr/bin/relay', '-healthcheck']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     environment:
       TACTILE_RELAY_ADDR: :8471
       TACTILE_RELAY_DATA: /data
       TACTILE_RELAY_POW_BITS: ${POW_BITS:-18}
       TACTILE_RELAY_MAX_STORAGE: ${MAX_STORAGE:-1099511627776}
-      # Paid tiers: set to enable; mint tokens with `relay -mint <tier>`.
-      TACTILE_RELAY_TOKEN_SECRETS: ${TOKEN_SECRETS:-}
+      # Access: public sync by default. Set ALLOW_PUBLIC=false and list
+      # client public keys to run a private relay.
+      TACTILE_RELAY_ALLOW_PUBLIC: ${ALLOW_PUBLIC:-true}
+      TACTILE_RELAY_ALLOWED_IDENTITIES: ${ALLOWED_IDENTITIES:-}
       # HA mode: switch to the s3 backend and run N replicas.
       TACTILE_RELAY_BACKEND: ${BACKEND:-fs}
       TACTILE_RELAY_S3_ENDPOINT: ${S3_ENDPOINT:-}

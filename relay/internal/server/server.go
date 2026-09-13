@@ -22,10 +22,10 @@ import (
 
 	"github.com/Sudo-Ivan/tactile/relay/internal/config"
 	"github.com/Sudo-Ivan/tactile/relay/internal/hub"
+	"github.com/Sudo-Ivan/tactile/relay/internal/identity"
 	"github.com/Sudo-Ivan/tactile/relay/internal/protocol"
 	"github.com/Sudo-Ivan/tactile/relay/internal/ratelimit"
 	"github.com/Sudo-Ivan/tactile/relay/internal/store"
-	"github.com/Sudo-Ivan/tactile/relay/internal/tier"
 )
 
 // Server is the relay.
@@ -37,9 +37,8 @@ type Server struct {
 	connRL  *ratelimit.Limiter // per-IP connection rate
 	relayID string
 
-	tiers      map[string]tier.Tier
-	secrets    [][]byte // empty means paid tiers disabled entirely
-	uaPrefixes []string // empty means User-Agent is not checked
+	allowed    map[[32]byte]bool // nil/empty means no explicit allowlist entries
+	uaPrefixes []string          // empty means User-Agent is not checked
 
 	mu      sync.Mutex
 	conns   map[string]int // remote IP -> open conns
@@ -68,7 +67,7 @@ func New(cfg config.Config, st store.Backend) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	secrets, tiers, err := parsePaidConfig(cfg)
+	allowed, err := cfg.AllowedSet()
 	if err != nil {
 		return nil, err
 	}
@@ -80,8 +79,7 @@ func New(cfg config.Config, st store.Backend) (*Server, error) {
 		msgRL:      ratelimit.New(cfg.MsgRatePerSec, cfg.MsgRatePerSec*2),
 		connRL:     ratelimit.New(cfg.ConnRatePerSec, cfg.ConnRatePerSec*2),
 		relayID:    hex.EncodeToString(id[:8]),
-		tiers:      tiers,
-		secrets:    secrets,
+		allowed:    allowed,
 		uaPrefixes: parsePrefixes(cfg.UAWhitelist),
 		conns:      make(map[string]int),
 		wss:        make(map[*conn]struct{}),
@@ -156,30 +154,10 @@ func (s *Server) ConnCount() int {
 
 func (s *Server) now() int64 { return time.Now().Unix() }
 
-// parsePaidConfig resolves token secrets and the tier table. With no
-// secrets, paid tiers are fully off and every request gets limits from
-// the plain config values. With secrets, limits come from the tiers file
-// (or the built-in table) so operators can adapt pricing knobs.
-func parsePaidConfig(cfg config.Config) ([][]byte, map[string]tier.Tier, error) {
-	var secrets [][]byte
-	for _, part := range strings.Split(cfg.TokenSecrets, ",") {
-		part = strings.TrimSpace(part)
-		if part != "" {
-			secrets = append(secrets, []byte(part))
-		}
-	}
-	if len(secrets) == 0 {
-		return nil, map[string]tier.Tier{"free": {
-			QuotaBytes:    cfg.IdentityQuota,
-			MaxTTLSeconds: int64(cfg.MaxTTL.Seconds()),
-			MaxBlobBytes:  int64(cfg.MaxBlobSize),
-		}}, nil
-	}
-	tiers, err := tier.LoadTiers(cfg.TiersFile)
-	if err != nil {
-		return nil, nil, err
-	}
-	return secrets, tiers, nil
+// allowIdentity gates authenticated access. Public mode lets every
+// identity in; otherwise the public key must be on the allowlist.
+func (s *Server) allowIdentity(pub identity.PubKey) bool {
+	return s.cfg.AllowPublic || s.allowed[pub]
 }
 
 func parsePrefixes(s string) []string {
@@ -208,27 +186,6 @@ func (s *Server) checkUA(w http.ResponseWriter, r *http.Request) bool {
 	}
 	writeErr(w, http.StatusForbidden, protocol.CodeForbiddenUA, "user-agent not allowed")
 	return false
-}
-
-// limitsFor resolves the effective limits for a request. No token means
-// the free tier; a bad or expired token is rejected rather than silently
-// downgraded so a paying user notices instead of quietly degrading.
-func (s *Server) limitsFor(token string) (tier.Tier, error) {
-	if len(s.secrets) == 0 {
-		return s.tiers["free"], nil
-	}
-	if token == "" {
-		return s.tiers["free"], nil
-	}
-	name, err := tier.Verify(s.secrets, token, s.now())
-	if err != nil {
-		return tier.Tier{}, err
-	}
-	t, ok := s.tiers[name]
-	if !ok {
-		return tier.Tier{}, tier.ErrBadTier
-	}
-	return t, nil
 }
 
 // clientIP returns the client IP, honoring X-Forwarded-For only when the
@@ -319,7 +276,7 @@ func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
 		"max_ttl_seconds":      int64(s.cfg.MaxTTL.Seconds()),
 		"identity_quota_bytes": s.cfg.IdentityQuota,
 		"now":                  s.now(),
-		"paid_tiers":           len(s.secrets) > 0,
+		"allow_public":         s.cfg.AllowPublic,
 		"load": map[string]any{
 			"conns":            s.ConnCount(),
 			"max_conns":        s.cfg.MaxConns,

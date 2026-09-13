@@ -26,7 +26,6 @@ import (
 	"github.com/Sudo-Ivan/tactile/publish/internal/protocol"
 	"github.com/Sudo-Ivan/tactile/publish/internal/ratelimit"
 	"github.com/Sudo-Ivan/tactile/publish/internal/store"
-	"github.com/Sudo-Ivan/tactile/publish/internal/tier"
 )
 
 // Server is a publish node.
@@ -37,9 +36,8 @@ type Server struct {
 	nodeKey  [32]byte // backend-shared secret: PoW challenges, DNS verify tokens
 	reserved map[string]bool
 
-	tiers      map[string]tier.Tier
-	secrets    [][]byte // empty means paid tiers disabled entirely
-	uaPrefixes []string // empty means User-Agent is not checked on the API
+	allowed    map[[32]byte]bool // identity allowlist; empty = none
+	uaPrefixes []string          // empty means User-Agent is not checked on the API
 	resolver   *net.Resolver
 
 	connRL *ratelimit.Limiter // per-IP API rate
@@ -81,7 +79,7 @@ func New(cfg config.Config, st store.Backend) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	secrets, tiers, err := parsePaidConfig(cfg)
+	allowed, err := cfg.AllowedSet()
 	if err != nil {
 		return nil, err
 	}
@@ -92,9 +90,8 @@ func New(cfg config.Config, st store.Backend) (*Server, error) {
 		nodeID:     hex.EncodeToString(id[:8]),
 		nodeKey:    key,
 		reserved:   cfg.Reserved(),
-		tiers:      tiers,
 		uaPrefixes: parsePrefixes(cfg.UAWhitelist),
-		secrets:    secrets,
+		allowed:    allowed,
 		resolver:   makeResolver(cfg.DNSResolver),
 		connRL:     ratelimit.New(cfg.ConnRatePerSec, cfg.ConnRatePerSec*2),
 		readRL:     ratelimit.New(cfg.ReadRatePerSec, cfg.ReadRatePerSec*2),
@@ -268,33 +265,11 @@ func (s *Server) siteLock(slug string) *sync.Mutex {
 	return l
 }
 
-// parsePaidConfig resolves token secrets and the tier table. With no
-// secrets, paid tiers are fully off and every request gets limits from
-// the plain config values.
-func parsePaidConfig(cfg config.Config) ([][]byte, map[string]tier.Tier, error) {
-	var secrets [][]byte
-	for _, part := range strings.Split(cfg.TokenSecrets, ",") {
-		part = strings.TrimSpace(part)
-		if part != "" {
-			secrets = append(secrets, []byte(part))
-		}
-	}
-	if len(secrets) == 0 {
-		return nil, map[string]tier.Tier{"free": {
-			QuotaBytes:     cfg.SiteQuota,
-			MaxSites:       cfg.MaxSites,
-			MaxDomains:     cfg.MaxDomains,
-			MaxSiteBytes:   cfg.MaxSiteBytes,
-			MaxFileBytes:   cfg.MaxFileBytes,
-			MaxFiles:       cfg.MaxFiles,
-			MaxBundleBytes: cfg.MaxBundleSize,
-		}}, nil
-	}
-	tiers, err := tier.LoadTiers(cfg.TiersFile)
-	if err != nil {
-		return nil, nil, err
-	}
-	return secrets, tiers, nil
+// allowIdentity gates API access. Public mode lets every identity in;
+// otherwise the public key must be on the allowlist. Public site content
+// is never gated.
+func (s *Server) allowIdentity(pub identity.PubKey) bool {
+	return s.cfg.AllowPublic || s.allowed[pub]
 }
 
 func parsePrefixes(s string) []string {
@@ -322,27 +297,6 @@ func (s *Server) checkUA(w http.ResponseWriter, r *http.Request) bool {
 	}
 	writeErr(w, http.StatusForbidden, protocol.CodeForbiddenUA, "user-agent not allowed")
 	return false
-}
-
-// limitsFor resolves the effective limits for a request. No token means
-// the free tier; a bad or expired token is rejected rather than silently
-// downgraded so a paying user notices instead of quietly degrading.
-func (s *Server) limitsFor(token string) (tier.Tier, error) {
-	if len(s.secrets) == 0 {
-		return s.tiers["free"], nil
-	}
-	if token == "" {
-		return s.tiers["free"], nil
-	}
-	name, err := tier.Verify(s.secrets, token, s.now())
-	if err != nil {
-		return tier.Tier{}, err
-	}
-	t, ok := s.tiers[name]
-	if !ok {
-		return tier.Tier{}, tier.ErrBadTier
-	}
-	return t, nil
 }
 
 // clientIP returns the client IP, honoring X-Forwarded-For only when the
@@ -453,26 +407,17 @@ func (s *Server) identityUsage(owner identity.PubKey) (store.Usage, error) {
 }
 
 func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
-	free := s.tiers["free"]
 	used := s.store.TotalBytes()
 	writeJSON(w, http.StatusOK, map[string]any{
 		"version":        protocol.Version,
 		"node_id":        s.nodeID,
 		"base_domain":    s.cfg.BaseDomain,
 		"read_only":      s.cfg.ReadOnly,
+		"allow_public":   s.cfg.AllowPublic,
 		"pow_bits":       s.cfg.PoWBits,
 		"pow_window_sec": int64(s.cfg.PoWWindow.Seconds()),
-		"limits": map[string]any{
-			"quota_bytes":      free.QuotaBytes,
-			"max_sites":        free.MaxSites,
-			"max_domains":      free.MaxDomains,
-			"max_site_bytes":   free.MaxSiteBytes,
-			"max_file_bytes":   free.MaxFileBytes,
-			"max_files":        free.MaxFiles,
-			"max_bundle_bytes": free.MaxBundleBytes,
-		},
-		"now":        s.now(),
-		"paid_tiers": len(s.secrets) > 0,
+		"limits":         s.limitsJSON(),
+		"now":            s.now(),
 		"load": map[string]any{
 			"conns":            s.ConnCount(),
 			"max_conns":        s.cfg.MaxConns,

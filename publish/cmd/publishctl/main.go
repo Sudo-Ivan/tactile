@@ -17,7 +17,6 @@ func main() {
 	var (
 		server = flag.String("server", envOr("TACTILE_PUBLISH_SERVER", "http://localhost:8472"), "node base URL")
 		key    = flag.String("key", envOr("TACTILE_PUBLISH_KEY", "publish.key"), "Ed25519 private key file (hex, created if absent)")
-		token  = flag.String("token", envOr("TACTILE_PUBLISH_TOKEN", ""), "paid-tier token")
 	)
 	flag.Usage = func() {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), `publishctl - tactile-publish node client
@@ -57,8 +56,6 @@ Flags:
 	if err != nil {
 		log.Fatalf("client: %v", err)
 	}
-	c.Token = *token
-
 	switch args[0] {
 	case "info":
 		printJSON(c.Info())

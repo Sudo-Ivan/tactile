@@ -24,8 +24,6 @@ const (
 	hdrTTL       = "X-Tactile-Ttl"
 	hdrTimestamp = "X-Tactile-Timestamp"
 	hdrSig       = "X-Tactile-Signature"
-	// #nosec G101 -- header name, not a credential.
-	hdrToken = "X-Tactile-Token"
 
 	restTimeWindow = 2 * time.Minute
 )
@@ -92,14 +90,13 @@ func (s *Server) handlePut(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusTooManyRequests, protocol.CodeRateLimited, "rate limited")
 		return
 	}
-	limits, err := s.limitsFor(r.Header.Get(hdrToken))
-	if err != nil {
-		writeErr(w, http.StatusForbidden, protocol.CodeBadToken, "invalid or expired token")
-		return
-	}
 	pub, err := restIdentity(r)
 	if err != nil {
 		writeErr(w, http.StatusBadRequest, protocol.CodeBadRequest, "bad identity header")
+		return
+	}
+	if !s.allowIdentity(pub) {
+		writeErr(w, http.StatusForbidden, protocol.CodeNotAllowed, "identity not allowed")
 		return
 	}
 	id, err := decodeBlobID(r.Header.Get(hdrBlobID))
@@ -117,9 +114,10 @@ func (s *Server) handlePut(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, protocol.CodeBadRequest, "bad signature header")
 		return
 	}
-	r.Body = http.MaxBytesReader(w, r.Body, limits.MaxBlobBytes+1)
+	maxBlob := int64(s.cfg.MaxBlobSize)
+	r.Body = http.MaxBytesReader(w, r.Body, maxBlob+1)
 	payload, err := io.ReadAll(r.Body)
-	if err != nil || len(payload) == 0 || int64(len(payload)) > limits.MaxBlobBytes {
+	if err != nil || len(payload) == 0 || int64(len(payload)) > maxBlob {
 		writeErr(w, http.StatusRequestEntityTooLarge, protocol.CodeTooLarge, "payload over max_blob_size")
 		return
 	}
@@ -130,8 +128,8 @@ func (s *Server) handlePut(w http.ResponseWriter, r *http.Request) {
 	if min := int64(s.cfg.MinTTL.Seconds()); ttl < min {
 		ttl = min
 	}
-	if ttl > limits.MaxTTLSeconds {
-		ttl = limits.MaxTTLSeconds
+	if max := int64(s.cfg.MaxTTL.Seconds()); ttl > max {
+		ttl = max
 	}
 	rec := &blob.Record{
 		ID:        id,
@@ -140,7 +138,7 @@ func (s *Server) handlePut(w http.ResponseWriter, r *http.Request) {
 		Sig:       sig,
 		ExpiresAt: s.now() + ttl,
 	}
-	err = s.store.PutWithin(rec, limits.QuotaBytes, s.cfg.MaxStorage)
+	err = s.store.PutWithin(rec, s.cfg.IdentityQuota, s.cfg.MaxStorage)
 	switch {
 	case err == nil:
 	case errors.Is(err, store.ErrQuotaExceeded):
@@ -170,6 +168,10 @@ func (s *Server) blobLookup(w http.ResponseWriter, r *http.Request, method strin
 	pub, err := restIdentity(r)
 	if err != nil {
 		writeErr(w, http.StatusBadRequest, protocol.CodeBadRequest, "bad identity header")
+		return pub, zero, false
+	}
+	if !s.allowIdentity(pub) {
+		writeErr(w, http.StatusForbidden, protocol.CodeNotAllowed, "identity not allowed")
 		return pub, zero, false
 	}
 	id, err := decodeBlobIDURL(r.PathValue("id"))
@@ -380,6 +382,10 @@ func (s *Server) handleList(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, protocol.CodeBadRequest, "bad identity header")
 		return
 	}
+	if !s.allowIdentity(pub) {
+		writeErr(w, http.StatusForbidden, protocol.CodeNotAllowed, "identity not allowed")
+		return
+	}
 	if err := checkFreshSig(r, pub, "LIST", nil); err != nil {
 		writeErr(w, http.StatusForbidden, protocol.CodeBadSig, err.Error())
 		return
@@ -406,6 +412,10 @@ func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {
 	pub, err := restIdentity(r)
 	if err != nil {
 		writeErr(w, http.StatusBadRequest, protocol.CodeBadRequest, "bad identity header")
+		return
+	}
+	if !s.allowIdentity(pub) {
+		writeErr(w, http.StatusForbidden, protocol.CodeNotAllowed, "identity not allowed")
 		return
 	}
 	id, err := decodeBlobIDURL(r.PathValue("id"))

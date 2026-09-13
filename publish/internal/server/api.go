@@ -18,7 +18,6 @@ import (
 	"github.com/Sudo-Ivan/tactile/publish/internal/identity"
 	"github.com/Sudo-Ivan/tactile/publish/internal/protocol"
 	"github.com/Sudo-Ivan/tactile/publish/internal/store"
-	"github.com/Sudo-Ivan/tactile/publish/internal/tier"
 )
 
 // REST auth headers, same scheme as the sync relay: an Ed25519 signature
@@ -29,8 +28,6 @@ const (
 	hdrTimestamp = "X-Tactile-Timestamp"
 	hdrSig       = "X-Tactile-Signature"
 	hdrPoWNonce  = "X-Tactile-Pow-Nonce"
-	// #nosec G101 -- header name, not a credential.
-	hdrToken = "X-Tactile-Token"
 
 	restTimeWindow = 2 * time.Minute
 )
@@ -90,6 +87,10 @@ func (s *Server) authed(w http.ResponseWriter, r *http.Request, msg []byte) (ide
 		writeErr(w, http.StatusForbidden, protocol.CodeBadSig, "signature check failed")
 		return pub, false
 	}
+	if !s.allowIdentity(p) {
+		writeErr(w, http.StatusForbidden, protocol.CodeNotAllowed, "identity not allowed")
+		return pub, false
+	}
 	return p, true
 }
 
@@ -103,14 +104,18 @@ func (s *Server) authedREST(w http.ResponseWriter, r *http.Request, method, subj
 	return s.authed(w, r, protocol.RESTSigMessage(method, subject, ts))
 }
 
-// limits is the common limit resolution step for authed requests.
-func (s *Server) limits(w http.ResponseWriter, r *http.Request) (tier.Tier, bool) {
-	limits, err := s.limitsFor(r.Header.Get(hdrToken))
-	if err != nil {
-		writeErr(w, http.StatusForbidden, protocol.CodeBadToken, "invalid or expired token")
-		return tier.Tier{}, false
+// limitsJSON reports the node's flat limits, shared by /v1/info and
+// /v1/usage.
+func (s *Server) limitsJSON() map[string]any {
+	return map[string]any{
+		"quota_bytes":      s.cfg.SiteQuota,
+		"max_sites":        s.cfg.MaxSites,
+		"max_domains":      s.cfg.MaxDomains,
+		"max_site_bytes":   s.cfg.MaxSiteBytes,
+		"max_file_bytes":   s.cfg.MaxFileBytes,
+		"max_files":        s.cfg.MaxFiles,
+		"max_bundle_bytes": s.cfg.MaxBundleSize,
 	}
-	return limits, true
 }
 
 func validSlug(slug string) bool { return slugRe.MatchString(slug) }
@@ -141,10 +146,6 @@ func (s *Server) handlePutSite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pub, ok := s.authed(w, r, protocol.SiteSigMessage(slug, ts))
-	if !ok {
-		return
-	}
-	limits, ok := s.limits(w, r)
 	if !ok {
 		return
 	}
@@ -196,7 +197,7 @@ func (s *Server) handlePutSite(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusInternalServerError, protocol.CodeInternal, "store failed")
 		return
 	}
-	if usage.Sites >= limits.MaxSites {
+	if usage.Sites >= s.cfg.MaxSites {
 		writeErr(w, http.StatusForbidden, protocol.CodeQuotaExceeded, "site limit reached")
 		return
 	}
@@ -317,10 +318,6 @@ func (s *Server) handleDeploy(w http.ResponseWriter, r *http.Request) {
 	}
 	defer s.releaseConn(s.clientIP(r))
 	slug := r.PathValue("slug")
-	limits, ok := s.limits(w, r)
-	if !ok {
-		return
-	}
 	ts, err := freshTimestamp(r)
 	if err != nil {
 		writeErr(w, http.StatusForbidden, protocol.CodeBadSig, err.Error())
@@ -335,9 +332,9 @@ func (s *Server) handleDeploy(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusTooManyRequests, protocol.CodeRateLimited, "deploy rate limited")
 		return
 	}
-	r.Body = http.MaxBytesReader(w, r.Body, limits.MaxBundleBytes+1)
+	r.Body = http.MaxBytesReader(w, r.Body, s.cfg.MaxBundleSize+1)
 	body, err := io.ReadAll(r.Body)
-	if err != nil || int64(len(body)) > limits.MaxBundleBytes || len(body) == 0 {
+	if err != nil || int64(len(body)) > s.cfg.MaxBundleSize || len(body) == 0 {
 		writeErr(w, http.StatusRequestEntityTooLarge, protocol.CodeTooLarge, "bundle over max_bundle_bytes")
 		return
 	}
@@ -345,6 +342,10 @@ func (s *Server) handleDeploy(w http.ResponseWriter, r *http.Request) {
 	sig, err := restSig(r)
 	if err != nil || !identity.Verify(pub, protocol.DeploySigMessage(slug, sum, ts), sig) {
 		writeErr(w, http.StatusForbidden, protocol.CodeBadSig, "signature check failed")
+		return
+	}
+	if !s.allowIdentity(pub) {
+		writeErr(w, http.StatusForbidden, protocol.CodeNotAllowed, "identity not allowed")
 		return
 	}
 	meta, err := s.store.GetSite(slug)
@@ -363,7 +364,7 @@ func (s *Server) handleDeploy(w http.ResponseWriter, r *http.Request) {
 
 	var depBytes int64
 	files, opts, err := bundle.Extract(bytes.NewReader(body),
-		bundle.Limits{MaxFiles: limits.MaxFiles, MaxFileBytes: limits.MaxFileBytes, MaxSiteBytes: limits.MaxSiteBytes},
+		bundle.Limits{MaxFiles: s.cfg.MaxFiles, MaxFileBytes: s.cfg.MaxFileBytes, MaxSiteBytes: s.cfg.MaxSiteBytes},
 		func(f bundle.File, data []byte) error {
 			if err := s.store.PutObject(f.Hash, data); err != nil {
 				return err
@@ -411,7 +412,7 @@ func (s *Server) handleDeploy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Quota check happens with the site lock held: deduped identity usage
-	// plus this deploy's unique bytes must fit the tier cap.
+	// plus this deploy's unique bytes must fit the per-identity cap.
 	usage, err := s.identityUsage(pub)
 	if err != nil {
 		writeErr(w, http.StatusInternalServerError, protocol.CodeInternal, "store failed")
@@ -424,7 +425,7 @@ func (s *Server) handleDeploy(w http.ResponseWriter, r *http.Request) {
 			newBytes += f.Size
 		}
 	}
-	if usage.Bytes+newBytes > limits.QuotaBytes {
+	if usage.Bytes+newBytes > s.cfg.SiteQuota {
 		writeErr(w, http.StatusForbidden, protocol.CodeQuotaExceeded, "identity quota exceeded")
 		return
 	}
@@ -558,10 +559,6 @@ func (s *Server) handleUsage(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	limits, ok := s.limits(w, r)
-	if !ok {
-		return
-	}
 	u, err := s.identityUsage(pub)
 	if err != nil {
 		writeErr(w, http.StatusInternalServerError, protocol.CodeInternal, "store failed")
@@ -569,6 +566,6 @@ func (s *Server) handleUsage(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"usage":  u,
-		"limits": limits,
+		"limits": s.limitsJSON(),
 	})
 }

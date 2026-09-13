@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -16,7 +17,6 @@ import (
 	"github.com/Sudo-Ivan/tactile/relay/internal/s3client"
 	"github.com/Sudo-Ivan/tactile/relay/internal/server"
 	"github.com/Sudo-Ivan/tactile/relay/internal/store"
-	"github.com/Sudo-Ivan/tactile/relay/internal/tier"
 )
 
 // Set by -ldflags at build time, e.g.
@@ -32,12 +32,11 @@ func main() {
 	fs := flag.NewFlagSet("relay", flag.ExitOnError)
 	cfg.Flags(fs)
 	var showVersion bool
-	var mintTier string
-	var mintDays int
+	var healthCheck bool
 	fs.BoolVar(&showVersion, "v", false, "print version and exit")
 	fs.BoolVar(&showVersion, "version", false, "print version and exit")
-	fs.StringVar(&mintTier, "mint", "", "mint a paid-tier token and exit (needs -token-secrets)")
-	fs.IntVar(&mintDays, "mint-days", 365, "token validity in days for -mint")
+	fs.BoolVar(&healthCheck, "healthcheck", false,
+		"probe the health endpoint on -addr and exit nonzero on failure")
 	fs.Usage = func() {
 		_, _ = fmt.Fprintf(fs.Output(), `tactile-relay %s (commit %s, built %s)
 
@@ -62,17 +61,8 @@ Flags:
 	if err := config.ApplyEnv(fs); err != nil {
 		fatal("env config", err)
 	}
-	if mintTier != "" {
-		if cfg.TokenSecrets == "" {
-			fatal("-mint needs -token-secrets or TACTILE_RELAY_TOKEN_SECRETS", nil)
-		}
-		secret := []byte(strings.TrimSpace(strings.Split(cfg.TokenSecrets, ",")[0]))
-		tok, err := tier.Mint(secret, mintTier, time.Duration(mintDays)*24*time.Hour)
-		if err != nil {
-			fatal("mint", err)
-		}
-		fmt.Println(tok)
-		return
+	if healthCheck {
+		os.Exit(probeHealth(cfg.Addr))
 	}
 
 	st, err := openBackend(cfg)
@@ -95,6 +85,26 @@ Flags:
 	if err := srv.ListenAndServe(); err != nil {
 		fatal("serve", err)
 	}
+}
+
+// probeHealth GETs /v1/health on the configured address and returns a
+// process exit code. It exists so minimal container images with no shell
+// or wget can still run a Docker healthcheck.
+func probeHealth(addr string) int {
+	host := addr
+	if strings.HasPrefix(addr, ":") {
+		host = "127.0.0.1" + addr
+	}
+	hc := &http.Client{Timeout: 3 * time.Second}
+	res, err := hc.Get("http://" + host + "/v1/health")
+	if err != nil {
+		return 1
+	}
+	_ = res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return 1
+	}
+	return 0
 }
 
 // fatal logs msg (with err when non-nil) and exits nonzero, like

@@ -23,7 +23,7 @@ const (
 	CodeQuotaExceeded = "quota_exceeded"
 	CodeStorageFull   = "storage_full"
 	CodeRateLimited   = "rate_limited"
-	CodeBadToken      = "bad_token"
+	CodeNotAllowed    = "not_allowed"
 	CodeForbiddenUA   = "forbidden"
 	CodeBadBundle     = "bad_bundle"
 	CodeBadDomain     = "bad_domain"

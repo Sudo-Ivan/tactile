@@ -4,6 +4,7 @@
 package config
 
 import (
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"net/netip"
@@ -67,9 +68,11 @@ type Config struct {
 	S3PathStyle bool   // bucket/key in path; required by MinIO/Garage/R2/B2
 	S3Prefix    string // key prefix inside the bucket
 
-	// Paid tiers, off by default. Setting secrets enables token support.
-	TokenSecrets string // comma-separated HMAC secrets; multiple allow rotation
-	TiersFile    string // JSON file overriding the built-in tier table
+	// Access control. Publishing is private by default: only identities on
+	// the AllowedIdentities allowlist may use the API. Setting AllowPublic
+	// to true opens registration to any Ed25519 identity.
+	AllowPublic       bool   // any identity may publish (default false)
+	AllowedIdentities string // comma-separated hex Ed25519 public keys; empty = none
 }
 
 // Default returns production-reasonable defaults.
@@ -78,13 +81,13 @@ func Default() Config {
 		Addr:             ":8472",
 		DataDir:          "./publish-data",
 		ReservedSlugs:    "www,api,app,s,mail,ftp,cdn,static",
-		MaxBundleSize:    128 << 20, // 128 MiB compressed
-		MaxSiteBytes:     1 << 30,   // 1 GiB extracted per deploy
-		MaxFileBytes:     32 << 20,
-		MaxFiles:         5000,
-		MaxSites:         3,
-		MaxDomains:       1,
-		SiteQuota:        5 << 30,
+		MaxBundleSize:    256 << 20, // 256 MiB compressed
+		MaxSiteBytes:     2 << 30,   // 2 GiB extracted per deploy
+		MaxFileBytes:     64 << 20,
+		MaxFiles:         10000,
+		MaxSites:         10,
+		MaxDomains:       5,
+		SiteQuota:        25 << 30,
 		MaxStorage:       256 << 30, // 256 GiB total
 		KeepDeploys:      10,
 		PoWBits:          16,
@@ -140,9 +143,10 @@ func (c *Config) Flags(fs *flag.FlagSet) {
 	fs.StringVar(&c.S3SecretKey, "s3-secret-key", c.S3SecretKey, "S3 secret key")
 	fs.BoolVar(&c.S3PathStyle, "s3-path-style", c.S3PathStyle, "path-style S3 addressing (MinIO/Garage/R2/B2)")
 	fs.StringVar(&c.S3Prefix, "s3-prefix", c.S3Prefix, "key prefix inside the bucket")
-	fs.StringVar(&c.TokenSecrets, "token-secrets", c.TokenSecrets,
-		"comma-separated HMAC secrets enabling paid tiers (prefer env var)")
-	fs.StringVar(&c.TiersFile, "tiers-file", c.TiersFile, "JSON file overriding built-in tiers")
+	fs.BoolVar(&c.AllowPublic, "allow-public", c.AllowPublic,
+		"allow any identity to publish (false = only allowed-identities)")
+	fs.StringVar(&c.AllowedIdentities, "allowed-identities", c.AllowedIdentities,
+		"comma-separated hex Ed25519 public keys allowed to use the API")
 }
 
 // ApplyEnv applies TACTILE_PUBLISH_* environment variables to flags that
@@ -188,6 +192,29 @@ func (c *Config) ParseTrustedProxies() ([]netip.Prefix, error) {
 			continue
 		}
 		return nil, fmt.Errorf("bad trusted proxy %q (want IP or CIDR)", s)
+	}
+	return out, nil
+}
+
+// AllowedSet parses AllowedIdentities into a lookup set of raw 32-byte
+// Ed25519 public keys.
+func (c *Config) AllowedSet() (map[[32]byte]bool, error) {
+	if c.AllowedIdentities == "" {
+		return nil, nil
+	}
+	out := make(map[[32]byte]bool)
+	for _, s := range strings.Split(c.AllowedIdentities, ",") {
+		s = strings.TrimSpace(s)
+		if s == "" {
+			continue
+		}
+		raw, err := hex.DecodeString(s)
+		if err != nil || len(raw) != 32 {
+			return nil, fmt.Errorf("bad allowed identity %q (want 64-char hex public key)", s)
+		}
+		var key [32]byte
+		copy(key[:], raw)
+		out[key] = true
 	}
 	return out, nil
 }

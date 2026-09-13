@@ -72,11 +72,13 @@ PoW challenges and DNS tokens verify on every node. `-read-only` turns a
 replica into a serving-only node. The fs backend is single-node unless
 the data dir is on a shared volume.
 
-## Paid tiers
+## Access control
 
-`-token-secrets` enables stateless HMAC tier tokens (same scheme as the
-sync relay). `-tiers-file` overrides the built-in free/supporter/pro
-table. Mint with `publish -mint pro -token-secrets ...`.
+The API is private by default: only public keys listed in
+`-allowed-identities` (comma-separated hex) may create sites, deploy, or
+manage domains. `publishctl pubkey` prints a key's identity. Set
+`-allow-public` to open registration to any signed identity. Site
+content reads are never gated.
 
 ## Docker
 

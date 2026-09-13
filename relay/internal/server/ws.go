@@ -13,7 +13,6 @@ import (
 	"github.com/Sudo-Ivan/tactile/relay/internal/identity"
 	"github.com/Sudo-Ivan/tactile/relay/internal/protocol"
 	"github.com/Sudo-Ivan/tactile/relay/internal/store"
-	"github.com/Sudo-Ivan/tactile/relay/internal/tier"
 	"github.com/gorilla/websocket"
 )
 
@@ -58,7 +57,6 @@ type conn struct {
 	authed    bool
 	challenge []byte
 	chalAt    time.Time
-	limits    tier.Tier
 }
 
 func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
@@ -250,9 +248,8 @@ func (c *conn) handleAuth(m *protocol.Auth) {
 		c.sendErr(protocol.CodeBadSig, "signature check failed")
 		return
 	}
-	limits, err := c.srv.limitsFor(m.Token)
-	if err != nil {
-		c.sendErr(protocol.CodeBadToken, "invalid or expired token")
+	if !c.srv.allowIdentity(pub) {
+		c.sendErr(protocol.CodeNotAllowed, "identity not allowed")
 		return
 	}
 	if c.authed {
@@ -261,7 +258,6 @@ func (c *conn) handleAuth(m *protocol.Auth) {
 	}
 	c.pub = pub
 	c.id = identity.IDOf(c.pub)
-	c.limits = limits
 	c.authed = true
 	c.srv.hub.Subscribe(c.id, &hub.Subscriber{ConnID: c.connID, Send: c.send})
 	c.sendJSON(protocol.OK{Type: protocol.TypeOK})
@@ -305,7 +301,7 @@ func (c *conn) handlePut(m *protocol.Put) {
 		c.sendErr(protocol.CodeBadRequest, "bad payload")
 		return
 	}
-	if len(payload) == 0 || int64(len(payload)) > c.limits.MaxBlobBytes {
+	if len(payload) == 0 || int64(len(payload)) > int64(cfg.MaxBlobSize) {
 		c.sendErr(protocol.CodeTooLarge, "payload over max_blob_size")
 		return
 	}
@@ -318,14 +314,14 @@ func (c *conn) handlePut(m *protocol.Put) {
 		c.sendErr(protocol.CodeBadSig, "signature check failed")
 		return
 	}
-	// TTL negotiation: client proposes, relay clamps to the tier's bounds
-	// and reports the result in put_ok.
+	// TTL negotiation: client proposes, relay clamps to its configured
+	// bounds and reports the result in put_ok.
 	ttl := m.TTLSeconds
 	if min := int64(cfg.MinTTL.Seconds()); ttl < min {
 		ttl = min
 	}
-	if ttl > c.limits.MaxTTLSeconds {
-		ttl = c.limits.MaxTTLSeconds
+	if max := int64(cfg.MaxTTL.Seconds()); ttl > max {
+		ttl = max
 	}
 	rec := &blob.Record{
 		ID:        id,
@@ -334,7 +330,7 @@ func (c *conn) handlePut(m *protocol.Put) {
 		Sig:       sig,
 		ExpiresAt: c.srv.now() + ttl,
 	}
-	err = c.srv.store.PutWithin(rec, c.limits.QuotaBytes, cfg.MaxStorage)
+	err = c.srv.store.PutWithin(rec, cfg.IdentityQuota, cfg.MaxStorage)
 	switch {
 	case err == nil:
 	case errors.Is(err, store.ErrQuotaExceeded):

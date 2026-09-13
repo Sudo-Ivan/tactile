@@ -58,7 +58,7 @@ const (
 	CodeStorageFull   = "storage_full"
 	CodeRateLimited   = "rate_limited"
 	CodeExpired       = "expired"
-	CodeBadToken      = "bad_token"
+	CodeNotAllowed    = "not_allowed"
 	CodeForbiddenUA   = "forbidden"
 	CodeInternal      = "internal"
 )
@@ -96,7 +96,6 @@ type Auth struct {
 	PubKey   string `json:"pubkey"` // base64, 32 bytes
 	Sig      string `json:"sig"`
 	PoWNonce string `json:"pow_nonce,omitempty"`
-	Token    string `json:"token,omitempty"` // paid-tier bearer token, if the relay takes them
 }
 
 // Put stores a blob. Sig covers

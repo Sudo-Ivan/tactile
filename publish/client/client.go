@@ -31,7 +31,6 @@ type Client struct {
 	Endpoint string // base URL, e.g. http://localhost:8472
 	priv     ed25519.PrivateKey
 	pub      identity.PubKey
-	Token    string // paid-tier token, optional
 	http     *http.Client
 }
 
@@ -95,9 +94,6 @@ func (c *Client) signedReq(method, url string, body io.Reader, msgFor func(ts in
 	req.Header.Set("X-Tactile-Identity", base64.StdEncoding.EncodeToString(c.pub[:]))
 	req.Header.Set("X-Tactile-Timestamp", fmt.Sprintf("%d", ts))
 	req.Header.Set("X-Tactile-Signature", sig)
-	if c.Token != "" {
-		req.Header.Set("X-Tactile-Token", c.Token)
-	}
 	req.Header.Set("User-Agent", ua)
 	return req, nil
 }

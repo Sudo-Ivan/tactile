@@ -33,7 +33,8 @@ type testEnv struct {
 func newTestEnv(t *testing.T, mutate func(*config.Config)) *testEnv {
 	t.Helper()
 	cfg := config.Default()
-	cfg.PoWBits = 0 // tests sign; PoW is exercised separately
+	cfg.PoWBits = 0        // tests sign; PoW is exercised separately
+	cfg.AllowPublic = true // the API is allowlist-only by default
 	cfg.ManifestTTL = time.Millisecond
 	if mutate != nil {
 		mutate(&cfg)

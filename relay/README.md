@@ -23,9 +23,9 @@ flag has a `TACTILE_RELAY_*` env override.
   storage (`-backend s3`).
 - Clients can use several relays at once. No federation: relays are
   independent and interchangeable.
-- Optional paid tiers via stateless HMAC tokens (`-token-secrets`,
-  `-mint`). Off by default. See `-h` and the tier table in
-  `internal/tier/tier.go`.
+- Public by default; `-allow-public=false` restricts every authenticated
+  operation to `-allowed-identities` (comma-separated hex public keys)
+  for a private relay.
 - Optional User-Agent whitelist (`-ua-whitelist`) and trusted-proxy
   support (`-trusted-proxies`) for deployments behind a load balancer.
 

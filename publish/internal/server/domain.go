@@ -95,10 +95,6 @@ func (s *Server) handleAddDomain(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	limits, ok := s.limits(w, r)
-	if !ok {
-		return
-	}
 	lk := s.siteLock(slug)
 	lk.Lock()
 	defer lk.Unlock()
@@ -124,7 +120,7 @@ func (s *Server) handleAddDomain(w http.ResponseWriter, r *http.Request) {
 				total += len(m.Domains)
 			}
 		}
-		if total >= limits.MaxDomains {
+		if total >= s.cfg.MaxDomains {
 			writeErr(w, http.StatusForbidden, protocol.CodeQuotaExceeded, "domain limit reached")
 			return
 		}

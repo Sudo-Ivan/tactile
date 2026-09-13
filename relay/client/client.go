@@ -64,7 +64,6 @@ type Client struct {
 	priv   ed25519.PrivateKey
 	pub    identity.PubKey
 	hc     *http.Client
-	token  string
 	ua     string
 
 	mu    sync.Mutex
@@ -73,11 +72,6 @@ type Client struct {
 
 // Option configures a Client.
 type Option func(*Client)
-
-// WithToken sets a paid-tier bearer token sent on writes.
-func WithToken(token string) Option {
-	return func(c *Client) { c.token = token }
-}
 
 // WithUserAgent overrides the client User-Agent. Operators running UA
 // whitelists should set this to their app's name.
@@ -127,12 +121,9 @@ func New(relays []string, priv ed25519.PrivateKey, opts ...Option) *Client {
 	return c
 }
 
-// setHeaders applies the User-Agent and paid-tier token to a request.
+// setHeaders applies the User-Agent to a request.
 func (c *Client) setHeaders(req *http.Request) {
 	req.Header.Set("User-Agent", c.ua)
-	if c.token != "" {
-		req.Header.Set("X-Tactile-Token", c.token)
-	}
 }
 
 // drain finishes a response body so the conn can be reused. The transport
