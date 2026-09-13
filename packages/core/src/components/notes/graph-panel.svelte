@@ -3,6 +3,8 @@
 	import { buildNoteGraph, type GraphNode } from '../../api/graph';
 	import { openNote } from '../../api/notes';
 	import { appState } from '../../state/app.svelte';
+	import { Button } from '@tactile/ui/components/button';
+	import Tooltip from '../shared/tooltip.svelte';
 	import {
 		forceCenter,
 		forceCollide,
@@ -13,6 +15,7 @@
 		type SimulationNodeDatum
 	} from 'd3-force';
 	import { quadtree, type Quadtree } from 'd3-quadtree';
+	import { Maximize, Minus, Plus } from '@lucide/svelte';
 
 	// Force-directed note graph: one node per note, edges from [[wikilinks]]
 	// and markdown links. Dangling targets render as hollow nodes. Canvas
@@ -47,6 +50,8 @@
 	let lastPointer = { x: 0, y: 0 };
 	let downPos = { x: 0, y: 0 };
 	let hoverNode: SimNode | null = null;
+	// Canvas cursor follows the interaction state.
+	let cursor = $state<'grab' | 'grabbing' | 'pointer'>('grab');
 
 	interface Palette {
 		node: string;
@@ -169,6 +174,7 @@
 	}
 
 	function onPointerDown(e: PointerEvent) {
+		if (e.button !== 0) return;
 		const p = localPos(e);
 		lastPointer = p;
 		downPos = p;
@@ -177,8 +183,10 @@
 			dragNode.fx = dragNode.x;
 			dragNode.fy = dragNode.y;
 			sim?.alphaTarget(0.1).restart();
+			cursor = 'grabbing';
 		} else {
 			panning = true;
+			cursor = 'grabbing';
 		}
 		canvas?.setPointerCapture(e.pointerId);
 	}
@@ -197,7 +205,7 @@
 			const hit = nodeAt(p.x, p.y);
 			if (hit !== hoverNode) {
 				hoverNode = hit;
-				canvas!.style.cursor = hit ? 'pointer' : 'grab';
+				cursor = hit ? 'pointer' : 'grab';
 				scheduleDraw();
 			}
 		}
@@ -218,18 +226,67 @@
 			sim?.alphaTarget(0);
 		}
 		panning = false;
+		cursor = 'grab';
 		canvas?.releasePointerCapture(e.pointerId);
+	}
+
+	function onPointerLeave() {
+		if (dragNode || panning) return;
+		hoverNode = null;
+		cursor = 'grab';
+		scheduleDraw();
+	}
+
+	const ZOOM_MIN = 0.2;
+	const ZOOM_MAX = 4;
+
+	function zoomAt(px: number, py: number, scale: number) {
+		const k = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, view.k * scale));
+		// Keep the anchor point stationary under the cursor.
+		view.x = px - ((px - view.x) / view.k) * k;
+		view.y = py - ((py - view.y) / view.k) * k;
+		view.k = k;
+		scheduleDraw();
+	}
+
+	function zoomStep(scale: number) {
+		if (!canvas) return;
+		zoomAt(canvas.clientWidth / 2, canvas.clientHeight / 2, scale);
 	}
 
 	function onWheel(e: WheelEvent) {
 		e.preventDefault();
 		const p = localPos(e);
-		const scale = Math.exp(-e.deltaY * 0.0015);
-		const k = Math.min(4, Math.max(0.2, view.k * scale));
-		// Zoom around the cursor.
-		view.x = p.x - ((p.x - view.x) / view.k) * k;
-		view.y = p.y - ((p.y - view.y) / view.k) * k;
+		zoomAt(p.x, p.y, Math.exp(-e.deltaY * 0.0015));
+	}
+
+	// Frame every node with a margin; falls back to the panel center.
+	function fitView() {
+		if (!canvas || nodes.length === 0) return;
+		let minX = Infinity,
+			minY = Infinity,
+			maxX = -Infinity,
+			maxY = -Infinity;
+		for (const n of nodes) {
+			if (n.x == null || n.y == null) continue;
+			minX = Math.min(minX, n.x);
+			minY = Math.min(minY, n.y);
+			maxX = Math.max(maxX, n.x);
+			maxY = Math.max(maxY, n.y);
+		}
+		if (!isFinite(minX)) return;
+		const w = canvas.clientWidth;
+		const h = canvas.clientHeight;
+		const pad = 48;
+		const bw = Math.max(1, maxX - minX);
+		const bh = Math.max(1, maxY - minY);
+		const k = Math.min(
+			ZOOM_MAX,
+			Math.max(ZOOM_MIN, Math.min((w - pad * 2) / bw, (h - pad * 2) / bh))
+		);
 		view.k = k;
+		view.x = w / 2 - ((minX + maxX) / 2) * k;
+		view.y = h / 2 - ((minY + maxY) / 2) * k;
 		scheduleDraw();
 	}
 
@@ -292,10 +349,6 @@
 			attributes: true,
 			attributeFilter: ['class', 'style', 'data-theme']
 		});
-		canvas?.addEventListener('pointerdown', onPointerDown);
-		canvas?.addEventListener('pointermove', onPointerMove);
-		canvas?.addEventListener('pointerup', onPointerUp);
-		canvas?.addEventListener('wheel', onWheel, { passive: false });
 		// Saves are debounced upstream; still batch them here since a
 		// rebuild reads every note in the collection.
 		unsubscribeSaves = appState.editor.subscribeToSaveEvents(() => {
@@ -323,9 +376,59 @@
 			<p class="text-[13px] text-muted-foreground">No notes yet</p>
 		</div>
 	{:else}
-		<canvas bind:this={canvas} class="w-full h-full block" aria-label="Note graph"></canvas>
+		<canvas
+			bind:this={canvas}
+			class="w-full h-full block touch-none"
+			style:cursor
+			aria-label="Note graph"
+			onpointerdown={onPointerDown}
+			onpointermove={onPointerMove}
+			onpointerup={onPointerUp}
+			onpointercancel={onPointerUp}
+			onpointerleave={onPointerLeave}
+			onwheel={onWheel}
+			ondblclick={fitView}
+		></canvas>
 		<p class="absolute bottom-2 left-3 text-[11px] text-muted-foreground pointer-events-none">
 			{stats.nodes} notes, {stats.links} links
 		</p>
+		<div class="absolute bottom-2 right-2 flex flex-col gap-1">
+			<Tooltip text="Zoom in" side="left">
+				<Button
+					size="icon"
+					variant="ghost"
+					scale="md"
+					class="h-7 w-7 text-muted-foreground hover:text-foreground"
+					onclick={() => zoomStep(1.3)}
+					aria-label="Zoom in"
+				>
+					<Plus class="w-4 h-4" />
+				</Button>
+			</Tooltip>
+			<Tooltip text="Zoom out" side="left">
+				<Button
+					size="icon"
+					variant="ghost"
+					scale="md"
+					class="h-7 w-7 text-muted-foreground hover:text-foreground"
+					onclick={() => zoomStep(1 / 1.3)}
+					aria-label="Zoom out"
+				>
+					<Minus class="w-4 h-4" />
+				</Button>
+			</Tooltip>
+			<Tooltip text="Fit graph to view" side="left">
+				<Button
+					size="icon"
+					variant="ghost"
+					scale="md"
+					class="h-7 w-7 text-muted-foreground hover:text-foreground"
+					onclick={fitView}
+					aria-label="Fit graph to view"
+				>
+					<Maximize class="w-4 h-4" />
+				</Button>
+			</Tooltip>
+		</div>
 	{/if}
 </div>
