@@ -23,6 +23,16 @@ services:
     image: tactile-publish:${IMAGE_VERSION:-dev}
     restart: unless-stopped
     read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ['CMD', '/usr/bin/publish', '-healthcheck']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     environment:
       TACTILE_PUBLISH_ADDR: :8472
       TACTILE_PUBLISH_ADMIN_ADDR: :8473
@@ -32,8 +42,11 @@ services:
       TACTILE_PUBLISH_BASE_DOMAIN: ${BASE_DOMAIN-${SITE_DOMAIN:-}}
       TACTILE_PUBLISH_POW_BITS: ${POW_BITS:-16}
       TACTILE_PUBLISH_MAX_STORAGE: ${MAX_STORAGE:-34359738368}
-      # Paid tiers: set to enable; mint tokens with `publish -mint <tier>`.
-      TACTILE_PUBLISH_TOKEN_SECRETS: ${TOKEN_SECRETS:-}
+      # Access: private by default. List client public keys in
+      # ALLOWED_IDENTITIES (publishctl pubkey prints yours) or set
+      # ALLOW_PUBLIC=true to open registration to anyone.
+      TACTILE_PUBLISH_ALLOW_PUBLIC: ${ALLOW_PUBLIC:-false}
+      TACTILE_PUBLISH_ALLOWED_IDENTITIES: ${ALLOWED_IDENTITIES:-}
       # HA mode: switch to the s3 backend and run N replicas behind a LB.
       TACTILE_PUBLISH_BACKEND: ${BACKEND:-fs}
       TACTILE_PUBLISH_S3_ENDPOINT: ${S3_ENDPOINT:-}
@@ -82,7 +95,9 @@ services:
     ports:
       - '${HTTP_PORT:-8080}:8080' # -> host 80 in real deployments
       - '${HTTPS_PORT:-8443}:8443' # -> host 443 in real deployments
-    depends_on: [publish]
+    depends_on:
+      publish:
+        condition: service_healthy
     networks: [edge]
     healthcheck:
       test: ['CMD', 'wget', '-qO-', 'http://publish:8472/v1/health']
